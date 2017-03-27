@@ -1,8 +1,0 @@
-Symlinking /home/eduardo/Robotica/WS_AutoNOMOS/line_det/devel/./env.sh
-Symlinking /home/eduardo/Robotica/WS_AutoNOMOS/line_det/devel/./_setup_util.py
-Symlinking /home/eduardo/Robotica/WS_AutoNOMOS/line_det/devel/./setup.bash
-Symlinking /home/eduardo/Robotica/WS_AutoNOMOS/line_det/devel/./setup.sh
-Symlinking /home/eduardo/Robotica/WS_AutoNOMOS/line_det/devel/./setup.zsh
-Symlinking /home/eduardo/Robotica/WS_AutoNOMOS/line_det/devel/share/catkin_tools_prebuild/cmake/catkin_tools_prebuildConfig-version.cmake
-Symlinking /home/eduardo/Robotica/WS_AutoNOMOS/line_det/devel/share/catkin_tools_prebuild/cmake/catkin_tools_prebuildConfig.cmake
-Symlinking /home/eduardo/Robotica/WS_AutoNOMOS/line_det/devel/lib/pkgconfig/catkin_tools_prebuild.pc

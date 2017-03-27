@@ -135,6 +135,8 @@ cLaneDetectionFu::cLaneDetectionFu(ros::NodeHandle nh)
     
     read_images_ = nh.subscribe(nh_.resolveName(camera_name), MY_ROS_QUEUE_SIZE, &cLaneDetectionFu::ProcessInput,this);
 
+    sub_planning = nh.subscribe("/planning", MY_ROS_QUEUE_SIZE, &cLaneDetectionFu::ProcessPlanning,this);
+
     //publish_curvature = nh.advertise<std_msgs::Float32>("/lane_model/curvature", MY_ROS_QUEUE_SIZE);
     publish_angle = nh.advertise<std_msgs::Float32>("/lane_model/angle", MY_ROS_QUEUE_SIZE);
 
@@ -410,7 +412,11 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
             pt.y = pointLocRight.y;
             pt.z = 0;
             array_ransac_right.cells.push_back(pt);
-            
+        }
+
+        for(int i=0; i<path_planned.cell_width;i++){
+            cv::Point pointPath = cv::Point(path_planned.cells[i].x, path_planned.cells[i].y);
+            cv::circle(transformedImagePaintableRansac,pointPath,0,cv::Scalar(255,255,0),-1);
         }
 
         pub_ransac_left.publish(array_ransac_left);
@@ -689,6 +695,13 @@ vector<vector<EdgePoint>> cLaneDetectionFu::scanImage(cv::Mat image) {
     return edgePoints;
 }
 
+/* Planning */
+
+// get planned path to show it on the image
+void cLaneDetectionFu::ProcessPlanning(const nav_msgs::GridCells& path){
+    path_planned.cell_width = path.cell_width;
+    path_planned.cells = path.cells;
+}
 
 /* LaneMarkingDetector methods */
 

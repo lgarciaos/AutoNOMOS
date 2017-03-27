@@ -81,6 +81,7 @@ class cLaneDetectionFu
 
         // subscribers
         ros::Subscriber read_images_;
+        ros::Subscriber sub_planning;
 
         // publishers
         //ros::Publisher publish_images;
@@ -260,6 +261,8 @@ class cLaneDetectionFu
         nav_msgs::GridCells array_center;
         nav_msgs::GridCells array_right;
 
+        nav_msgs::GridCells path_planned;
+
         nav_msgs::GridCells array_ransac_left;
         nav_msgs::GridCells array_ransac_center;
         nav_msgs::GridCells array_ransac_right;
@@ -273,6 +276,8 @@ class cLaneDetectionFu
     	virtual ~cLaneDetectionFu();
         
         void ProcessInput(const sensor_msgs::Image::ConstPtr& msg);
+
+        void ProcessPlanning(const nav_msgs::GridCells& path);
         
         void pubRGBImageMsg(cv::Mat& rgb_mat, image_transport::CameraPublisher publisher);
 
