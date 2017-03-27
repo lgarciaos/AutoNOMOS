@@ -392,6 +392,12 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
         array_ransac_center.cells.clear();
         array_ransac_right.cells.clear();
 
+        array_ransac_left.cell_width =  maxYRoi - minYPolyRoi;
+        array_ransac_left.cell_height = 1;
+        array_ransac_center.cell_width = maxYRoi - minYPolyRoi ;
+        array_ransac_center.cell_height = 1;
+        array_ransac_right.cell_width = maxYRoi - minYPolyRoi;
+        array_ransac_right.cell_height = 1;
         for(int i = minYPolyRoi; i < maxYRoi; i++)
         {
             cv::Point pointLocLeft = cv::Point(polyLeft.at(i), i);

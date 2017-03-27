@@ -1,0 +1,8 @@
+prefix=/home/eduardo/Robotica/AutoNOMOS2/line_det/devel/.private/lane_controller
+
+Name: lane_controller
+Description: Description of lane_controller
+Version: 0.0.0
+Cflags: 
+Libs: -L/home/eduardo/Robotica/AutoNOMOS2/line_det/devel/.private/lane_controller/lib 
+Requires: 

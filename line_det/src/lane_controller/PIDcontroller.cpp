@@ -15,32 +15,41 @@
 // https://gist.github.com/bradley219/5373998
 
 
-#include <iostream>
 #include <ros/ros.h>
-// #include "stdmsgs/String.h"
+#include <std_msgs/Header.h>
+#include <iostream>
 #include <geometry_msgs/Point.h>
+#include <std_msgs/Int32MultiArray.h>
+#include <std_msgs/Float32MultiArray.h>
 #include <nav_msgs/GridCells.h>
-#include <cmath>
-#include <stdio.h>
+#include <std_msgs/Int16.h>
+
+
 
 double rate_hz = 1;
 
 // Variables globales 
-double max = 90;
-double min = 0;
+double max;
+double min;
 double dt;
 double Kp;
 double Kd;
 double Ki;
 double prevError = 0;
 double integral = 0;
+double pE;
+double velocity;
+double altura;
 
+
+nav_msgs::GridCells path_planning;
 
 /*
 	@param pE posicion origen (del vehiculo)
 	@param p posicion destino
 */
 double PIDtime(double pE, double p, double dt, double max, double min, double Kp, double Kd, double Ki){
+	ROS_INFO_STREAM("PID time");
 	double error = pE - p;
 	double pOut = Kp * error;
 	integral += error * dt;
@@ -48,6 +57,9 @@ double PIDtime(double pE, double p, double dt, double max, double min, double Kp
 	double derivative = (error - prevError) / dt;
 	double dOut = Kd * derivative;
 	double output = pOut + iOut + dOut;
+
+	// correccion en el carro
+	output += 45; 
 
     // Restriction
 	if( output > max )
@@ -61,39 +73,77 @@ double PIDtime(double pE, double p, double dt, double max, double min, double Kp
 }
 
 void get_path(const nav_msgs::GridCells& path){
+	path_planning.cells = path.cells;
+	path_planning.cell_width = path.cell_width;
 
+	ROS_INFO_STREAM("cells_width: " << path_planning.cell_width);
+
+	if(path_planning.cell_width > 0){
+		double p = 0.0;
+		double pid_res = 0.0;
+		std_msgs::Int16 value_motor;
+		std_msgs::Int16 value_steering;
+
+
+
+		p = path_planning.cells[altura].x;
+		ROS_INFO_STREAM("PID: pos actual: " << pE << ", objetivo:" << p << ", altura: " << altura);
+		pid_res = PIDtime(pE, p, dt, max, min, Kp, Kd, Ki);
+
+		value_motor.data = velocity;
+		value_steering.data = pid_res;
+
+		// pub.publish(value_motor); 
+		// pub_ste.publish(value_ste); 
+
+		ROS_INFO_STREAM("velocity: " << value_motor.data << ", steering: " << value_steering.data << " )");
+	}
 }
 
 
 int main(int argc, char** argv){
-	ros::init(argc, argv, "PIDcontroller");
+	ros::init(argc, argv, "PID controller");
 	ROS_INFO_STREAM("PID controller initialized");
+	ros::NodeHandle priv_nh_("~");
+	//head_time_stamp = ros::Time::now();
 	ros::NodeHandle nh;
 	ros::Rate loop_rate(rate_hz);
 
-	ros::Publisher pub_speed = nh.advertise<std_msgs::Int16>(nh.resolveName("/manual_control/speed"), 1);
-	ros::Publisher pub_steering = nh.advertise<std_msgs::Int16>(nh.resolveName("/manual_control/steering"), 1);
+	std::string node_name = "/lane_controller_node";
+	ROS_INFO_STREAM("Obteniendo p");
+
+	priv_nh_.param<double>(node_name+"/Kp", Kp, 0.6);
+	priv_nh_.param<double>(node_name+"/Ki", Ki, 0.3);
+	priv_nh_.param<double>(node_name+"/Kd", Kd, 0.0);
+	priv_nh_.param<double>(node_name+"/dt", dt, 1.0);
+
+	priv_nh_.param<double>(node_name+"/pE", pE, 80.0);
+	priv_nh_.param<double>(node_name+"/min", min, 0.0);
+	priv_nh_.param<double>(node_name+"/max", max, 90.0);
+	priv_nh_.param<double>(node_name+"/velocity", velocity, 30.0);
+	priv_nh_.param<double>(node_name+"/altura", altura, 140.0);
+
+	ROS_INFO_STREAM("Parametros obtenidos");
+
+	ros::Publisher pub_speed = nh.advertise<std_msgs::Int16>("/manual_control/speed", rate_hz);
+	ros::Publisher pub_steering = nh.advertise<std_msgs::Int16>("/manual_control/steering", rate_hz);
 
 	// esto va mejor en el launch file
 	
-	ros::Subscriber sub_path = nh.subscribe("/planning",1, get_path);
+	ros::Subscriber sub_path = nh.subscribe("/planning",1, &get_path);
 
-	double p = targetposition.linear.x;
+	
 
-	while (ros::ok())
+	ROS_INFO_STREAM("antes de while");
+	while (nh.ok())
 	{
+		ROS_INFO_STREAM("while 1");
+		ros::spinOnce();
+
 		// convertir entre 0 y 90
 		// pE siempre es la misma
-		value_ste.data = PIDtime(pE, p, dt, max, min, Kp, Kd, Ki,);
 
-		pub.publish(value_motor); 
-		pub_ste.publish(value_ste); 
- 
-		ROS_INFO_STREAM("\nvals: (" << value_motor.data << " , " << value_ste.data << " )");	
-																																																																																									
-		
-		ros::spinOnce();
-		rate.sleep();
+		loop_rate.sleep();
     }
     return 0;
 }

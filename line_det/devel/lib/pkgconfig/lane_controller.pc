@@ -1,0 +1,1 @@
+/home/eduardo/Robotica/AutoNOMOS2/line_det/devel/.private/lane_controller/lib/pkgconfig/lane_controller.pc

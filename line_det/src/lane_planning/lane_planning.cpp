@@ -13,11 +13,9 @@
 
 static const uint32_t MY_ROS_QUEUE_SIZE = 1;
 
-geometry_msgs::Twist destiny_position;
 double rate_hz = 1;
-ros::Publisher pub_loc;
-ros::Publisher pub_lidar;
-//image_transport::CameraPublisher image_publisher;
+ros::Publisher pub_path;
+// ros::Publisher pub_lidar;
 
 std::string nombre;
 
@@ -25,8 +23,7 @@ nav_msgs::GridCells arr_left;
 nav_msgs::GridCells arr_center;
 nav_msgs::GridCells arr_right;
 
-nav_msgs::GridCells path_right;
-nav_msgs::GridCells path_left;
+nav_msgs::GridCells path_planned;
 
 // estados: 	 NSI,   FI,   CI,   CD,   FD, NSD
 void get_pts_left(const nav_msgs::GridCells& array)
@@ -52,14 +49,14 @@ void get_pts_right(const nav_msgs::GridCells& array)
 }
 
 // sapruder
-geometry_msgs::GridCells get_path(int lane){
-	
-	geometry_msgs::GridCells path_temp;
-	geometry_msgs::Point pt;
+void get_path(int lane){
+	// ROS_INFO_STREAM("L: " << arr_left.cell_width << "C: " << arr_center.cell_width << "R: " << arr_right.cell_width);
 
-	path_temp.cell_width = arr_center.cell_width;
-    path_temp.cell_height = 1;
-    path_temp.cells.clear();
+	geometry_msgs::Point pt;
+	path_planned.cell_width = arr_center.cell_width;
+    path_planned.cell_height = 1;
+    path_planned.cells.clear();
+    
 	for(int i=0;i<arr_center.cell_width;i++){
 		if(arr_right.cell_width > 0 && lane == RIGHT){
 			pt.x = (arr_center.cells[i].x + arr_right.cells[i].x)/2;
@@ -71,17 +68,22 @@ geometry_msgs::GridCells get_path(int lane){
             pt.y = (arr_center.cells[i].y + arr_left.cells[i].y)/2;
             pt.z = 0;
 		}
-		
-        path_temp.cells.push_back(pt);
+		// ROS_INFO_STREAM("i: " << i << ", x: " << pt.x << ", y: " << pt.y);
+        path_planned.cells.push_back(pt);
 	}
-	return path_temp;
 }
 
 void planning(){
-	nav_msgs::GridCells path_right = get_path(RIGHT);
+	get_path(RIGHT);
+	// nav_msgs::GridCells* path_right = &get_path(RIGHT);
 	// path_right.cells = 
-	// path_right.cell_width = path_right.cell_width;
-	pub_path.publish(path_right);
+	// path_right.cell_width = arr_center.cell_width;
+	ROS_INFO_STREAM("Planned path: ");
+	for(int i=0; i<path_planned.cell_width; i++){
+		ROS_INFO_STREAM("i: " << i << ", x: " << path_planned.cells[i].x << ", y: " << path_planned.cells[i].y);
+	}
+
+	pub_path.publish(path_planned);
 }
 
 
@@ -95,19 +97,13 @@ int main(int argc, char** argv){
 	
 	pub_path = nh.advertise<nav_msgs::GridCells>("/planning", rate_hz);
 	
-	//image_transport::ImageTransport image_transport(nh);
-	//image_publisher = image_transport.advertiseCamera("/planning_image", MY_ROS_QUEUE_SIZE);
-
-	ros::Subscriber sub_pts_left = nh.subscribe("/points/ransac_left",1, get_pts_left);
-	ros::Subscriber sub_pts_center = nh.subscribe("/points/ransac_center",1, get_pts_center);
-	ros::Subscriber sub_pts_right = nh.subscribe("/points/ransac_right",1, get_pts_right);
+	ros::Subscriber sub_pts_left = nh.subscribe("/points/ransac_left",1, &get_pts_left);
+	ros::Subscriber sub_pts_center = nh.subscribe("/points/ransac_center",1, &get_pts_center);
+	ros::Subscriber sub_pts_right = nh.subscribe("/points/ransac_right",1, &get_pts_right);
 	
 	
 	while(nh.ok())
 	{
-		L=0;
-		R=0;
-		C=0;
 
 	    ros::spinOnce();
 	    

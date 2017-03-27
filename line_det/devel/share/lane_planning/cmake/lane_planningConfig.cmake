@@ -1,0 +1,1 @@
+/home/eduardo/Robotica/AutoNOMOS2/line_det/devel/.private/lane_planning/share/lane_planning/cmake/lane_planningConfig.cmake

@@ -1,0 +1,1 @@
+/home/eduardo/Robotica/AutoNOMOS2/line_det/devel/.private/line_detection_fu_mod/lib/pkgconfig/line_detection_fu_mod.pc
