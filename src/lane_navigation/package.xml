@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package>
-  <name>lane_states_original</name>
+  <name>lane_navigation</name>
   <version>0.0.0</version>
-  <description>The lane_states package</description>
+  <description>The lane_controller package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag --> 
   <!-- Example:  -->

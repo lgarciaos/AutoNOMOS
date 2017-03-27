@@ -41,6 +41,8 @@ double pE;
 double velocity;
 double altura;
 
+ros::Publisher pub_speed;
+ros::Publisher pub_steering;
 
 nav_msgs::GridCells path_planning;
 
@@ -60,6 +62,8 @@ double PIDtime(double pE, double p, double dt, double max, double min, double Kp
 
 	// correccion en el carro
 	output += 45; 
+	// cambiar los sentidos
+	output = abs(output-90);
 
     // Restriction
 	if( output > max )
@@ -93,8 +97,8 @@ void get_path(const nav_msgs::GridCells& path){
 		value_motor.data = velocity;
 		value_steering.data = pid_res;
 
-		// pub.publish(value_motor); 
-		// pub_ste.publish(value_ste); 
+		pub_speed.publish(value_motor); 
+		pub_steering.publish(value_steering); 
 
 		ROS_INFO_STREAM("velocity: " << value_motor.data << ", steering: " << value_steering.data << " )");
 	}
@@ -125,8 +129,8 @@ int main(int argc, char** argv){
 
 	ROS_INFO_STREAM("Parametros obtenidos");
 
-	ros::Publisher pub_speed = nh.advertise<std_msgs::Int16>("/manual_control/speed", rate_hz);
-	ros::Publisher pub_steering = nh.advertise<std_msgs::Int16>("/manual_control/steering", rate_hz);
+	pub_speed = nh.advertise<std_msgs::Int16>("/manual_control/speed", rate_hz);
+	pub_steering = nh.advertise<std_msgs::Int16>("/manual_control/steering", rate_hz);
 
 	// esto va mejor en el launch file
 	

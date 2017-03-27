@@ -1,5 +1,0 @@
-lane_states
-/home/eduardo/Robotica/AutoNOMOS2/line_det/devel/.private/lane_states/share/lane_states/cmake/lane_statesConfig-version.cmake /home/eduardo/Robotica/AutoNOMOS2/line_det/devel/share/lane_states/cmake/lane_statesConfig-version.cmake
-/home/eduardo/Robotica/AutoNOMOS2/line_det/devel/.private/lane_states/share/lane_states/cmake/lane_statesConfig.cmake /home/eduardo/Robotica/AutoNOMOS2/line_det/devel/share/lane_states/cmake/lane_statesConfig.cmake
-/home/eduardo/Robotica/AutoNOMOS2/line_det/devel/.private/lane_states/lib/lane_states/lane_states_node /home/eduardo/Robotica/AutoNOMOS2/line_det/devel/lib/lane_states/lane_states_node
-/home/eduardo/Robotica/AutoNOMOS2/line_det/devel/.private/lane_states/lib/pkgconfig/lane_states.pc /home/eduardo/Robotica/AutoNOMOS2/line_det/devel/lib/pkgconfig/lane_states.pc

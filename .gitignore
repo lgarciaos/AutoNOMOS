@@ -1,6 +1,6 @@
 src/CMakeLists.txt
 **/*.*~
-**/build/
-**/devel/
-**/install/
-**/logs/
+build/
+install/
+logs/
+.catkin_tools/
