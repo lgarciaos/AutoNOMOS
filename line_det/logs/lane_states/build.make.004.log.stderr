@@ -1,0 +1,34 @@
+/home/eduardo/Robotica/AutoNOMOS2/line_det/src/lane_states/lane_states_node.cpp: In function ‘void get_motion(const Int16&)’:
+/home/eduardo/Robotica/AutoNOMOS2/line_det/src/lane_states/lane_states_node.cpp:86:14: error: ‘math’ was not declared in this scope
+  orientation=math.abs(val.data-90)-45;
+              ^
+/home/eduardo/Robotica/AutoNOMOS2/line_det/src/lane_states/lane_states_node.cpp:86:14: note: suggested alternative:
+In file included from /usr/include/boost/math/special_functions/round.hpp:13:0,
+                 from /opt/ros/indigo/include/ros/time.h:58,
+                 from /opt/ros/indigo/include/ros/ros.h:38,
+                 from /home/eduardo/Robotica/AutoNOMOS2/line_det/src/lane_states/lane_states_node.cpp:1:
+/usr/include/boost/math/tools/config.hpp:264:32: note:   ‘boost::math’
+ namespace boost{ namespace math{
+                                ^
+/home/eduardo/Robotica/AutoNOMOS2/line_det/src/lane_states/lane_states_node.cpp: In function ‘std_msgs::Float32MultiArray move()’:
+/home/eduardo/Robotica/AutoNOMOS2/line_det/src/lane_states/lane_states_node.cpp:123:13: error: ‘pExact’ was not declared in this scope
+   float s = pExact * p[(i-U) % NUM_STATES];
+             ^
+/home/eduardo/Robotica/AutoNOMOS2/line_det/src/lane_states/lane_states_node.cpp:123:23: error: no match for ‘operator[]’ (operand types are ‘std_msgs::Float32MultiArray’ and ‘int’)
+   float s = pExact * p[(i-U) % NUM_STATES];
+                       ^
+/home/eduardo/Robotica/AutoNOMOS2/line_det/src/lane_states/lane_states_node.cpp:124:17: error: ‘pOvershoot’ was not declared in this scope
+         s = s + pOvershoot * p[(i-U-1) % NUM_STATES];
+                 ^
+/home/eduardo/Robotica/AutoNOMOS2/line_det/src/lane_states/lane_states_node.cpp:124:31: error: no match for ‘operator[]’ (operand types are ‘std_msgs::Float32MultiArray’ and ‘int’)
+         s = s + pOvershoot * p[(i-U-1) % NUM_STATES];
+                               ^
+/home/eduardo/Robotica/AutoNOMOS2/line_det/src/lane_states/lane_states_node.cpp:125:17: error: ‘pUndershoot’ was not declared in this scope
+         s = s + pUndershoot * p[(i-U+1) % NUM_STATES];
+                 ^
+/home/eduardo/Robotica/AutoNOMOS2/line_det/src/lane_states/lane_states_node.cpp:125:32: error: no match for ‘operator[]’ (operand types are ‘std_msgs::Float32MultiArray’ and ‘int’)
+         s = s + pUndershoot * p[(i-U+1) % NUM_STATES];
+                                ^
+make[2]: *** [CMakeFiles/lane_states_node.dir/lane_states_node.cpp.o] Error 1
+make[1]: *** [CMakeFiles/lane_states_node.dir/all] Error 2
+make: *** [all] Error 2

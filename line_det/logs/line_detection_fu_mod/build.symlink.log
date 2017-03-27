@@ -1,0 +1,36 @@
+Symlinking /home/eduardo/Robotica/AutoNOMOS2/line_det/devel/include/line_detection_fu_mod/LaneDetectionConfig.h
+Symlinking /home/eduardo/Robotica/AutoNOMOS2/line_det/devel/share/line_detection_fu_mod/docs/LaneDetectionConfig-usage.dox
+Symlinking /home/eduardo/Robotica/AutoNOMOS2/line_det/devel/share/line_detection_fu_mod/docs/LaneDetectionConfig.dox
+Symlinking /home/eduardo/Robotica/AutoNOMOS2/line_det/devel/share/line_detection_fu_mod/docs/LaneDetectionConfig.wikidoc
+Symlinking /home/eduardo/Robotica/AutoNOMOS2/line_det/devel/share/line_detection_fu_mod/cmake/line_detection_fu_modConfig.cmake
+Symlinking /home/eduardo/Robotica/AutoNOMOS2/line_det/devel/share/line_detection_fu_mod/cmake/line_detection_fu_modConfig-version.cmake
+Symlinking /home/eduardo/Robotica/AutoNOMOS2/line_det/devel/lib/libLaneDetectorFu.so
+Symlinking /home/eduardo/Robotica/AutoNOMOS2/line_det/devel/lib/python2.7/dist-packages/line_detection_fu_mod/__init__.py
+Symlinking /home/eduardo/Robotica/AutoNOMOS2/line_det/devel/lib/python2.7/dist-packages/line_detection_fu_mod/cfg/LaneDetectionConfig.py
+Symlinking /home/eduardo/Robotica/AutoNOMOS2/line_det/devel/lib/python2.7/dist-packages/line_detection_fu_mod/cfg/__init__.py
+Symlinking /home/eduardo/Robotica/AutoNOMOS2/line_det/devel/lib/pkgconfig/line_detection_fu_mod.pc
+Symlinking /home/eduardo/Robotica/AutoNOMOS2/line_det/devel/lib/line_detection_fu_mod/line_detection_fu_node
+Cleaning: (/home/eduardo/Robotica/WS_AutoNOMOS/line_det/devel/.private/line_detection_fu_mod/include/line_detection_fu_mod/LaneDetectionConfig.h, /home/eduardo/Robotica/WS_AutoNOMOS/line_det/devel/include/line_detection_fu_mod/LaneDetectionConfig.h)
+Cleaning: (/home/eduardo/Robotica/WS_AutoNOMOS/line_det/devel/.private/line_detection_fu_mod/share/line_detection_fu_mod/docs/LaneDetectionConfig-usage.dox, /home/eduardo/Robotica/WS_AutoNOMOS/line_det/devel/share/line_detection_fu_mod/docs/LaneDetectionConfig-usage.dox)
+Cleaning: (/home/eduardo/Robotica/WS_AutoNOMOS/line_det/devel/.private/line_detection_fu_mod/share/line_detection_fu_mod/docs/LaneDetectionConfig.dox, /home/eduardo/Robotica/WS_AutoNOMOS/line_det/devel/share/line_detection_fu_mod/docs/LaneDetectionConfig.dox)
+Cleaning: (/home/eduardo/Robotica/WS_AutoNOMOS/line_det/devel/.private/line_detection_fu_mod/share/line_detection_fu_mod/docs/LaneDetectionConfig.wikidoc, /home/eduardo/Robotica/WS_AutoNOMOS/line_det/devel/share/line_detection_fu_mod/docs/LaneDetectionConfig.wikidoc)
+Cleaning: (/home/eduardo/Robotica/WS_AutoNOMOS/line_det/devel/.private/line_detection_fu_mod/share/line_detection_fu_mod/cmake/line_detection_fu_modConfig.cmake, /home/eduardo/Robotica/WS_AutoNOMOS/line_det/devel/share/line_detection_fu_mod/cmake/line_detection_fu_modConfig.cmake)
+Cleaning: (/home/eduardo/Robotica/WS_AutoNOMOS/line_det/devel/.private/line_detection_fu_mod/share/line_detection_fu_mod/cmake/line_detection_fu_modConfig-version.cmake, /home/eduardo/Robotica/WS_AutoNOMOS/line_det/devel/share/line_detection_fu_mod/cmake/line_detection_fu_modConfig-version.cmake)
+Cleaning: (/home/eduardo/Robotica/WS_AutoNOMOS/line_det/devel/.private/line_detection_fu_mod/lib/libLaneDetectorFu.so, /home/eduardo/Robotica/WS_AutoNOMOS/line_det/devel/lib/libLaneDetectorFu.so)
+Cleaning: (/home/eduardo/Robotica/WS_AutoNOMOS/line_det/devel/.private/line_detection_fu_mod/lib/python2.7/dist-packages/line_detection_fu_mod/__init__.py, /home/eduardo/Robotica/WS_AutoNOMOS/line_det/devel/lib/python2.7/dist-packages/line_detection_fu_mod/__init__.py)
+Cleaning: (/home/eduardo/Robotica/WS_AutoNOMOS/line_det/devel/.private/line_detection_fu_mod/lib/python2.7/dist-packages/line_detection_fu_mod/cfg/LaneDetectionConfig.py, /home/eduardo/Robotica/WS_AutoNOMOS/line_det/devel/lib/python2.7/dist-packages/line_detection_fu_mod/cfg/LaneDetectionConfig.py)
+Cleaning: (/home/eduardo/Robotica/WS_AutoNOMOS/line_det/devel/.private/line_detection_fu_mod/lib/python2.7/dist-packages/line_detection_fu_mod/cfg/__init__.py, /home/eduardo/Robotica/WS_AutoNOMOS/line_det/devel/lib/python2.7/dist-packages/line_detection_fu_mod/cfg/__init__.py)
+Cleaning: (/home/eduardo/Robotica/WS_AutoNOMOS/line_det/devel/.private/line_detection_fu_mod/lib/pkgconfig/line_detection_fu_mod.pc, /home/eduardo/Robotica/WS_AutoNOMOS/line_det/devel/lib/pkgconfig/line_detection_fu_mod.pc)
+Cleaning: (/home/eduardo/Robotica/WS_AutoNOMOS/line_det/devel/.private/line_detection_fu_mod/lib/line_detection_fu_mod/line_detection_fu_node, /home/eduardo/Robotica/WS_AutoNOMOS/line_det/devel/lib/line_detection_fu_mod/line_detection_fu_node)
+Unlinking: /home/eduardo/Robotica/WS_AutoNOMOS/line_det/devel/include/line_detection_fu_mod/LaneDetectionConfig.h
+Unlinking: /home/eduardo/Robotica/WS_AutoNOMOS/line_det/devel/share/line_detection_fu_mod/docs/LaneDetectionConfig-usage.dox
+Unlinking: /home/eduardo/Robotica/WS_AutoNOMOS/line_det/devel/share/line_detection_fu_mod/docs/LaneDetectionConfig.dox
+Unlinking: /home/eduardo/Robotica/WS_AutoNOMOS/line_det/devel/share/line_detection_fu_mod/docs/LaneDetectionConfig.wikidoc
+Unlinking: /home/eduardo/Robotica/WS_AutoNOMOS/line_det/devel/share/line_detection_fu_mod/cmake/line_detection_fu_modConfig.cmake
+Unlinking: /home/eduardo/Robotica/WS_AutoNOMOS/line_det/devel/share/line_detection_fu_mod/cmake/line_detection_fu_modConfig-version.cmake
+Unlinking: /home/eduardo/Robotica/WS_AutoNOMOS/line_det/devel/lib/libLaneDetectorFu.so
+Unlinking: /home/eduardo/Robotica/WS_AutoNOMOS/line_det/devel/lib/python2.7/dist-packages/line_detection_fu_mod/__init__.py
+Unlinking: /home/eduardo/Robotica/WS_AutoNOMOS/line_det/devel/lib/python2.7/dist-packages/line_detection_fu_mod/cfg/LaneDetectionConfig.py
+Unlinking: /home/eduardo/Robotica/WS_AutoNOMOS/line_det/devel/lib/python2.7/dist-packages/line_detection_fu_mod/cfg/__init__.py
+Unlinking: /home/eduardo/Robotica/WS_AutoNOMOS/line_det/devel/lib/pkgconfig/line_detection_fu_mod.pc
+Unlinking: /home/eduardo/Robotica/WS_AutoNOMOS/line_det/devel/lib/line_detection_fu_mod/line_detection_fu_node

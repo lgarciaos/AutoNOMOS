@@ -1,0 +1,7 @@
+/home/eduardo/Robotica/AutoNOMOS2/line_det/src/lane_states/lane_states_node.cpp:5:16: fatal error: math: No such file or directory
+ #include <math>
+                ^
+compilation terminated.
+make[2]: *** [CMakeFiles/lane_states_node.dir/lane_states_node.cpp.o] Error 1
+make[1]: *** [CMakeFiles/lane_states_node.dir/all] Error 2
+make: *** [all] Error 2

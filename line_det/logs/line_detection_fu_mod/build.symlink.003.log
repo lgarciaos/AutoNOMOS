@@ -1,0 +1,17 @@
+Linked: (/home/eduardo/Robotica/AutoNOMOS2/line_det/devel/.private/line_detection_fu_mod/include/line_detection_fu_mod/LaneDetectionConfig.h, /home/eduardo/Robotica/AutoNOMOS2/line_det/devel/include/line_detection_fu_mod/LaneDetectionConfig.h)
+Warning: Cannot symlink from /home/eduardo/Robotica/AutoNOMOS2/line_det/devel/.private/line_detection_fu_mod/share/line_detection_fu_mod/cmake/line_detection_fu_modConfig.cmake to existing file /home/eduardo/Robotica/AutoNOMOS2/line_det/devel/share/line_detection_fu_mod/cmake/line_detection_fu_modConfig.cmake
+Warning: Source hash: 0808d00c4fe9d08f8988fca12664c711
+Warning: Dest hash: b8801e2c6890cb13c227b314d2c600fb
+Stage `symlink` failed with arguments:
+  package: {'package_format': 1, 'exports': [], 'buildtool_export_depends': [], 'exec_depends': [<catkin_pkg.package.Dependency object at 0x7f64b627efb0>, <catkin_pkg.package.Dependency object at 0x7f64b627e0b0>, <catkin_pkg.package.Dependency object at 0x7f64b627e1d0>, <catkin_pkg.package.Dependency object at 0x7f64b627ead0>, <catkin_pkg.package.Dependency object at 0x7f64b627e9b0>, <catkin_pkg.package.Dependency object at 0x7f64b627ea70>], 'name': 'line_detection_fu_mod', 'filename': '/home/eduardo/Robotica/AutoNOMOS2/line_det/src/fu_line_detection/package.xml', 'replaces': [], 'version_abi': None, 'build_export_depends': [<catkin_pkg.package.Dependency object at 0x7f64b627e590>, <catkin_pkg.package.Dependency object at 0x7f64b627e110>, <catkin_pkg.package.Dependency object at 0x7f64b627e410>, <catkin_pkg.package.Dependency object at 0x7f64b627eb30>, <catkin_pkg.package.Dependency object at 0x7f64b627e470>, <catkin_pkg.package.Dependency object at 0x7f64b627e230>], 'doc_depends': [], 'test_depends': [], 'maintainers': [<catkin_pkg.package.Person object at 0x7f64b6296990>], 'version': '0.0.0', 'build_depends': [<catkin_pkg.package.Dependency object at 0x7f64b627e170>, <catkin_pkg.package.Dependency object at 0x7f64b627e3b0>, <catkin_pkg.package.Dependency object at 0x7f64b627e650>, <catkin_pkg.package.Dependency object at 0x7f64b627e530>, <catkin_pkg.package.Dependency object at 0x7f64b627e2f0>, <catkin_pkg.package.Dependency object at 0x7f64b62a6050>], 'urls': [], 'authors': [], 'licenses': ['MIT'], 'buildtool_depends': [<catkin_pkg.package.Dependency object at 0x7f64b62a60b0>], 'conflicts': [], 'description': u'The line_detection package'}
+  metadata_path: /home/eduardo/Robotica/AutoNOMOS2/line_det/.catkin_tools/profiles/default
+  devel_manifest_path: /home/eduardo/Robotica/AutoNOMOS2/line_det/.catkin_tools/profiles/default/packages/line_detection_fu_mod
+  prebuild: False
+  package_path: fu_line_detection
+  dest_devel_path: /home/eduardo/Robotica/AutoNOMOS2/line_det/devel
+  source_devel_path: /home/eduardo/Robotica/AutoNOMOS2/line_det/devel/.private/line_detection_fu_mod
+Traceback (most recent call last):
+  File "/usr/lib/python2.7/dist-packages/catkin_tools/execution/executor.py", line 146, in async_job
+    event_queue))
+UnicodeDecodeError: 'ascii' codec can't decode byte 0xe0 in position 24: ordinal not in range(128)
+

@@ -1,0 +1,1 @@
+/home/eduardo/Robotica/AutoNOMOS2/line_det/devel/.private/lane_states/lib/pkgconfig/lane_states.pc

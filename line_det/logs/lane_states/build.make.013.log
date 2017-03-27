@@ -1,0 +1,15 @@
+[35m[1mScanning dependencies of target lane_states_node
+[0m[100%] [32mBuilding CXX object CMakeFiles/lane_states_node.dir/lane_states_node.cpp.o
+/home/eduardo/Robotica/AutoNOMOS2/line_det/src/lane_states/lane_states_node.cpp: In function ‘void sense()’:
+/home/eduardo/Robotica/AutoNOMOS2/line_det/src/lane_states/lane_states_node.cpp:95:5: error: ‘sum’ was not declared in this scope
+  if(sum>0){
+     ^
+/home/eduardo/Robotica/AutoNOMOS2/line_det/src/lane_states/lane_states_node.cpp:104:7: error: redeclaration of ‘int sum’
+   int sum = 0;
+       ^
+/home/eduardo/Robotica/AutoNOMOS2/line_det/src/lane_states/lane_states_node.cpp:95:5: error: ‘<typeprefixerror>sum’ previously declared here
+  if(sum>0){
+     ^
+make[2]: *** [CMakeFiles/lane_states_node.dir/lane_states_node.cpp.o] Error 1
+make[1]: *** [CMakeFiles/lane_states_node.dir/all] Error 2
+make: *** [all] Error 2

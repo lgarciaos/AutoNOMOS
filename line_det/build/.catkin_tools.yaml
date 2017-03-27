@@ -1,0 +1,6 @@
+devel_space: /home/eduardo/Robotica/AutoNOMOS2/line_det/devel
+install: false
+install_space: /home/eduardo/Robotica/AutoNOMOS2/line_det/install
+profile: default
+source_space: /home/eduardo/Robotica/AutoNOMOS2/line_det/src
+workspace: /home/eduardo/Robotica/AutoNOMOS2/line_det

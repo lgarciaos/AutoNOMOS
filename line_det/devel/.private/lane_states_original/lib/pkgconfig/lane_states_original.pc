@@ -1,0 +1,8 @@
+prefix=/home/eduardo/Robotica/AutoNOMOS2/line_det/devel/.private/lane_states_original
+
+Name: lane_states_original
+Description: Description of lane_states_original
+Version: 0.0.0
+Cflags: 
+Libs: -L/home/eduardo/Robotica/AutoNOMOS2/line_det/devel/.private/lane_states_original/lib 
+Requires: 

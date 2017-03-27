@@ -1,0 +1,24 @@
+Symlinking /home/eduardo/Robotica/AutoNOMOS2/line_det/devel/./env.sh
+Symlinking /home/eduardo/Robotica/AutoNOMOS2/line_det/devel/./_setup_util.py
+Symlinking /home/eduardo/Robotica/AutoNOMOS2/line_det/devel/./setup.bash
+Symlinking /home/eduardo/Robotica/AutoNOMOS2/line_det/devel/./setup.sh
+Symlinking /home/eduardo/Robotica/AutoNOMOS2/line_det/devel/./setup.zsh
+Symlinking /home/eduardo/Robotica/AutoNOMOS2/line_det/devel/share/catkin_tools_prebuild/cmake/catkin_tools_prebuildConfig-version.cmake
+Symlinking /home/eduardo/Robotica/AutoNOMOS2/line_det/devel/share/catkin_tools_prebuild/cmake/catkin_tools_prebuildConfig.cmake
+Symlinking /home/eduardo/Robotica/AutoNOMOS2/line_det/devel/lib/pkgconfig/catkin_tools_prebuild.pc
+Cleaning: (/home/eduardo/Robotica/WS_AutoNOMOS/line_det/devel/.private/catkin_tools_prebuild/env.sh, /home/eduardo/Robotica/WS_AutoNOMOS/line_det/devel/./env.sh)
+Cleaning: (/home/eduardo/Robotica/WS_AutoNOMOS/line_det/devel/.private/catkin_tools_prebuild/_setup_util.py, /home/eduardo/Robotica/WS_AutoNOMOS/line_det/devel/./_setup_util.py)
+Cleaning: (/home/eduardo/Robotica/WS_AutoNOMOS/line_det/devel/.private/catkin_tools_prebuild/setup.bash, /home/eduardo/Robotica/WS_AutoNOMOS/line_det/devel/./setup.bash)
+Cleaning: (/home/eduardo/Robotica/WS_AutoNOMOS/line_det/devel/.private/catkin_tools_prebuild/setup.sh, /home/eduardo/Robotica/WS_AutoNOMOS/line_det/devel/./setup.sh)
+Cleaning: (/home/eduardo/Robotica/WS_AutoNOMOS/line_det/devel/.private/catkin_tools_prebuild/setup.zsh, /home/eduardo/Robotica/WS_AutoNOMOS/line_det/devel/./setup.zsh)
+Cleaning: (/home/eduardo/Robotica/WS_AutoNOMOS/line_det/devel/.private/catkin_tools_prebuild/share/catkin_tools_prebuild/cmake/catkin_tools_prebuildConfig-version.cmake, /home/eduardo/Robotica/WS_AutoNOMOS/line_det/devel/share/catkin_tools_prebuild/cmake/catkin_tools_prebuildConfig-version.cmake)
+Cleaning: (/home/eduardo/Robotica/WS_AutoNOMOS/line_det/devel/.private/catkin_tools_prebuild/share/catkin_tools_prebuild/cmake/catkin_tools_prebuildConfig.cmake, /home/eduardo/Robotica/WS_AutoNOMOS/line_det/devel/share/catkin_tools_prebuild/cmake/catkin_tools_prebuildConfig.cmake)
+Cleaning: (/home/eduardo/Robotica/WS_AutoNOMOS/line_det/devel/.private/catkin_tools_prebuild/lib/pkgconfig/catkin_tools_prebuild.pc, /home/eduardo/Robotica/WS_AutoNOMOS/line_det/devel/lib/pkgconfig/catkin_tools_prebuild.pc)
+Unlinking: /home/eduardo/Robotica/WS_AutoNOMOS/line_det/devel/./env.sh
+Unlinking: /home/eduardo/Robotica/WS_AutoNOMOS/line_det/devel/./_setup_util.py
+Unlinking: /home/eduardo/Robotica/WS_AutoNOMOS/line_det/devel/./setup.bash
+Unlinking: /home/eduardo/Robotica/WS_AutoNOMOS/line_det/devel/./setup.sh
+Unlinking: /home/eduardo/Robotica/WS_AutoNOMOS/line_det/devel/./setup.zsh
+Unlinking: /home/eduardo/Robotica/WS_AutoNOMOS/line_det/devel/share/catkin_tools_prebuild/cmake/catkin_tools_prebuildConfig-version.cmake
+Unlinking: /home/eduardo/Robotica/WS_AutoNOMOS/line_det/devel/share/catkin_tools_prebuild/cmake/catkin_tools_prebuildConfig.cmake
+Unlinking: /home/eduardo/Robotica/WS_AutoNOMOS/line_det/devel/lib/pkgconfig/catkin_tools_prebuild.pc
