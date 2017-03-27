@@ -39,12 +39,16 @@ float p_exact = .5;
 float p_undershoot = .25;
 float p_overshoot = .25;
 
+float p_hit = 0.6;
+float p_miss = 0.2; 
+
 int movement = 0;
 // PERCEPCION DE LIDAR
 
 int L = 0;
 int C = 0;
 int R = 0;
+int des_state = 3;
 
 void get_pts_left(const nav_msgs::GridCells& array)
 {
@@ -80,7 +84,12 @@ void get_motion(const std_msgs::Int16& val)
 		movement = -1;
 }
 
-std_msgs::Float32MultiArray conv(float *vec, std_msgs::Float32MultiArray p)
+void get_des_state(const std_msgs::Int16& val)
+{
+	des_state = val.data;
+}
+
+std_msgs::Float32MultiArray conv(bool hit, std_msgs::Float32MultiArray p)
 {
 	std_msgs::Float32MultiArray q;
 
@@ -90,7 +99,7 @@ std_msgs::Float32MultiArray conv(float *vec, std_msgs::Float32MultiArray p)
 		{
 			q.data.push_back(0.001);
 		} else {
-			q.data.push_back(p.data[i] * vec[i]);
+			q.data.push_back(p.data[i] * (hit * p_hit + (1-hit) * p_miss));
 		}
 	}
 
@@ -108,36 +117,83 @@ std_msgs::Float32MultiArray conv(float *vec, std_msgs::Float32MultiArray p)
 	return q;
 }
 
+int det_actual_state()
+{
+	int lanes_detected = (L > 0);
+	lanes_detected = actual_state << 1;
+	lanes_detected = C > 0;
+	lanes_detected = actual_state << 1;
+	lanes_detected = R > 0;
+	// bool hit = (des_state == actual_state);
+        // q.append(p[i] * (hit * pHit + (1-hit) * pMiss))
+
+	ROS_INFO_STREAM("L: " << L << "C: " << C << "R: " << R);
+
+	int actual_state;
+	switch(lanes_detected)
+	{
+		case 0: 
+			//estado actual depende si estoy más cerca de NI o ND
+			actual_state = desire_state < 3 ? 0 : 5;  
+			break;
+		case 1: 
+			actual_state = 1;
+			break;
+		case 2: 
+			actual_state = 4;
+			break;
+		case 3: 
+			actual_state = 2;
+			break;
+		case 4:
+			actual_state = 4; 
+			break;
+		case 5: 
+			actual_state = 3;
+			break;
+		case 6: 
+			actual_state = 4;
+			break;
+		case 7: 
+			actual_state = 3;
+			break;		
+	}
+	ROS_INFO_STREAM("Actual state: " << actual_state);
+	return actual_state
+}
+
 std_msgs::Float32MultiArray sense(std_msgs::Float32MultiArray prob)
 {
 	std_msgs::Float32MultiArray q;
 
-	ROS_INFO_STREAM("L: " << L << "C: " << C << "R: " << R);
+	bool hit = desire_state == det_actual_state();
 
-	if(L > 0 && C > 0 && R > 0) {
-		q = conv(c7, prob); ROS_INFO_STREAM("sense: " << 7);
-	}
-	else if(L > 0 && C > 0 && R == 0)	{
-		q = conv(c6, prob); ROS_INFO_STREAM("sense: " << 6);
-	}
-	else if(L > 0 && C == 0 && R > 0)	{
-		q = conv(c5, prob); ROS_INFO_STREAM("sense: " << 5);
-	}
-	else if(L > 0 && C == 0 && R == 0) {	
-		q = conv(c4, prob); ROS_INFO_STREAM("sense: " << 4);
-	}
-	else if(L==0 && C > 0 && R > 0)	{
-		q = conv(c3, prob); ROS_INFO_STREAM("sense: " << 3);
-	}
-	else if(L==0 && C > 0 && R == 0)	{
-		q = conv(c2, prob); ROS_INFO_STREAM("sense: " << 2);
-	}
-	else if(L==0 && C == 0 && R > 0) {
-		q = conv(c1, prob); ROS_INFO_STREAM("sense: " << 1);
-	}
-	else if(L==0 && C == 0 && R ==0) {
-		q = conv(c0, prob); ROS_INFO_STREAM("sense: " << 0);
-	}
+	q = conv(hit, prob);
+	
+	// if(L > 0 && C > 0 && R > 0) {
+	// 	q = conv(c7, prob); ROS_INFO_STREAM("sense: " << 7);
+	// }
+	// else if(L > 0 && C > 0 && R == 0)	{
+	// 	q = conv(c6, prob); ROS_INFO_STREAM("sense: " << 6);
+	// }
+	// else if(L > 0 && C == 0 && R > 0)	{
+	// 	q = conv(c5, prob); ROS_INFO_STREAM("sense: " << 5);
+	// }
+	// else if(L > 0 && C == 0 && R == 0) {	
+	// 	q = conv(c4, prob); ROS_INFO_STREAM("sense: " << 4);
+	// }
+	// else if(L==0 && C > 0 && R > 0)	{
+	// 	q = conv(c3, prob); ROS_INFO_STREAM("sense: " << 3);
+	// }
+	// else if(L==0 && C > 0 && R == 0)	{
+	// 	q = conv(c2, prob); ROS_INFO_STREAM("sense: " << 2);
+	// }
+	// else if(L==0 && C == 0 && R > 0) {
+	// 	q = conv(c1, prob); ROS_INFO_STREAM("sense: " << 1);
+	// }
+	// else if(L==0 && C == 0 && R ==0) {
+	// 	q = conv(c0, prob); ROS_INFO_STREAM("sense: " << 0);
+	// }
 	
 	return q;
 }
@@ -182,6 +238,7 @@ int main(int argc, char** argv){
 	ros::Subscriber sub_pts_center = nh.subscribe("/points/center",1, get_pts_center);
 	ros::Subscriber sub_pts_right = nh.subscribe("/points/right",1, get_pts_right);
 	ros::Subscriber sub_mov = nh.subscribe("/manual_control/steering",1,get_motion);
+	ros::Subscriber sub_des_state = nh.subscribe("/desire_state",1, get_des_state);
 	
 	while(nh.ok())
 	{
