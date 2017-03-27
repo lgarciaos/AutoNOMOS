@@ -1,4 +1,0 @@
-[35m[1mScanning dependencies of target lane_states_node
-[0m[100%] [32mBuilding CXX object CMakeFiles/lane_states_node.dir/lane_states_node.cpp.o
-[0m[31m[1mLinking CXX executable /home/eduardo/Robotica/AutoNOMOS2/line_det/devel/.private/lane_states/lib/lane_states/lane_states_node
-[0m[100%] Built target lane_states_node

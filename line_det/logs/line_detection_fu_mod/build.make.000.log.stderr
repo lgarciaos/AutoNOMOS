@@ -1,8 +1,0 @@
-In file included from /home/eduardo/Robotica/WS_AutoNOMOS/line_det/src/fu_line_detection/src/laneDetection.cpp:1:0:
-/home/eduardo/Robotica/WS_AutoNOMOS/line_det/src/fu_line_detection/src/laneDetection.h:61:51: fatal error: line_detection_fu/LaneDetectionConfig.h: No such file or directory
- #include <line_detection_fu/LaneDetectionConfig.h>
-                                                   ^
-compilation terminated.
-make[2]: *** [CMakeFiles/line_detection_fu_node.dir/src/laneDetection.cpp.o] Error 1
-make[1]: *** [CMakeFiles/line_detection_fu_node.dir/all] Error 2
-make: *** [all] Error 2

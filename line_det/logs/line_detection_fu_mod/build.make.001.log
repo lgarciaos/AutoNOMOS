@@ -1,5 +1,0 @@
-[ 60%] Built target LaneDetectorFu
-[ 80%] Built target line_detection_fu_mod_gencfg
-[100%] [32mBuilding CXX object CMakeFiles/line_detection_fu_node.dir/src/laneDetection.cpp.o
-[0m[31m[1mLinking CXX executable /home/eduardo/Robotica/WS_AutoNOMOS/line_det/devel/.private/line_detection_fu_mod/lib/line_detection_fu_mod/line_detection_fu_node
-[0m[100%] Built target line_detection_fu_node

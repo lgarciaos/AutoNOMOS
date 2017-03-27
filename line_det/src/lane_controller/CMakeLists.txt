@@ -127,7 +127,7 @@ catkin_package(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME}_node src/lane_states_node.cpp)
-add_executable(lane_states_node lane_states_node.cpp)
+add_executable(lane_controller PIDcontroller.cpp)
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
@@ -140,7 +140,7 @@ add_executable(lane_states_node lane_states_node.cpp)
 
 ## Specify libraries to link a library or executable target against
 # target_link_libraries(${PROJECT_NAME}_node
-target_link_libraries(lane_states_node ${catkin_LIBRARIES})
+target_link_libraries(lane_controller ${catkin_LIBRARIES})
 #   ${catkin_LIBRARIES}
 # )
 
