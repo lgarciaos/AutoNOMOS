@@ -89,7 +89,53 @@ void get_des_state(const std_msgs::Int16& val)
 	des_state = val.data;
 }
 
-std_msgs::Float32MultiArray conv(bool hit, std_msgs::Float32MultiArray p)
+
+int det_hit(int state)
+{
+	int lanes_detected = (L > 0);
+	lanes_detected = lanes_detected << 1;
+	lanes_detected = lanes_detected | C > 0;
+	lanes_detected = lanes_detected << 1;
+	lanes_detected = lanes_detected | R > 0;
+	// bool hit = (des_state == actual_state);
+        // q.append(p[i] * (hit * pHit + (1-hit) * pMiss))
+
+	// ROS_INFO_STREAM("L: " << L << "\tC: " << C << "\tR: " << R << "\tlanes: " << lanes_detected);
+
+	int hit;
+	switch(lanes_detected)
+	{
+		case 0: 
+			//estado actual depende si estoy más cerca de NI o ND
+			hit = state == 0 || state == 5;  
+			break;
+		case 1: 
+			hit = state == 1 ;//|| state == 2 || state == 3;
+			break;
+		case 2: 
+			hit = state == 2 || state == 4;
+			break;
+		case 3: 
+			hit = state == 2 ;//|| state == 3 || state == 4;
+			break;
+		case 4:
+			hit = state == 4; // || state == 3; 
+			break;
+		case 5: 
+			hit = state == 3;
+			break;
+		case 6: 
+			hit = state == 4 ;// || state == 3;
+			break;
+		case 7: 
+			hit = state == 3;
+			break;		
+	}
+	ROS_INFO_STREAM("lanes: " << lanes_detected << "\tstate:" << state << "\thit" << hit);
+	return hit;
+}
+
+std_msgs::Float32MultiArray conv(std_msgs::Float32MultiArray p)
 {
 	std_msgs::Float32MultiArray q;
 
@@ -99,6 +145,8 @@ std_msgs::Float32MultiArray conv(bool hit, std_msgs::Float32MultiArray p)
 		{
 			q.data.push_back(0.001);
 		} else {
+			bool hit = det_hit(i);
+			// ROS_INFO_STREAM(p.data[i] << " ==> " << p.data[i] * (hit * p_hit + (1-hit) * p_miss));
 			q.data.push_back(p.data[i] * (hit * p_hit + (1-hit) * p_miss));
 		}
 	}
@@ -117,58 +165,15 @@ std_msgs::Float32MultiArray conv(bool hit, std_msgs::Float32MultiArray p)
 	return q;
 }
 
-int det_actual_state()
-{
-	int lanes_detected = (L > 0);
-	lanes_detected = actual_state << 1;
-	lanes_detected = C > 0;
-	lanes_detected = actual_state << 1;
-	lanes_detected = R > 0;
-	// bool hit = (des_state == actual_state);
-        // q.append(p[i] * (hit * pHit + (1-hit) * pMiss))
 
-	ROS_INFO_STREAM("L: " << L << "C: " << C << "R: " << R);
-
-	int actual_state;
-	switch(lanes_detected)
-	{
-		case 0: 
-			//estado actual depende si estoy más cerca de NI o ND
-			actual_state = desire_state < 3 ? 0 : 5;  
-			break;
-		case 1: 
-			actual_state = 1;
-			break;
-		case 2: 
-			actual_state = 4;
-			break;
-		case 3: 
-			actual_state = 2;
-			break;
-		case 4:
-			actual_state = 4; 
-			break;
-		case 5: 
-			actual_state = 3;
-			break;
-		case 6: 
-			actual_state = 4;
-			break;
-		case 7: 
-			actual_state = 3;
-			break;		
-	}
-	ROS_INFO_STREAM("Actual state: " << actual_state);
-	return actual_state
-}
 
 std_msgs::Float32MultiArray sense(std_msgs::Float32MultiArray prob)
 {
 	std_msgs::Float32MultiArray q;
 
-	bool hit = desire_state == det_actual_state();
+	// bool hit = des_state == det_actual_state();
 
-	q = conv(hit, prob);
+	q = conv(prob);
 	
 	// if(L > 0 && C > 0 && R > 0) {
 	// 	q = conv(c7, prob); ROS_INFO_STREAM("sense: " << 7);
@@ -251,21 +256,21 @@ int main(int argc, char** argv){
 	    // p = move(p);
 	    pub_loc.publish(p);
 
-	    ROS_INFO_STREAM("Histogram: [" << p.data[0] << "," << p.data[1] << "," << p.data[2] << ","<< p.data[3] << ","<< p.data[4] << ","<< p.data[5]);
+	    ROS_INFO_STREAM("[" << p.data[0] << "," << p.data[1] << "," << p.data[2] << ","<< p.data[3] << ","<< p.data[4] << ","<< p.data[5] << "]");
 
 	    // detectar estado de mayor probabilidad para imprimirlo
-	    float max=0;
-	    for(int i=0;i<NUM_STATES;i++){
-	    	if(p.data[i]>max){
-	    		max=p.data[i];
-	    	}
-	    }
+	    // float max=0;
+	    // for(int i=0;i<NUM_STATES;i++){
+	    // 	if(p.data[i]>max){
+	    // 		max=p.data[i];
+	    // 	}
+	    // }
 
-	    for(int i=0;i<NUM_STATES;i++){
-	    	if(p.data[i]==max){
-	    		ROS_INFO_STREAM("Estas en:" << nombre_estado[i]);
-	    	}
-	    }
+	    // for(int i=0;i<NUM_STATES;i++){
+	    // 	if(p.data[i]==max){
+	    // 		ROS_INFO_STREAM("Estas en:" << nombre_estado[i]);
+	    // 	}
+	    // }
 
 	    movement = 0;
 
