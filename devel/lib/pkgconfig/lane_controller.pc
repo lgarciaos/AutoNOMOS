@@ -1,8 +1,0 @@
-prefix=/root/catkin_ws_user/AutoNOMOS/devel
-
-Name: lane_controller
-Description: Description of lane_controller
-Version: 0.0.0
-Cflags: 
-Libs: -L/root/catkin_ws_user/AutoNOMOS/devel/lib 
-Requires: 

@@ -1,8 +1,0 @@
-prefix=/root/catkin_ws_user/AutoNOMOS/devel
-
-Name: lane_planning
-Description: Description of lane_planning
-Version: 0.0.0
-Cflags: 
-Libs: -L/root/catkin_ws_user/AutoNOMOS/devel/lib 
-Requires: 
