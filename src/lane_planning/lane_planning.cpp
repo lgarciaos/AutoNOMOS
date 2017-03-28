@@ -58,17 +58,19 @@ void get_path(int lane){
     path_planned.cells.clear();
     
 	for(int i=0;i<arr_center.cell_width;i++){
-		if(arr_right.cell_width > 0 && lane == RIGHT){
+		if(arr_right.cell_width > 0 && lane == RIGHT && arr_right.cells[i].x > 0){
 			pt.x = (arr_center.cells[i].x + arr_right.cells[i].x)/2;
             pt.y = (arr_center.cells[i].y + arr_right.cells[i].y)/2;
             pt.z = 0;
 		}
-		else if(arr_left.cell_width > 0 && lane == LEFT){
+		else if(arr_left.cell_width > 0 && lane == LEFT && arr_left.cells[i].x > 0){
 			pt.x = (arr_center.cells[i].x + arr_left.cells[i].x)/2;
             pt.y = (arr_center.cells[i].y + arr_left.cells[i].y)/2;
             pt.z = 0;
 		}
-		// ROS_INFO_STREAM("i: " << i << ", x: " << pt.x << ", y: " << pt.y);
+		else{
+			// al menos la linea del centro se ve
+		}
         path_planned.cells.push_back(pt);
 	}
 }

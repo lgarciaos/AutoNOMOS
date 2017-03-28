@@ -1,1 +1,1 @@
-/home/eduardo/Robotica/AutoNOMOS2/line_det/devel/.private/line_detection_fu_mod/share/line_detection_fu_mod/cmake/line_detection_fu_modConfig-version.cmake
+/home/eduardo/Robotica/AutoNOMOS2/devel/.private/line_detection_fu_mod/share/line_detection_fu_mod/cmake/line_detection_fu_modConfig-version.cmake

@@ -8,7 +8,7 @@
 
 # since this file is sourced either use the provided _CATKIN_SETUP_DIR
 # or fall back to the destination set at configure time
-: ${_CATKIN_SETUP_DIR:=/home/eduardo/Robotica/AutoNOMOS2/line_det/devel/.private/catkin_tools_prebuild}
+: ${_CATKIN_SETUP_DIR:=/home/eduardo/Robotica/AutoNOMOS2/devel/.private/catkin_tools_prebuild}
 _SETUP_UTIL="$_CATKIN_SETUP_DIR/_setup_util.py"
 unset _CATKIN_SETUP_DIR
 

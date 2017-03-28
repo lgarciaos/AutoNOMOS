@@ -67,14 +67,14 @@ set(line_detection_fu_mod_CONFIG_INCLUDED TRUE)
 
 # set variables for source/devel/install prefixes
 if("TRUE" STREQUAL "TRUE")
-  set(line_detection_fu_mod_SOURCE_PREFIX /home/eduardo/Robotica/AutoNOMOS2/line_det/src/fu_line_detection)
-  set(line_detection_fu_mod_DEVEL_PREFIX /home/eduardo/Robotica/AutoNOMOS2/line_det/devel/.private/line_detection_fu_mod)
+  set(line_detection_fu_mod_SOURCE_PREFIX /home/eduardo/Robotica/AutoNOMOS2/src/fu_line_detection)
+  set(line_detection_fu_mod_DEVEL_PREFIX /home/eduardo/Robotica/AutoNOMOS2/devel/.private/line_detection_fu_mod)
   set(line_detection_fu_mod_INSTALL_PREFIX "")
   set(line_detection_fu_mod_PREFIX ${line_detection_fu_mod_DEVEL_PREFIX})
 else()
   set(line_detection_fu_mod_SOURCE_PREFIX "")
   set(line_detection_fu_mod_DEVEL_PREFIX "")
-  set(line_detection_fu_mod_INSTALL_PREFIX /home/eduardo/Robotica/AutoNOMOS2/line_det/install)
+  set(line_detection_fu_mod_INSTALL_PREFIX /home/eduardo/Robotica/AutoNOMOS2/install)
   set(line_detection_fu_mod_PREFIX ${line_detection_fu_mod_INSTALL_PREFIX})
 endif()
 
@@ -91,9 +91,9 @@ endif()
 # flag project as catkin-based to distinguish if a find_package()-ed project is a catkin project
 set(line_detection_fu_mod_FOUND_CATKIN_PROJECT TRUE)
 
-if(NOT "/home/eduardo/Robotica/AutoNOMOS2/line_det/devel/.private/line_detection_fu_mod/include;/home/eduardo/Robotica/AutoNOMOS2/line_det/src/fu_line_detection/include;/usr/include/opencv;/usr/include " STREQUAL " ")
+if(NOT "/home/eduardo/Robotica/AutoNOMOS2/devel/.private/line_detection_fu_mod/include;/home/eduardo/Robotica/AutoNOMOS2/src/fu_line_detection/include;/usr/include/opencv;/usr/include " STREQUAL " ")
   set(line_detection_fu_mod_INCLUDE_DIRS "")
-  set(_include_dirs "/home/eduardo/Robotica/AutoNOMOS2/line_det/devel/.private/line_detection_fu_mod/include;/home/eduardo/Robotica/AutoNOMOS2/line_det/src/fu_line_detection/include;/usr/include/opencv;/usr/include")
+  set(_include_dirs "/home/eduardo/Robotica/AutoNOMOS2/devel/.private/line_detection_fu_mod/include;/home/eduardo/Robotica/AutoNOMOS2/src/fu_line_detection/include;/usr/include/opencv;/usr/include")
   foreach(idir ${_include_dirs})
     if(IS_ABSOLUTE ${idir} AND IS_DIRECTORY ${idir})
       set(include ${idir})
@@ -103,7 +103,7 @@ if(NOT "/home/eduardo/Robotica/AutoNOMOS2/line_det/devel/.private/line_detection
         message(FATAL_ERROR "Project 'line_detection_fu_mod' specifies '${idir}' as an include dir, which is not found.  It does not exist in '${include}'.  Ask the maintainer 'zargol <zahra.boroujeni@gmail.com>' to fix it.")
       endif()
     else()
-      message(FATAL_ERROR "Project 'line_detection_fu_mod' specifies '${idir}' as an include dir, which is not found.  It does neither exist as an absolute directory nor in '/home/eduardo/Robotica/AutoNOMOS2/line_det/src/fu_line_detection/${idir}'.  Ask the maintainer 'zargol <zahra.boroujeni@gmail.com>' to fix it.")
+      message(FATAL_ERROR "Project 'line_detection_fu_mod' specifies '${idir}' as an include dir, which is not found.  It does neither exist as an absolute directory nor in '/home/eduardo/Robotica/AutoNOMOS2/src/fu_line_detection/${idir}'.  Ask the maintainer 'zargol <zahra.boroujeni@gmail.com>' to fix it.")
     endif()
     _list_append_unique(line_detection_fu_mod_INCLUDE_DIRS ${include})
   endforeach()
@@ -122,7 +122,7 @@ foreach(library ${libraries})
     set(lib_path "")
     set(lib "${library}-NOTFOUND")
     # since the path where the library is found is returned we have to iterate over the paths manually
-    foreach(path /home/eduardo/Robotica/AutoNOMOS2/line_det/devel/.private/line_detection_fu_mod/lib;/home/eduardo/Robotica/AutoNOMOS2/line_det/devel/lib;/opt/ros/indigo/lib)
+    foreach(path /home/eduardo/Robotica/AutoNOMOS2/devel/.private/line_detection_fu_mod/lib;/home/eduardo/Robotica/AutoNOMOS2/devel/lib;/opt/ros/indigo/lib)
       find_library(lib ${library}
         PATHS ${path}
         NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH)

@@ -62,14 +62,16 @@ double PIDtime(double pE, double p, double dt, double max, double min, double Kp
 
 	// correccion en el carro
 	output += 45; 
-	// cambiar los sentidos
-	output = abs(output-90);
+	
 
     // Restriction
 	if( output > max )
 		output = max;
 	else if( output < min )
 		output = min;
+
+	// cambiar los sentidos
+	output = 90-output;
 
 	prevError = error;
 
@@ -89,18 +91,22 @@ void get_path(const nav_msgs::GridCells& path){
 		std_msgs::Int16 value_steering;
 
 
+		if(path_planning.cells[altura].x > 0) {
+			p = path_planning.cells[altura].x;
+			ROS_INFO_STREAM("PID: pos actual: " << pE << ", objetivo:" << p << ", altura: " << altura);
+			pid_res = PIDtime(pE, p, dt, max, min, Kp, Kd, Ki);
 
-		p = path_planning.cells[altura].x;
-		ROS_INFO_STREAM("PID: pos actual: " << pE << ", objetivo:" << p << ", altura: " << altura);
-		pid_res = PIDtime(pE, p, dt, max, min, Kp, Kd, Ki);
+			value_motor.data = velocity;
+			value_steering.data = pid_res;
 
-		value_motor.data = velocity;
-		value_steering.data = pid_res;
+			pub_speed.publish(value_motor); 
+			pub_steering.publish(value_steering); 
 
-		pub_speed.publish(value_motor); 
-		pub_steering.publish(value_steering); 
-
-		ROS_INFO_STREAM("velocity: " << value_motor.data << ", steering: " << value_steering.data << " )");
+			ROS_INFO_STREAM("velocity: " << value_motor.data << ", steering: " << value_steering.data << " )");
+		}
+		else{
+			// talvez ir derecho
+		}
 	}
 }
 

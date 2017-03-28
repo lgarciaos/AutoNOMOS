@@ -1,1 +1,1 @@
-/home/eduardo/Robotica/AutoNOMOS2/line_det/devel/.private/lane_controller/share/lane_controller/cmake/lane_controllerConfig-version.cmake
+/home/eduardo/Robotica/AutoNOMOS2/devel/.private/lane_controller/share/lane_controller/cmake/lane_controllerConfig-version.cmake

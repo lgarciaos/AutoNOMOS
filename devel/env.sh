@@ -1,1 +1,1 @@
-/home/eduardo/Robotica/AutoNOMOS2/line_det/devel/.private/catkin_tools_prebuild/env.sh
+/home/eduardo/Robotica/AutoNOMOS2/devel/.private/catkin_tools_prebuild/env.sh
