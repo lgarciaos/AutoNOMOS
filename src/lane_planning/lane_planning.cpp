@@ -128,7 +128,7 @@ void planning(){
 
 	ROS_INFO_STREAM("Planned path: ");
 	for(int i=0; i<path_planned.cell_width; i++){
-			ROS_INFO_STREAM("i: " << i << ", x: " << path_planned.cells[i].x << ", y: " << path_planned.cells[i].y);
+			// ROS_INFO_STREAM("i: " << i << ", x: " << path_planned.cells[i].x << ", y: " << path_planned.cells[i].y);
 	}
 
 	pub_path.publish(path_planned);

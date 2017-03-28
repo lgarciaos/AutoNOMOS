@@ -39,7 +39,6 @@ double prevError = 0;
 double integral = 0;
 double pE;
 double velocity;
-double altura;
 
 ros::Publisher pub_speed;
 ros::Publisher pub_steering;
@@ -93,7 +92,7 @@ void get_path(const nav_msgs::GridCells& path){
 
 		if(path_planning.cells[0].x >= 0) {
 			p = path_planning.cells[0].x;
-			ROS_INFO_STREAM("PID: pos actual: " << pE << ", objetivo:" << p << ", altura: " << altura);
+			ROS_INFO_STREAM("PID: pos actual: " << pE << ", objetivo:" << p );
 			pid_res = PIDtime(pE, p, dt, max, min, Kp, Kd, Ki);
 
 			value_motor.data = velocity;

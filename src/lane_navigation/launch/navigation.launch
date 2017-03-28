@@ -50,26 +50,21 @@
     
   </node>
 
-  <node name="lane_planning_node" pkg="lane_planning" type="lane_planning_node"  >
-    <param name="corte"          type="double" value="70.0"/>
+  <node name="lane_planning_node" pkg="lane_planning" type="lane_planning_node" output="screen" >
+    <param name="corte"          type="double" value="90.0"/>
   </node> 
   
   <node name="lane_states_node" pkg="lane_states_original" type="lane_states_node"  />
 
   <node name="lane_controller_node" pkg="lane_controller" type="lane_controller_node" output="screen" > 
-    
-
     <param name="Kp"          type="double" value="0.6"/>
     <param name="Ki"          type="double" value="0.3"/>
     <param name="Kd"          type="double" value="0.0"/>
     <param name="dt"          type="double" value="1.0"/>
     <param name="pE"          type="double" value="80.0"/>
-    <param name="min"          type="double" value="0.0"/>
-    <param name="max"          type="double" value="90.0"/>
-    <param name="velocity"          type="double" value="-30.0"/>
-    
-    
-    
+    <param name="min"         type="double" value="0.0"/>
+    <param name="max"         type="double" value="90.0"/>
+    <param name="velocity"    type="double" value="-30.0"/>
   </node>
  
 </launch>
