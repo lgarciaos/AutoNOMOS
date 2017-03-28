@@ -91,8 +91,8 @@ void get_path(const nav_msgs::GridCells& path){
 		std_msgs::Int16 value_steering;
 
 
-		if(path_planning.cells[altura].x > 0) {
-			p = path_planning.cells[altura].x;
+		if(path_planning.cells[0].x >= 0) {
+			p = path_planning.cells[0].x;
 			ROS_INFO_STREAM("PID: pos actual: " << pE << ", objetivo:" << p << ", altura: " << altura);
 			pid_res = PIDtime(pE, p, dt, max, min, Kp, Kd, Ki);
 
@@ -119,7 +119,7 @@ int main(int argc, char** argv){
 	ros::NodeHandle nh;
 	ros::Rate loop_rate(rate_hz);
 
-	std::string node_name = "/lane_controller_node";
+	std::string node_name = ros::this_node::getName();
 	ROS_INFO_STREAM("Obteniendo p");
 
 	priv_nh_.param<double>(node_name+"/Kp", Kp, 0.6);
@@ -131,7 +131,6 @@ int main(int argc, char** argv){
 	priv_nh_.param<double>(node_name+"/min", min, 0.0);
 	priv_nh_.param<double>(node_name+"/max", max, 90.0);
 	priv_nh_.param<double>(node_name+"/velocity", velocity, 30.0);
-	priv_nh_.param<double>(node_name+"/altura", altura, 140.0);
 
 	ROS_INFO_STREAM("Parametros obtenidos");
 

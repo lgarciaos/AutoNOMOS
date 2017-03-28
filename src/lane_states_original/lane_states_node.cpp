@@ -258,19 +258,7 @@ int main(int argc, char** argv){
 
 	    ROS_INFO_STREAM("[" << p.data[0] << "," << p.data[1] << "," << p.data[2] << ","<< p.data[3] << ","<< p.data[4] << ","<< p.data[5] << "]");
 
-	    // detectar estado de mayor probabilidad para imprimirlo
-	    // float max=0;
-	    // for(int i=0;i<NUM_STATES;i++){
-	    // 	if(p.data[i]>max){
-	    // 		max=p.data[i];
-	    // 	}
-	    // }
-
-	    // for(int i=0;i<NUM_STATES;i++){
-	    // 	if(p.data[i]==max){
-	    // 		ROS_INFO_STREAM("Estas en:" << nombre_estado[i]);
-	    // 	}
-	    // }
+	    
 
 	    movement = 0;
 
