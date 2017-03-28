@@ -64,10 +64,8 @@ void get_path(int lane){
 	// ROS_INFO_STREAM("L: " << arr_left.cell_width << "C: " << arr_center.cell_width << "R: " << arr_right.cell_width);
 
 	geometry_msgs::Point pt;
-	path_planned.cell_width = arr_center.cell_width;
+	path_planned.cells.clear();
     path_planned.cell_height = 1;
-    path_planned.cells.clear();
-    
     if(estado >= 0){
 
 		switch(estado){
@@ -75,21 +73,25 @@ void get_path(int lane){
 				pt.x = 150;
 	            pt.y = 0;
 	            pt.z = 0;
+	            path_planned.cell_width = 1;
 	            path_planned.cells.push_back(pt);
 				break;
 			case FI:
 				pt.x = 150;
 	            pt.y = 0;
 	            pt.z = 0;
+	            path_planned.cell_width = 1;
 	            path_planned.cells.push_back(pt);
 				break;
 			case CI:
 				pt.x = 100;
 	            pt.y = 0;
 	            pt.z = 0;
+	            path_planned.cell_width = 1;
 	            path_planned.cells.push_back(pt);
 				break;
 			case CD:
+				path_planned.cell_width = arr_center.cell_width;
 				for(int i=corte;i<arr_center.cell_width;i++){
 					if(arr_right.cell_width > 0 && lane == RIGHT && arr_right.cells[i].x > 0){
 						pt.x = (arr_center.cells[i].x + arr_right.cells[i].x)/2;
@@ -111,12 +113,14 @@ void get_path(int lane){
 				pt.x = 0;
 	            pt.y = 0;
 	            pt.z = 0;
+	            path_planned.cell_width = 1;
 	            path_planned.cells.push_back(pt);
 				break;
 			case NSD:
 				pt.x = 0;
 	            pt.y = 0;
 	            pt.z = 0;
+	            path_planned.cell_width = 1;
 	            path_planned.cells.push_back(pt);
 				break;
 		}
