@@ -422,7 +422,8 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
 
         for(int i=0; i<path_planned.cell_width;i++){
             cv::Point pointPath = cv::Point(path_planned.cells[i].x, path_planned.cells[i].y);
-            cv::circle(transformedImagePaintableRansac,pointPath,0,cv::Scalar(255,255,0),-1);
+            // center, radius, color, thickness
+            cv::circle(transformedImagePaintableRansac,pointPath,2,cv::Scalar(255,255,0),-1);
         }
 
         pub_ransac_left.publish(array_ransac_left);

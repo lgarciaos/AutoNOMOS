@@ -34,6 +34,8 @@ nav_msgs::GridCells arr_left;
 nav_msgs::GridCells arr_center;
 nav_msgs::GridCells arr_right;
 
+std_msgs::Float32MultiArray localizationArray;
+
 nav_msgs::GridCells path_planned;
 
 float p_exact = .5;
@@ -68,85 +70,40 @@ void get_pts_right(const nav_msgs::GridCells& array)
 	// lines_sensed = array.cell_width > 0 ?  lines_sensed | 1 : lines_sensed | 0;
 }
 
-// sapruder
-void get_path(int lane){
-	// ROS_INFO_STREAM("L: " << arr_left.cell_width << "C: " << arr_center.cell_width << "R: " << arr_right.cell_width);
-
-	geometry_msgs::Point pt;
-	path_planned.cell_height = 1;
-	path_planned.cell_width = 1;
-	path_planned.cells.clear();
-    
-    if(estado >= 0){
-
-		switch(estado){
-			case NSI: 
-				pt.x = 150;
-	            pt.y = corte;
-	            pt.z = 0;
-	            path_planned.cells.push_back(pt);
-				break;
-			case FI:
-				pt.x = 150;
-	            pt.y = corte;
-	            pt.z = 0;
-	            path_planned.cells.push_back(pt);
-				break;
-			case CI:
-				pt.x = 100;
-	            pt.y = corte;
-	            pt.z = 0;
-	            path_planned.cells.push_back(pt);
-				break;
-			case CD:
-				path_planned.cell_width = arr_center.cell_width;
-				for(int i=corte;i<arr_center.cell_width;i++){
-					if(arr_right.cell_width > 0 && lane == RIGHT && arr_right.cells[i].x > 0){
-						pt.x = (arr_center.cells[i].x + arr_right.cells[i].x)/2;
-			            pt.y = (arr_center.cells[i].y + arr_right.cells[i].y)/2;
-			            pt.z = 0;
-					}
-					else if(arr_left.cell_width > 0 && lane == LEFT && arr_left.cells[i].x > 0){
-						pt.x = (arr_center.cells[i].x + arr_left.cells[i].x)/2;
-			            pt.y = (arr_center.cells[i].y + arr_left.cells[i].y)/2;
-			            pt.z = 0;
-					}
-					else{
-						// al menos la linea del centro se ve
-					}
-			        path_planned.cells.push_back(pt);
-				}
-				break;
-			case FD:
-				pt.x = 10;
-	            pt.y = corte;
-	            pt.z = 0;
-	            path_planned.cells.push_back(pt);
-				break;
-			case NSD:
-				pt.x = 10;
-	            pt.y = corte;
-	            pt.z = 0;
-	            path_planned.cells.push_back(pt);
-				break;
-		}
-	}	
-}
-
 void planning(){
-	get_path(RIGHT);
-	
-	ROS_INFO_STREAM("Planned path: ");
-	for(int i=0; i<path_planned.cell_width; i++){
-			// ROS_INFO_STREAM("i: " << i << ", x: " << path_planned.cells[i].x << ", y: " << path_planned.cells[i].y);
-	}
-	pub_path.publish(path_planned);
-	
+	// TODO
 }
 
+void move(std_msgs::Float32MultiArray& prob)
+{
+	int pos, pos_exact, pos_undershoot, pos_overshoot;
+	float s;
+	
+	
+	for (int m=0;m<MHEIGHT;m++){
+		double movement = vectorMovimiento[m];
+		ROS_INFO_STREAM("Moving: " << movement);
+		for (int i = 0; i < NUM_STATES; ++i)
+		{
+			pos = i - movement;
+			pos_exact      = (pos) % NUM_STATES;
+			pos_undershoot = (pos - 1) % NUM_STATES;
+			pos_overshoot  = (pos + 1) % NUM_STATES;
+			
+			s = p_exact * localizationArray.data[pos_exact];
+			s += p_undershoot * localizationArray.data[pos_undershoot];
+			s += p_overshoot * localizationArray.data[pos_overshoot];
+
+			matrizMovimiento[m][i] = s;
+		}
+	}
+}
 
 void get_localization(const std_msgs::Float32MultiArray& locArray) {
 	// detectar estado de mayor probabilidad para imprimirlo
+
+	localizationArray.data = locArray.data;
+
 	float max=0;
 	for(int i=0;i<NUM_STATES;i++){
 	 	if(locArray.data[i]>max){

@@ -98,8 +98,8 @@ void get_path(const nav_msgs::GridCells& path){
 			value_motor.data = velocity;
 			value_steering.data = pid_res;
 
-			pub_speed.publish(value_motor); 
-			pub_steering.publish(value_steering); 
+			// pub_speed.publish(value_motor); 
+			// pub_steering.publish(value_steering); 
 
 			ROS_INFO_STREAM("velocity: " << value_motor.data << ", steering: " << value_steering.data << " )");
 		}
@@ -140,17 +140,13 @@ int main(int argc, char** argv){
 	
 	ros::Subscriber sub_path = nh.subscribe("/planning",1, &get_path);
 
-	
-
 	ROS_INFO_STREAM("antes de while");
 	while (nh.ok())
 	{
 		ROS_INFO_STREAM("while 1");
 		ros::spinOnce();
-
 		// convertir entre 0 y 90
 		// pE siempre es la misma
-
 		loop_rate.sleep();
     }
     return 0;
