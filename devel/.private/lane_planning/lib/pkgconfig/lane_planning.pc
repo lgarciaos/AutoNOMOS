@@ -1,8 +1,0 @@
-prefix=/home/eduardo/Robotica/AutoNOMOS2/devel/.private/lane_planning
-
-Name: lane_planning
-Description: Description of lane_planning
-Version: 0.0.0
-Cflags: 
-Libs: -L/home/eduardo/Robotica/AutoNOMOS2/devel/.private/lane_planning/lib 
-Requires: 

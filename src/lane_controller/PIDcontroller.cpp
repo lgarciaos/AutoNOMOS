@@ -71,7 +71,7 @@ double PIDtime(double pE, double p, double dt, double max, double min, double Kp
 		output = min;
 
 	// cambiar los sentidos
-	output = 90-output;
+	// output = 90-output;
 
 	prevError = error;
 
