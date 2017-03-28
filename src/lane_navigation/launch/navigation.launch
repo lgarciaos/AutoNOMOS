@@ -11,9 +11,9 @@
     <param name="maxYRoi"                       type="int"    value="159"/>
     <param name="minYDefaultRoi"                type="int"    value="110"/>
     <param name="minYPolyRoi"                   type="int"    value="68"/>
-    <param name="defaultXLeft"                  type="int"    value="43"/>
-    <param name="defaultXCenter"                type="int"    value="69"/>
-    <param name="defaultXRight"                 type="int"    value="92"/>
+    <param name="defaultXLeft"                  type="int"    value="35"/>
+    <param name="defaultXCenter"                type="int"    value="65"/>
+    <param name="defaultXRight"                 type="int"    value="95"/>
     <param name="interestDistancePoly"          type="int"    value="5"/>
     <param name="interestDistanceDefault"       type="int"    value="20"/>
     <param name="iterationsRansac"              type="int"    value="30"/>
@@ -60,7 +60,7 @@
     <param name="Ki"          type="double" value="0.3"/>
     <param name="Kd"          type="double" value="0.0"/>
     <param name="dt"          type="double" value="1.0"/>
-    <param name="pE"          type="double" value="77.0"/>
+    <param name="pE"          type="double" value="80.0"/>
     <param name="min"          type="double" value="0.0"/>
     <param name="max"          type="double" value="90.0"/>
     <param name="velocity"          type="double" value="-30.0"/>
