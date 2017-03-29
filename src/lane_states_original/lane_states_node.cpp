@@ -116,7 +116,7 @@ int det_hit(int state)
 			hit = state == 2 || state == 4;
 			break;
 		case 3: 
-			hit = state == 2 ;//|| state == 3 || state == 4;
+			hit = state == 2 || state == 3 ;//|| state == 4;
 			break;
 		case 4:
 			hit = state == 4; // || state == 3; 

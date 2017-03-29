@@ -12,7 +12,7 @@
     <param name="maxYRoi"                       type="int"    value="159"/>
     <param name="minYDefaultRoi"                type="int"    value="110"/>
     <param name="minYPolyRoi"                   type="int"    value="68"/>
-    <param name="defaultXLeft"                  type="int"    value="35"/>
+    <param name="defaultXLeft"                  type="int"    value="32"/>
     <param name="defaultXCenter"                type="int"    value="65"/>
     <param name="defaultXRight"                 type="int"    value="95"/>
     <param name="interestDistancePoly"          type="int"    value="5"/>

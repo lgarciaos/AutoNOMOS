@@ -372,7 +372,9 @@ int main(int argc, char** argv){
 	loop_rate.sleep();
 	while(nh.ok())
 	{
-		// ROS_INFO_STREAM("at 1");
+		
+	    path_planned.cells.clear();
+	// ROS_INFO_STREAM("at 1");
 	    ros::spinOnce();
 	    // ROS_INFO_STREAM("at 2");
 	    // planning();
@@ -387,10 +389,12 @@ int main(int argc, char** argv){
 	    ROS_INFO_STREAM("next p" << p[1]);
 	    ROS_INFO_STREAM("next p" << p[2]);
 	    // ROS_INFO_STREAM("at 6");
-	    pt_to_send.x = 100;
-	    pt_to_send.y = det_next_move();
+	    pt_to_send.x = det_next_move();
+	    pt_to_send.y = 100;
 	    ROS_INFO_STREAM("Moving to: (" << pt_to_send.x << " , " << pt_to_send.y << " )" ) ; 
 	    pt_to_send.z = 0;
+	    path_planned.cell_width = 1;
+	    path_planned.cell_height = 1;
 	    path_planned.cells.push_back(pt_to_send);
 	    pub_path.publish(path_planned);
 	    loop_rate.sleep();
