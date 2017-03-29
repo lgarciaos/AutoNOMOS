@@ -175,31 +175,6 @@ std_msgs::Float32MultiArray sense(std_msgs::Float32MultiArray prob)
 
 	q = conv(prob);
 	
-	// if(L > 0 && C > 0 && R > 0) {
-	// 	q = conv(c7, prob); ROS_INFO_STREAM("sense: " << 7);
-	// }
-	// else if(L > 0 && C > 0 && R == 0)	{
-	// 	q = conv(c6, prob); ROS_INFO_STREAM("sense: " << 6);
-	// }
-	// else if(L > 0 && C == 0 && R > 0)	{
-	// 	q = conv(c5, prob); ROS_INFO_STREAM("sense: " << 5);
-	// }
-	// else if(L > 0 && C == 0 && R == 0) {	
-	// 	q = conv(c4, prob); ROS_INFO_STREAM("sense: " << 4);
-	// }
-	// else if(L==0 && C > 0 && R > 0)	{
-	// 	q = conv(c3, prob); ROS_INFO_STREAM("sense: " << 3);
-	// }
-	// else if(L==0 && C > 0 && R == 0)	{
-	// 	q = conv(c2, prob); ROS_INFO_STREAM("sense: " << 2);
-	// }
-	// else if(L==0 && C == 0 && R > 0) {
-	// 	q = conv(c1, prob); ROS_INFO_STREAM("sense: " << 1);
-	// }
-	// else if(L==0 && C == 0 && R ==0) {
-	// 	q = conv(c0, prob); ROS_INFO_STREAM("sense: " << 0);
-	// }
-	
 	return q;
 }
 
@@ -230,7 +205,7 @@ int main(int argc, char** argv){
 	ros::NodeHandle nh;
 	ros::Rate loop_rate(rate_hz);
 
-	ROS_INFO_STREAM("First prob: " << 1.0/(float)NUM_STATES);
+	// ROS_INFO_STREAM("First prob: " << 1.0/(float)NUM_STATES);
 	for (int i = 0; i < NUM_STATES; ++i)
 	{
 		p.data.push_back((float) (1/(float)NUM_STATES));

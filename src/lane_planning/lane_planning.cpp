@@ -6,6 +6,7 @@
 #include <std_msgs/Float32MultiArray.h>
 #include <nav_msgs/GridCells.h>
 #include <std_msgs/Int16.h>
+#include <vector>
 
 #define NUM_STATES 6
 #define LEFT 0
@@ -20,10 +21,12 @@
 
 static const uint32_t MY_ROS_QUEUE_SIZE = 1;
 
+#define MHEIGHT 3
+
 double rate_hz = 1;
 ros::Publisher pub_path;
 // ros::Publisher pub_lidar;
-double corte = 0.0;
+int corte = 0;
 
 std::string nombre;
 
@@ -32,6 +35,12 @@ nav_msgs::GridCells arr_center;
 nav_msgs::GridCells arr_right;
 
 nav_msgs::GridCells path_planned;
+
+float p_exact = .5;
+float p_undershoot = .25;
+float p_overshoot = .25;
+double matrizMovimiento[MHEIGHT][NUM_STATES];
+double vectorMovimiento[MHEIGHT] = {-1,0,1};
 
 int estado = -1;
 std::string nombre_estado [NUM_STATES] = {"NS Izquierda", "Fuera Izquierda", "Carril Izquierdo", "Carril Derecho", "Fuera Derecha", "NS Derecha"};
@@ -64,30 +73,29 @@ void get_path(int lane){
 	// ROS_INFO_STREAM("L: " << arr_left.cell_width << "C: " << arr_center.cell_width << "R: " << arr_right.cell_width);
 
 	geometry_msgs::Point pt;
+	path_planned.cell_height = 1;
+	path_planned.cell_width = 1;
 	path_planned.cells.clear();
-    path_planned.cell_height = 1;
+    
     if(estado >= 0){
 
 		switch(estado){
 			case NSI: 
 				pt.x = 150;
-	            pt.y = 0;
+	            pt.y = corte;
 	            pt.z = 0;
-	            path_planned.cell_width = 1;
 	            path_planned.cells.push_back(pt);
 				break;
 			case FI:
 				pt.x = 150;
-	            pt.y = 0;
+	            pt.y = corte;
 	            pt.z = 0;
-	            path_planned.cell_width = 1;
 	            path_planned.cells.push_back(pt);
 				break;
 			case CI:
 				pt.x = 100;
-	            pt.y = 0;
+	            pt.y = corte;
 	            pt.z = 0;
-	            path_planned.cell_width = 1;
 	            path_planned.cells.push_back(pt);
 				break;
 			case CD:
@@ -110,17 +118,15 @@ void get_path(int lane){
 				}
 				break;
 			case FD:
-				pt.x = 0;
-	            pt.y = 0;
+				pt.x = 10;
+	            pt.y = corte;
 	            pt.z = 0;
-	            path_planned.cell_width = 1;
 	            path_planned.cells.push_back(pt);
 				break;
 			case NSD:
-				pt.x = 0;
-	            pt.y = 0;
+				pt.x = 10;
+	            pt.y = corte;
 	            pt.z = 0;
-	            path_planned.cell_width = 1;
 	            path_planned.cells.push_back(pt);
 				break;
 		}
@@ -129,15 +135,15 @@ void get_path(int lane){
 
 void planning(){
 	get_path(RIGHT);
-
+	
 	ROS_INFO_STREAM("Planned path: ");
 	for(int i=0; i<path_planned.cell_width; i++){
 			// ROS_INFO_STREAM("i: " << i << ", x: " << path_planned.cells[i].x << ", y: " << path_planned.cells[i].y);
 	}
-
 	pub_path.publish(path_planned);
 	
 }
+
 
 void get_localization(const std_msgs::Float32MultiArray& locArray) {
 	// detectar estado de mayor probabilidad para imprimirlo
@@ -159,34 +165,30 @@ void get_localization(const std_msgs::Float32MultiArray& locArray) {
 
 
 int main(int argc, char** argv){
-	ros::init(argc, argv, "lane_states_node");
-	ROS_INFO_STREAM("lane_states_node initialized");
+	ros::init(argc, argv, "lane planning node");
+	ROS_INFO_STREAM("lane_planning_node initialized");
 	ros::NodeHandle nh;
 	ros::NodeHandle priv_nh_("~");
 	ros::Rate loop_rate(rate_hz);
 
 	std::string node_name = ros::this_node::getName();
 
-	priv_nh_.param<double>(node_name+"/corte", corte, 140.0);
-	
+	priv_nh_.param<int>(node_name+"/corte", corte, 140);
+
 	pub_path = nh.advertise<nav_msgs::GridCells>("/planning", rate_hz);
 	
 	ros::Subscriber sub_pts_left = nh.subscribe("/points/ransac_left",1, &get_pts_left);
 	ros::Subscriber sub_pts_center = nh.subscribe("/points/ransac_center",1, &get_pts_center);
 	ros::Subscriber sub_pts_right = nh.subscribe("/points/ransac_right",1, &get_pts_right);
-
 	ros::Subscriber sub_localization = nh.subscribe("/localization_array",1, &get_localization);
-	
+
 	
 	while(nh.ok())
 	{
-
 	    ros::spinOnce();
-	    
 	    planning();
 	    // p = move(p);
 	    //pub_path.publish(p);
-
 	    loop_rate.sleep();
 	}
 	return 0;
