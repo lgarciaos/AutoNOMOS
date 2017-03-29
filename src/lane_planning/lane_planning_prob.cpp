@@ -50,6 +50,7 @@ std_msgs::Float32MultiArray p[MHEIGHT];
 int estado = -1;
 std::string nombre_estado [NUM_STATES] = {"NS Izquierda", "Fuera Izquierda", "Carril Izquierdo", "Carril Derecho", "Fuera Derecha", "NS Derecha"};
 int des_state = 3;
+
 // estados: 	 NSI,   FI,   CI,   CD,   FD, NSD
 void get_pts_left(const nav_msgs::GridCells& array)
 {
@@ -133,8 +134,32 @@ std_msgs::Float32MultiArray move(std_msgs::Float32MultiArray prob, int movement)
 // 		}
 // 	}
 // }
+/*
+void move(std_msgs::Float32MultiArray& prob)
+{
+	int pos, pos_exact, pos_undershoot, pos_overshoot;
+	float s;
+	
+	
+	for (int m=0;m<MHEIGHT;m++){
+		double movement = vectorMovimiento[m];
+		ROS_INFO_STREAM("Moving: " << movement);
+		for (int i = 0; i < NUM_STATES; ++i)
+		{
+			pos = i - movement;
+			pos_exact      = (pos) % NUM_STATES;
+			pos_undershoot = (pos - 1) % NUM_STATES;
+			pos_overshoot  = (pos + 1) % NUM_STATES;
+			
+			s = p_exact * localizationArray.data[pos_exact];
+			s += p_undershoot * localizationArray.data[pos_undershoot];
+			s += p_overshoot * localizationArray.data[pos_overshoot];
 
-
+			matrizMovimiento[m][i] = s;
+		}
+	}
+}
+*/
 void get_localization(const std_msgs::Float32MultiArray& locArray) {
 	// detectar estado de mayor probabilidad para imprimirlo
 
@@ -319,6 +344,7 @@ void init_p()
 	}
 
 }
+
 
 int main(int argc, char** argv){
 	ros::init(argc, argv, "lane planning node");
