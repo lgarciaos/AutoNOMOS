@@ -55,6 +55,7 @@ nav_msgs::GridCells path_planning;
 		double x = (pE - p);
 		double theta = atan2(x,100);
 		theta = (theta * 180 / PI) + 90;
+		theta = -theta;
 	// Regresa valores entre 0 y 180 grados
 
 		return theta;
@@ -108,7 +109,7 @@ nav_msgs::GridCells path_planning;
 
 				ROS_INFO_STREAM("PID: pos Esperada: " << pE << ", pos Actual:" << p );
 				// 'p' en terminos de theta en grados
-				p = getThetaError(pE, p);
+				p = getThetaError(pE, p)/2;
 
 				// El servomotor del coche siempre tiene que estar en 45 grados
 				pid_res = PIDtime(45, p, dt, max, min, Kp, Kd, Ki);
