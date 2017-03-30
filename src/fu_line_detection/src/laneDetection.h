@@ -91,10 +91,13 @@ class cLaneDetectionFu
         ros::Publisher pub_left;
         ros::Publisher pub_center;
         ros::Publisher pub_right;
+        ros::Publisher pub_horizontal;
 
         ros::Publisher pub_ransac_left;
         ros::Publisher pub_ransac_center;
         ros::Publisher pub_ransac_right;
+
+        ros::Publisher pub_ransac_horizontal;
 
         IPMapper ipMapper;
 
@@ -129,6 +132,7 @@ class cLaneDetectionFu
         NewtonPolynomial polyLeft;
         NewtonPolynomial polyCenter;
         NewtonPolynomial polyRight;
+        NewtonPolynomial polyHorizontal;
 
         /**
          * Horizontal relative positions of the default lane marking lines.
@@ -140,6 +144,7 @@ class cLaneDetectionFu
         int defaultXLeft;
         int defaultXCenter;
         int defaultXRight;
+        int defaultYHorizontal;
 
         /**
          * The maximum distance of a point to a polynomial so that it counts as a
@@ -199,6 +204,8 @@ class cLaneDetectionFu
         bool polyDetectedCenter;
         bool polyDetectedRight;
 
+        bool polyDetectedHorizontal;
+
         /**
          * pairs for saving the best lane polynomials produced during RANSAC
          *
@@ -209,6 +216,8 @@ class cLaneDetectionFu
         std::pair<NewtonPolynomial, double> bestPolyCenter;
         std::pair<NewtonPolynomial, double> bestPolyRight;
 
+        std::pair<NewtonPolynomial, double> bestPolyHorizontal;
+
 
         /**
          * Lists containing the lane marking points selected for detecting the lane
@@ -218,12 +227,15 @@ class cLaneDetectionFu
         std::vector<FuPoint<int>> laneMarkingsCenter;
         std::vector<FuPoint<int>> laneMarkingsRight;
 
+        std::vector<FuPoint<int>> laneMarkingsHorizontal;
+
         /**
          * Newton interpolation data points selected for the best polynomial
          */
         std::vector<FuPoint<int>> pointsLeft;
         std::vector<FuPoint<int>> pointsCenter;
         std::vector<FuPoint<int>> pointsRight;
+        std::vector<FuPoint<int>> pointsHorizontal;
 
         /**
          * Vectors containing the supporters of the best polynomial
@@ -231,6 +243,7 @@ class cLaneDetectionFu
         std::vector<FuPoint<int>> supportersLeft;
         std::vector<FuPoint<int>> supportersCenter;
         std::vector<FuPoint<int>> supportersRight;
+        std::vector<FuPoint<int>> supportersHorizontal;
 
         /**
          * The polynomials detected on the previous picture
@@ -238,6 +251,7 @@ class cLaneDetectionFu
         NewtonPolynomial prevPolyLeft;
         NewtonPolynomial prevPolyCenter;
         NewtonPolynomial prevPolyRight;
+        NewtonPolynomial prevPolyHorizontal;
 
         /**
          * The polynomial representing the center of the right lane
@@ -261,11 +275,15 @@ class cLaneDetectionFu
         nav_msgs::GridCells array_center;
         nav_msgs::GridCells array_right;
 
+        nav_msgs::GridCells array_horizontal;
+
         nav_msgs::GridCells path_planned;
 
         nav_msgs::GridCells array_ransac_left;
         nav_msgs::GridCells array_ransac_center;
         nav_msgs::GridCells array_ransac_right;
+
+        nav_msgs::GridCells array_ransac_horizontal;
 
         double rate_hz = 30;
 
@@ -287,15 +305,23 @@ class cLaneDetectionFu
 
         std::vector<std::vector<LineSegment<int>> > getScanlines();
 
-        std::vector<std::vector<EdgePoint> > scanImage(cv::Mat image);
+        std::vector<std::vector<EdgePoint> > scanImage(cv::Mat image, ePosition position);
 
         std::vector<FuPoint<int>> extractLaneMarkings(const std::vector<std::vector<EdgePoint>>& edges);
 
+        std::vector<FuPoint<int>> extractLaneMarkingsHorizontal(const std::vector<std::vector<EdgePoint>>& edges);
+
         void buildLaneMarkingsLists(const std::vector<FuPoint<int>> &laneMarkings);
+
+        void buildLaneMarkingsListsHorizontal(const std::vector<FuPoint<int>> &laneMarkings);
 
         int horizDistanceToDefaultLine(ePosition &line, FuPoint<int> &p);
 
+        int vertDistanceToDefaultLine(ePosition &line, FuPoint<int> &p);
+
         int horizDistanceToPolynomial(NewtonPolynomial& poly, FuPoint<int> &p);
+
+        int vertDistanceToPolynomial(NewtonPolynomial& poly, FuPoint<int> &p);
 
         bool isInDefaultRoi(ePosition position, FuPoint<int> &p);
 
@@ -314,6 +340,8 @@ class cLaneDetectionFu
         int horizDistance(FuPoint<int> &p1, FuPoint<int> &p2);
 
         void createLanePoly(ePosition position);
+
+        void createLanePolyHorizontal(ePosition position);
 
         void detectLane();
 

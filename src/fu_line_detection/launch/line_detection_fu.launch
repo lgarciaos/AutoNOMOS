@@ -15,16 +15,26 @@
     <param name="defaultXLeft"                  type="int"    value="35"/>
     <param name="defaultXCenter"                type="int"    value="65"/>
     <param name="defaultXRight"                 type="int"    value="95"/>
+
+    <param name="defaultYHorizontal"                 type="int"    value="140"/>
+
     <param name="interestDistancePoly"          type="int"    value="5"/>
     <param name="interestDistanceDefault"       type="int"    value="20"/>
     <param name="iterationsRansac"              type="int"    value="30"/>
+    
     <param name="proportionThreshould"          type="double" value="0.8"/>
+
     <param name="m_gradientThreshold"           type="int"    value="8"/>
-    <param name="m_nonMaxWidth"                 type="int"    value="10"/>
+
+    <!-- Non Maxima Suppression, estaba en 10 creo -->
+    <param name="m_nonMaxWidth"                 type="int"    value="2"/>
+    
     <param name="laneMarkingSquaredThreshold"   type="int"    value="36"/>
     <param name="angleAdjacentLeg"              type="int"    value="18"/>
+    
     <param name="scanlinesVerticalDistance"     type="int"    value="2"/>
-    <param name="scanlinesMaxCount"             type="int"    value="100"/>
+    <param name="scanlinesMaxCount"             type="int"    value="200"/>
+
     <param name="polyY1"                        type="int"    value="155"/>
     <param name="polyY2"                        type="int"    value="145"/>    
     <param name="polyY3"                        type="int"    value="130"/>    
