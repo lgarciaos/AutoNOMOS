@@ -201,38 +201,7 @@ int det_hit (int state)
 			break;
 			
 	}
-/*
-	int hit;
-	switch(lanes_detected)
-	{
-		case 0: 
-			//estado actual depende si estoy más cerca de NI o ND
-			hit = state == 0 || state == 5;  
-			break;
-		case 1: 
-			hit = state == 1 ;//|| state == 2 || state == 3;
-			break;
-		case 2: 
-			hit = state == 2 || state == 4;
-			break;
-		case 3: 
-			hit = state == 2 || state == 3 ;//|| state == 4;
-			break;
-		case 4:
-			hit = state == 4; // || state == 3; 
-			break;
-		case 5: 
-			hit = state == 3;
-			break;
-		case 6: 
-			hit = state == 4 ;// || state == 3;
-			break;
-		case 7: 
-			hit = state == 3;
-			break;		
-	}
-	ROS_INFO_STREAM("lanes: " << lanes_detected << "\tstate:" << state << "\thit" << hit);
-	*/
+
 	return hit;
 }
 
@@ -283,7 +252,7 @@ std_msgs::Float32MultiArray sense(std_msgs::Float32MultiArray prob)
 float det_prob(int edo_ini, int ctrl_action, int edo_fin)
 {
 	float prob = -1;
-	prob = (1 - abs(edo_fin - edo_ini) / NUM_STATES);
+	prob = (1 - fabs(edo_fin - edo_ini) / NUM_STATES);
 	// prob *= 0.98;
 
 	return prob;
@@ -300,8 +269,11 @@ std_msgs::Float32MultiArray move(std_msgs::Float32MultiArray prob)
 	{
 		for (int edo_ini = 0; edo_ini < NUM_STATES; ++edo_ini)
 		{
+			// ROS_INFO_STREAM("det_prob: " <<  det_prob(edo_ini, ctrl_action, edo_fin));
 			q.data[edo_fin] += prob.data[edo_ini] * det_prob(edo_ini, ctrl_action, edo_fin);
 		}
+		// ROS_INFO_STREAM("[" << q.data[0] << "," << q.data[1] << "," << q.data[2] << ","<< q.data[3] << ","<< q.data[4] << ","<< q.data[5] << "," << q.data[6] << "," << q.data[7] << ","<< q.data[8] << "]");
+		
 	}
 
 	 return q;
@@ -378,11 +350,15 @@ int main(int argc, char** argv){
 
 	    ros::spinOnce();
 	    p = sense(p);
-	   // p = move(p);
+	    ROS_INFO_STREAM("Arr after sensed");
+		ROS_INFO_STREAM("[" << p.data[0] << "," << p.data[1] << "," << p.data[2] << ","<< p.data[3] << ","<< p.data[4] << ","<< p.data[5] << "," << p.data[6] << "," << p.data[7] << ","<< p.data[8] << "]");
+		ROS_INFO_STREAM("Applying movement: ");
+	    p = move(p);
+	    ROS_INFO_STREAM("[" << p.data[0] << "," << p.data[1] << "," << p.data[2] << ","<< p.data[3] << ","<< p.data[4] << ","<< p.data[5] << "," << p.data[6] << "," << p.data[7] << ","<< p.data[8] << "]");
+		
 	    pub_loc.publish(p);
 
-	    ROS_INFO_STREAM("[" << p.data[0] << "," << p.data[1] << "," << p.data[2] << ","<< p.data[3] << ","<< p.data[4] << ","<< p.data[5] << "," << p.data[6] << "," << p.data[7] << ","<< p.data[8] << "]");
-		print_state_order();
+	    print_state_order();
 	    
 
 	    movement = 0;
