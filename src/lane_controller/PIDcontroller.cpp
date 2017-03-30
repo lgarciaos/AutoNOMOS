@@ -98,8 +98,8 @@ void get_path(const nav_msgs::GridCells& path){
 			value_motor.data = velocity;
 			value_steering.data = pid_res;
 
-			// pub_speed.publish(value_motor); 
-			// pub_steering.publish(value_steering); 
+			pub_speed.publish(value_motor); 
+			pub_steering.publish(value_steering); 
 
 			ROS_INFO_STREAM("velocity: " << value_motor.data << ", steering: " << value_steering.data << " )");
 		}
