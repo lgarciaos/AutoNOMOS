@@ -54,9 +54,9 @@ nav_msgs::GridCells path_planning;
 	// Asumiendo 'y' = 100 fijo, que pE y p estan en unidades: pixeles
 		double x = (pE - p);
 		double theta = atan2(x,100);
-		theta = (theta * 180 / PI) + 90;
+		theta = (theta * 180 / PI)/2;
 		theta = -theta;
-	// Regresa valores entre 0 y 180 grados
+	// Regresa valores entre -45 y 45 grados
 
 		return theta;
 
@@ -107,12 +107,14 @@ nav_msgs::GridCells path_planning;
 				p = path_planning.cells[0].x;
 
 
-				ROS_INFO_STREAM("PID: pos Esperada: " << pE << ", pos Actual:" << p );
-				// 'p' en terminos de theta en grados
-				p = getThetaError(pE, p)/2;
+				ROS_INFO_STREAM("PID: posPixel Esperada: " << pE << ", posPixel Actual:" << p );
+				// 'p' en terminos de theta en grados de -45 a 45
+				p = getThetaError(pE, p);
 
 				// El servomotor del coche siempre tiene que estar en 45 grados
 				pid_res = PIDtime(45, p, dt, max, min, Kp, Kd, Ki);
+
+				ROS_INFO_STREAM("PID: errorTheta: " << p << ", ajustePID Actual:" << pid_res );
 
 				value_motor.data = velocity;
 				value_steering.data = pid_res;
@@ -162,7 +164,7 @@ nav_msgs::GridCells path_planning;
 		ROS_INFO_STREAM("antes de while");
 		while (nh.ok())
 		{
-			ROS_INFO_STREAM("while 1");
+			// ROS_INFO_STREAM("while 1");
 			ros::spinOnce();
 		// convertir entre 0 y 90
 		// pE siempre es la misma
