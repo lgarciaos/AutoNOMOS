@@ -50,7 +50,9 @@
     
   </node>
 
-  <node name="lane_states_node" pkg="lane_states_original" type="lane_states_node" output="screen" />
+  <node name="lane_states_node" pkg="lane_states_original" type="lane_states_node" output="screen" >
+	<param name="alpha"	type="double" value="12"/>
+  </node>
 
   <node name="lane_planning_prob_node" pkg="lane_planning" type="lane_planning_prob_node" output="screen" >
     <param name="corte"          type="int" value="90"/>
