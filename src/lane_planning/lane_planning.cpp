@@ -136,7 +136,7 @@ void get_path(int lane){
 void planning(){
 	get_path(RIGHT);
 	
-	ROS_INFO_STREAM("Planned path: ");
+	//ROS_INFO_STREAM("Planned path: ");
 	for(int i=0; i<path_planned.cell_width; i++){
 			// ROS_INFO_STREAM("i: " << i << ", x: " << path_planned.cells[i].x << ", y: " << path_planned.cells[i].y);
 	}
@@ -156,7 +156,7 @@ void get_localization(const std_msgs::Float32MultiArray& locArray) {
 
 	for(int i=0;i<NUM_STATES;i++){
 	 	if(locArray.data[i]==max){
-	 		ROS_INFO_STREAM("Estas en:" << nombre_estado[i]);
+	 		// ROS_INFO_STREAM("Estas en:" << nombre_estado[i]);
 	 		estado = i;
 	 	}
 	}
@@ -166,7 +166,7 @@ void get_localization(const std_msgs::Float32MultiArray& locArray) {
 
 int main(int argc, char** argv){
 	ros::init(argc, argv, "lane planning node");
-	ROS_INFO_STREAM("lane_planning_node initialized");
+	//ROS_INFO_STREAM("lane_planning_node initialized");
 	ros::NodeHandle nh;
 	ros::NodeHandle priv_nh_("~");
 	ros::Rate loop_rate(rate_hz);
