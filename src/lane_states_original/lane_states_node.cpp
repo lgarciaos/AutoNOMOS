@@ -27,16 +27,16 @@ std_msgs::Float32MultiArray p;
 
 // estados: 	 NSI,   FI,   CI,   CD,   FD, NSD
 
-float c0 [6] = {0.40, 0.05, 0.05, 0.05, 0.05, 0.40};
-float c1 [6] = {1/30, 0.40, 0.25, 0.25, 1/30, 1/30};
-float c2 [6] = {1/30, 1/30, 0.35, 0.20, 0.35, 1/30};
-float c3 [6] = {1/40, 1/40, 0.60, 0.30, 1/40, 1/40};
-float c4 [6] = {1/40, 1/40, 1/40, 0.30, 0.60, 1/40};
-float c5 [6] = {0.02, 0.02, 0.02, 0.90, 0.02, 0.02};
-float c6 [6] = {1/40, 1/40, 1/40, 0.30, 0.60, 1/40};
-float c7 [6] = {0.02, 0.02, 0.02, 0.90, 0.02, 0.02};
+// float c0 [6] = {0.40, 0.05, 0.05, 0.05, 0.05, 0.40};
+// float c1 [6] = {1/30, 0.40, 0.25, 0.25, 1/30, 1/30};
+// float c2 [6] = {1/30, 1/30, 0.35, 0.20, 0.35, 1/30};
+// float c3 [6] = {1/40, 1/40, 0.60, 0.30, 1/40, 1/40};
+// float c4 [6] = {1/40, 1/40, 1/40, 0.30, 0.60, 1/40};
+// float c5 [6] = {0.02, 0.02, 0.02, 0.90, 0.02, 0.02};
+// float c6 [6] = {1/40, 1/40, 1/40, 0.30, 0.60, 1/40};
+// float c7 [6] = {0.02, 0.02, 0.02, 0.90, 0.02, 0.02};
 
-std::string nombre_estado [NUM_STATES] = {"NS Izquierda", "Fuera Izquierda", "Carril Izquierdo", "Carril Derecho", "Fuera Derecha", "NS Derecha"};
+// std::string nombre_estado [NUM_STATES] = {"NS Izquierda", "Fuera Izquierda", "Carril Izquierdo", "Carril Derecho", "Fuera Derecha", "NS Derecha"};
 
 
 float p_exact = .35;
@@ -61,29 +61,35 @@ int ctrl_action = 0;
 void get_pts_left(const nav_msgs::GridCells& array)
 {
 	arr_left.cells = array.cells;
-	if (array.cells[0].x > 0)
+	if (array.cell_width > 0 && array.cells[0].x > 0) {
 		L = array.cell_width;
-	else
+	}
+	else {
 		L=0;
+	}
 }
 //gets the center points
 void get_pts_center(const nav_msgs::GridCells& array)
 {
 	arr_center.cells = array.cells;
-	if (array.cells[0].x > 0)
+	if (array.cell_width > 0 && array.cells[0].x > 0) {
 		C = array.cell_width;
-	else
+	}
+	else {
 		C=0;
+	}
 }
 
 //gets the right points
 void get_pts_right(const nav_msgs::GridCells& array)
 {
 	arr_right.cells = array.cells;
-	if (array.cells[0].x > 0)
+	if (array.cell_width > 0 && array.cells[0].x > 0) {
 		R = array.cell_width;
-	else
+	}
+	else {
 		R=0;
+	}
 }
 
 //transforms the motion into values for shift >> used before but maybe not useful anymore (290317)
@@ -133,13 +139,16 @@ float dist(geometry_msgs::Point p1, geometry_msgs::Point p2)
 //
 int det_hit (int state)
 {
+	ROS_INFO_STREAM("det hit");
 	//Determine the number of lanes seen
 	int lanes_detected = (L > 0);
 	lanes_detected = lanes_detected << 1;
 	lanes_detected = lanes_detected | C > 0;
 	lanes_detected = lanes_detected << 1;
 	lanes_detected = lanes_detected | R > 0;
-	
+
+	ROS_INFO_STREAM("lanes detected: " << lanes_detected);
+	ROS_INFO_STREAM("R: " << R << ", C: " << C << ", L: "<< L);
 	geometry_msgs::Point pt_r ;
 	geometry_msgs::Point pt_c ;
 	geometry_msgs::Point pt_l ;
@@ -189,7 +198,7 @@ int det_hit (int state)
 		if(hit) ROS_INFO_STREAM("Hit at state: " << state);
 			break;
 		case 4:
-			hit = cc && lanes_detected > 1  || rr && lanes_detected > 1 && lanes_detected < 7;
+			hit = (cc && lanes_detected > 1 ) || (rr && lanes_detected > 1 && lanes_detected < 7);
 			if(hit) ROS_INFO_STREAM("Hit at state: " << state);
 			break;
 		case 5:
@@ -217,7 +226,7 @@ int det_hit (int state)
 std_msgs::Float32MultiArray conv(std_msgs::Float32MultiArray p)
 {
 	std_msgs::Float32MultiArray q;
-
+	ROS_INFO_STREAM("conv");
 	for (int i = 0; i < NUM_STATES; ++i)
 	{	
 		ROS_INFO_STREAM("-------------------------" << i << "------------------------"); 
@@ -226,8 +235,9 @@ std_msgs::Float32MultiArray conv(std_msgs::Float32MultiArray p)
 			q.data.push_back(0.001);
 		} else {
 			bool hit = det_hit(i);
-			 ROS_INFO_STREAM(p.data[i] << " ==> " << p.data[i] * (hit * p_hit + (1-hit) * p_miss));
-			q.data.push_back(p.data[i] * (hit * p_hit + (1-hit) * p_miss));
+			double prob = p.data[i] * (hit * p_hit + (1-hit) * p_miss);
+			ROS_INFO_STREAM(p.data[i] << " ==> " << prob);
+			q.data.push_back(prob);
 		}
 	}
 
@@ -250,11 +260,7 @@ std_msgs::Float32MultiArray conv(std_msgs::Float32MultiArray p)
 std_msgs::Float32MultiArray sense(std_msgs::Float32MultiArray prob)
 {
 	std_msgs::Float32MultiArray q;
-
-	// bool hit = des_state == det_actual_state();
-
 	q = conv(prob);
-	
 	return q;
 }
 
@@ -263,16 +269,16 @@ float det_prob(int edo_ini, int ctrl_action, int edo_fin)
 	float prob = -1;
 	prob = (1 - fabs(edo_fin - edo_ini) / NUM_STATES);
 	// prob *= 0.98;
-
 	return prob;
 }
 
 std_msgs::Float32MultiArray move(std_msgs::Float32MultiArray prob)
 {
+	ROS_INFO_STREAM("move");
 	std_msgs::Float32MultiArray q;
 	for (int i = 0; i < NUM_STATES; ++i)
 	{
-		q.data.push_back(0);
+		q.data.push_back(0.0);
 	}
 	for (int edo_fin = 0; edo_fin < NUM_STATES; ++edo_fin)
 	{
@@ -337,6 +343,8 @@ int main(int argc, char** argv){
         priv_nh_.param<float>(node_name+"/alpha", alpha,12);
 
 	// ROS_INFO_STREAM("First prob: " << 1.0/(float)NUM_STATES);
+
+
 	for (int i = 0; i < NUM_STATES; ++i)
 	{
 		p.data.push_back((float) (1/(float)NUM_STATES));
@@ -353,16 +361,16 @@ int main(int argc, char** argv){
 	
 	while(nh.ok())
 	{
-		L=0;
-		R=0;
-		C=0;
-
 	    ros::spinOnce();
+	    
 	    p = sense(p);
+
 	    ROS_INFO_STREAM("Arr after sensed");
 		ROS_INFO_STREAM("[" << p.data[0] << "," << p.data[1] << "," << p.data[2] << ","<< p.data[3] << ","<< p.data[4] << ","<< p.data[5] << "," << p.data[6] << "," << p.data[7] << ","<< p.data[8] << "]");
 		ROS_INFO_STREAM("Applying movement: ");
+	    
 	    p = move(p);
+
 	    ROS_INFO_STREAM("[" << p.data[0] << "," << p.data[1] << "," << p.data[2] << ","<< p.data[3] << ","<< p.data[4] << ","<< p.data[5] << "," << p.data[6] << "," << p.data[7] << ","<< p.data[8] << "]");
 		
 	    pub_loc.publish(p);
