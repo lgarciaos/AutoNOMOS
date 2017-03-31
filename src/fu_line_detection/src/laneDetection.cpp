@@ -505,13 +505,13 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
             if(path_planned.cells[i].x < proj_image_w && path_planned.cells[i].y < proj_image_h) {
                 cv::Point pointPath = cv::Point(path_planned.cells[i].x, path_planned.cells[i].y);
                 // center, radius, color, thickness
-                cv::circle(transformedImagePaintableRansac,pointPath,2,cv::Scalar(255,255,0),-1);
+                cv::circle(transformedImagePaintableRansac,pointPath,2,cv::Scalar(200,200,0),-1);
                 ROS_INFO_STREAM("X: " << pointPath.x << ", Y: " << pointPath.y);
             }
         }
 
         cv::Point pun_des = cv::Point(punto_des.x, punto_des.y);
-        cv::circle(transformedImagePaintableRansac,pun_des,3,cv::Scalar(255,200,0),-1);
+        cv::circle(transformedImagePaintableRansac,pun_des,3,cv::Scalar(255,255,0),-1);
 
 
         pub_ransac_left.publish(array_ransac_left);

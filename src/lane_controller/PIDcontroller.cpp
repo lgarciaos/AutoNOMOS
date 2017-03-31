@@ -50,93 +50,53 @@ nav_msgs::GridCells path_planning;
 	@param pE posicion origen (del vehiculo)
 	@param p posicion destino
 */
-	double getThetaError (double pE, double p){
+double getThetaError (double pE, double p){
 	// Asumiendo 'y' = 100 fijo, que pE y p estan en unidades: pixeles
-		double x = (pE - p);
-		double theta = atan2(x,100);
-		theta = (theta * 180 / PI)/2;
-		theta = -theta;
+	double x = (pE - p);
+	double theta = atan2(x,100);
+	theta = (theta * 180 / PI)/2;
+	theta = -theta;
 	// Regresa valores entre -45 y 45 grados
 
-		return theta;
+	return theta;
 
-	}
+}
 
-	double PIDtime(double pE, double p, double dt, double max, double min, double Kp, double Kd, double Ki){
-		// ROS_INFO_STREAM("PID time");
-		double error = pE - p;
-		double pOut = Kp * error;
-		integral += error * dt;
-		double iOut = Ki * integral;
-		double derivative = (error - prevError) / dt;
-		double dOut = Kd * derivative;
-		double output = pOut + iOut + dOut;
+double PIDtime(double pE, double p, double dt, double max, double min, double Kp, double Kd, double Ki){
+	// ROS_INFO_STREAM("PID time");
+	double error = pE - p;
+	double pOut = Kp * error;
+	integral += error * dt;
+	double iOut = Ki * integral;
+	double derivative = (error - prevError) / dt;
+	double dOut = Kd * derivative;
+	double output = pOut + iOut + dOut;
 
 	// correccion en el carro
 		// output += 45; 
 
 
     // Restriction
-		if( output > max )
-			output = max;
-		else if( output < min )
-			output = min;
+	if( output > max )
+		output = max;
+	else if( output < min )
+		output = min;
 
 	// cambiar los sentidos
 	// output = 90-output;
 
-		prevError = error;
+	prevError = error;
 
-		return output;
-	}
+	return output;
+}
 
-	// void get_path(const nav_msgs::GridCells& path){
-	// 	path_planning.cells = path.cells;
-	// 	path_planning.cell_width = path.cell_width;
-
-	// 	ROS_INFO_STREAM("cells_width: " << path_planning.cell_width);
-
-	// 	if(path_planning.cell_width > 0){
-	// 		double p = 0.0;
-	// 		double pid_res = 0.0;
-	// 		std_msgs::Int16 value_motor;
-	// 		std_msgs::Int16 value_steering;
-
-
-	// 		if(path_planning.cells[0].x >= 0) {
-	// 			p = path_planning.cells[0].x;
-
-
-	// 			ROS_INFO_STREAM("PID: posPixel Esperada: " << pE << ", posPixel Actual:" << p );
-	// 			// 'p' en terminos de theta en grados de -45 a 45
-	// 			p = getThetaError(pE, p);
-
-	// 			// El servomotor del coche siempre tiene que estar en 45 grados
-	// 			pid_res = PIDtime(45, p, dt, max, min, Kp, Kd, Ki);
-
-	// 			ROS_INFO_STREAM("PID: errorTheta: " << p << ", ajustePID Actual:" << pid_res );
-
-	// 			value_motor.data = velocity;
-	// 			value_steering.data = pid_res;
-
-	// 			pub_speed.publish(value_motor); 
-	// 			pub_steering.publish(value_steering); 
-
-	// 			ROS_INFO_STREAM("velocity: " << value_motor.data << ", steering: " << value_steering.data << " )");
-	// 		}
-	// 		else{
-	// 		// talvez ir derecho
-	// 		}
-	// 	}
-	// }
-
-		void get_pathxy(const geometry_msgs::Point& point){
-		path_planning.cells = path.cells;
-		path_planning.cell_width = path.cell_width;
+void get_pathxy(const geometry_msgs::Point& point){
+		//path_planning.cells = path.cells;
+		//path_planning.cell_width = path.cell_width;
 
 		// ROS_INFO_STREAM("cells_width: " << path_planning.cell_width);
 
-		if(path_planning.cell_width > 0){
+		//if(path_planning.cell_width > 0){
 			double p = 0.0;
 			double pid_res = 0.0;
 			std_msgs::Int16 value_motor;
@@ -167,16 +127,17 @@ nav_msgs::GridCells path_planning;
 			else{
 			// talvez ir derecho
 			}
-		}
-	}
+		
+}
 
 
-	int main(int argc, char** argv){
-		// ros::init(argc, argv, "PID controller");
+int main(int argc, char** argv){
+		ros::init(argc, argv, "PID controller");
 		// ROS_INFO_STREAM("PID controller initialized");
 		ros::NodeHandle priv_nh_("~");
 	//head_time_stamp = ros::Time::now();
 		ros::NodeHandle nh;
+
 		ros::Rate loop_rate(rate_hz);
 
 		std::string node_name = ros::this_node::getName();
@@ -199,8 +160,7 @@ nav_msgs::GridCells path_planning;
 
 	// esto va mejor en el launch file
 
-		ros::Subscriber sub_path = nh.subscribe("/planning",1, &get_path);
-		ros::Subscriber sub_path = nh.subscribe("/planningxy",1, &get_pathxy);
+		ros::Subscriber sub_pathxy = nh.subscribe("/planningxy",1, &get_pathxy);
 
 		// ROS_INFO_STREAM("antes de while");
 		while (nh.ok())

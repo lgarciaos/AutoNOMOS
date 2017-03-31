@@ -7,3 +7,6 @@ logs/
 devel/lib
 devel/share
 devel/.*
+devel/_*
+devel/setup*
+devel/etc
