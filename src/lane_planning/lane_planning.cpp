@@ -76,6 +76,7 @@ void get_path(int lane){
 	path_planned.cell_height = 1;
 	path_planned.cell_width = 1;
 	path_planned.cells.clear();
+	estado = 5;
     
     if(estado >= 0){
 
