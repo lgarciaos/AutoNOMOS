@@ -72,7 +72,7 @@
     <param name="pE"          type="double" value="80.0"/>
     <param name="min"         type="double" value="0.0"/>
     <param name="max"         type="double" value="90.0"/>
-    <param name="velocity"    type="double" value="-30.0"/>
+    <param name="velocity"    type="double" value="-60.0"/>
   </node>
  
 </launch>

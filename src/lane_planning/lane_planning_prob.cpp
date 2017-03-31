@@ -8,7 +8,7 @@
 #include <std_msgs/Int16.h>
 
 #define NUM_STATES 9
-#define RADIO 3
+#define RADIO 300
 
 static const uint32_t MY_ROS_QUEUE_SIZE = 1;
 
@@ -113,15 +113,18 @@ void planning(){
 	d = v*t
 	
 	*/
-	double d = 2*M_PI*RADIO; //cm, avance de una rueda 
-	double velocity = RPM*d*60; //cm/seg
+	double d = 0.0862*RADIO; //cm, avance de una rueda 
+	double velocity = RPM*d/60; //cm/seg
 	double time = 1/rate_hz; //seg
 	double distance = velocity*time; // cm
 
 	// 1/8 mm sub-pixel resolution = 0.125 SR300 Intel
-	double distancia_pixeles = 1/8 * 1/100 * distance; //pixel_res * conversion a cm * dist_cm
+	double distancia_pixeles = distance / 66; //pixel_res * conversion a cm * dist_cm
 
-	distancia_pixeles =10;
+	if(distancia_pixeles < 2){
+		distancia_pixeles=2;
+	}	
+
 	double pix_y = proj_image_h - distancia_pixeles;
 
 
