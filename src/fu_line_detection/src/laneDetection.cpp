@@ -2,7 +2,7 @@
 
 using namespace std;
 
-#define PAINT_OUTPUT true
+// #define PAINT_OUTPUT true
 #define PUBLISH_DEBUG_OUTPUT
 
 static const uint32_t MY_ROS_QUEUE_SIZE = 1;
@@ -24,6 +24,8 @@ unsigned int head_sequence_id = 0;
 ros::Time head_time_stamp;
 std::string rgb_frame_id = "_rgb_optical_frame";
 sensor_msgs::CameraInfoPtr rgb_camera_info;
+
+geometry_msgs::Point punto_des;
 
 // try kernel width 5 for now
 const static int g_kernel1DWidth = 5;
@@ -151,6 +153,8 @@ cLaneDetectionFu::cLaneDetectionFu(ros::NodeHandle nh)
     read_images_ = nh.subscribe(nh_.resolveName(camera_name), MY_ROS_QUEUE_SIZE, &cLaneDetectionFu::ProcessInput,this);
 
     sub_planning = nh.subscribe("/planning", MY_ROS_QUEUE_SIZE, &cLaneDetectionFu::ProcessPlanning,this);
+
+    planningxy = nh.subscribe("/planningxy", MY_ROS_QUEUE_SIZE, &cLaneDetectionFu::ProcessPlanningXY,this);
 
     //publish_curvature = nh.advertise<std_msgs::Float32>("/lane_model/curvature", MY_ROS_QUEUE_SIZE);
     publish_angle = nh.advertise<std_msgs::Float32>("/lane_model/angle", MY_ROS_QUEUE_SIZE);
@@ -498,16 +502,23 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
         }
 
         for(int i=0; i<path_planned.cell_width;i++) {
-            cv::Point pointPath = cv::Point(path_planned.cells[i].x, path_planned.cells[i].y);
-            // center, radius, color, thickness
-            cv::circle(transformedImagePaintableRansac,pointPath,2,cv::Scalar(255,255,0),-1);
+            if(path_planned.cells[i].x < proj_image_w && path_planned.cells[i].y < proj_image_h) {
+                cv::Point pointPath = cv::Point(path_planned.cells[i].x, path_planned.cells[i].y);
+                // center, radius, color, thickness
+                cv::circle(transformedImagePaintableRansac,pointPath,2,cv::Scalar(255,255,0),-1);
+                ROS_INFO_STREAM("X: " << pointPath.x << ", Y: " << pointPath.y);
+            }
         }
+
+        cv::Point pun_des = cv::Point(punto_des.x, punto_des.y);
+        cv::circle(transformedImagePaintableRansac,pun_des,3,cv::Scalar(255,200,0),-1);
+
 
         pub_ransac_left.publish(array_ransac_left);
         pub_ransac_center.publish(array_ransac_center);
         pub_ransac_right.publish(array_ransac_right);
         pub_ransac_horizontal.publish(array_ransac_right);
-        
+
         pubRGBImageMsg(transformedImagePaintableRansac, image_publisher_ransac);
 
     #ifdef PAINT_OUTPUT
@@ -850,6 +861,10 @@ vector<vector<EdgePoint>> cLaneDetectionFu::scanImage(cv::Mat image, ePosition p
 void cLaneDetectionFu::ProcessPlanning(const nav_msgs::GridCells& path){
     path_planned.cell_width = path.cell_width;
     path_planned.cells = path.cells;
+}
+
+void cLaneDetectionFu::ProcessPlanningXY(const geometry_msgs::Point& path){
+    punto_des = path;
 }
 
 /* LaneMarkingDetector methods */

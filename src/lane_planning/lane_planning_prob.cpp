@@ -6,27 +6,17 @@
 #include <std_msgs/Float32MultiArray.h>
 #include <nav_msgs/GridCells.h>
 #include <std_msgs/Int16.h>
-#include <vector>
 
-#define NUM_STATES 6
-#define LEFT 0
-#define RIGHT 1
-
-#define NSI 0
-#define FI 1
-#define CI 2
-#define CD 3
-#define FD 4
-#define NSD 5
+#define NUM_STATES 9
+#define RADIO 3
 
 static const uint32_t MY_ROS_QUEUE_SIZE = 1;
 
-#define MHEIGHT 3
-
 double rate_hz = 1;
 ros::Publisher pub_path;
+ros::Publisher pub_pathxy;
 // ros::Publisher pub_lidar;
-int corte = 0;
+int RPM = 0;
 
 std::string nombre;
 
@@ -38,17 +28,17 @@ std_msgs::Float32MultiArray localizationArray;
 
 nav_msgs::GridCells path_planned;
 
-float p_exact = .5;
-float p_undershoot = .25;
-float p_overshoot = .25;
-double matrizMovimiento[MHEIGHT][NUM_STATES];
-double vectorMovimiento[MHEIGHT] = {-1,0,1};
-int future_points_x[MHEIGHT] = {50,80,110};
 geometry_msgs::Point pt_to_send;
-std_msgs::Float32MultiArray p[MHEIGHT];
 
 int estado = -1;
-std::string nombre_estado [NUM_STATES] = {"NS Izquierda", "Fuera Izquierda", "Carril Izquierdo", "Carril Derecho", "Fuera Derecha", "NS Derecha"};
+int R;
+int L;
+int C;
+int proj_image_h=0;
+int threshold_dist_y=0;
+int pixeles_cambio_estado=0;
+
+std::string nombre_estado [NUM_STATES] = {"Dont Know Left", "Out Left", "Left Left", "Left Center", "Center Center", "Right Center", "Out Right", "Dont Know Right"};
 int des_state = 3;
 
 // estados: 	 NSI,   FI,   CI,   CD,   FD, NSD
@@ -56,6 +46,7 @@ void get_pts_left(const nav_msgs::GridCells& array)
 {
 	arr_left.cells = array.cells;
 	arr_left.cell_width = array.cell_width;
+	L = array.cell_width;
 	// lines_sensed = array.cell_width > 0 ?  lines_sensed | 4 : lines_sensed | 0;
 }
 
@@ -63,6 +54,7 @@ void get_pts_center(const nav_msgs::GridCells& array)
 {
 	arr_center.cells = array.cells;
 	arr_center.cell_width = array.cell_width;
+	C = array.cell_width;
 	// lines_sensed = array.cell_width > 0 ?  lines_sensed | 2 : lines_sensed | 0;
 }
 
@@ -70,6 +62,7 @@ void get_pts_right(const nav_msgs::GridCells& array)
 {
 	arr_right.cells = array.cells;
 	arr_right.cell_width = array.cell_width;
+	R = array.cell_width;
 	// ROS_INFO_STREAM("Array: " << array);
 	// lines_sensed = array.cell_width > 0 ?  lines_sensed | 1 : lines_sensed | 0;
 }
@@ -79,87 +72,157 @@ void get_des_state(const std_msgs::Int16& val)
 	des_state = val.data;
 }
 
+
+
 void planning(){
-	// TODO
-}
-
-std_msgs::Float32MultiArray move(std_msgs::Float32MultiArray prob, int movement)
-{
-	std_msgs::Float32MultiArray q;
-	int pos, pos_exact, pos_undershoot, pos_overshoot;
-	float s;
-	ROS_INFO_STREAM("Moving: " << movement);
-
-	for (int i = 0; i < NUM_STATES; ++i)
-	{
-		pos_exact      = (i - movement) % NUM_STATES;
-		pos_undershoot = (i - movement - 1 + NUM_STATES) % NUM_STATES;
-		pos_overshoot  = (i - movement + 1) % NUM_STATES;
-		
-		s = p_exact * prob.data[pos_exact];
-		s += p_undershoot * prob.data[pos_undershoot];
-		s += p_overshoot * prob.data[pos_overshoot];
-		// ROS_INFO_STREAM("i: " << i <<"\ts: " << s << "\tpe: " << pos_exact << "\tpu: " << pos_undershoot << "\tpo: " << pos_overshoot);
-		q.data.push_back(s);
-	}
-	// if(movement == 0){
-	// ROS_INFO_STREAM("prob: " << prob);
-	// ROS_INFO_STREAM("q: " << q);
-	// ROS_BREAK();
-	// }
-	return q;
-}
-
-// void move(std_msgs::Float32MultiArray& prob)
-// {
-// 	int pos, pos_exact, pos_undershoot, pos_overshoot;
-// 	float s;
-	
-	
-// 	for (int m=0;m<MHEIGHT;m++){
-// 		double movement = vectorMovimiento[m];
-// 		ROS_INFO_STREAM("Moving: " << movement);
-// 		for (int i = 0; i < NUM_STATES; ++i)
-// 		{
-// 			pos = i - movement;
-// 			pos_exact      = (pos) % NUM_STATES;
-// 			pos_undershoot = (pos - 1) % NUM_STATES;
-// 			pos_overshoot  = (pos + 1) % NUM_STATES;
-			
-// 			s = p_exact * localizationArray.data[pos_exact];
-// 			s += p_undershoot * localizationArray.data[pos_undershoot];
-// 			s += p_overshoot * localizationArray.data[pos_overshoot];
-
-// 			matrizMovimiento[m][i] = s;
-// 		}
-// 	}
-// }
 /*
-void move(std_msgs::Float32MultiArray& prob)
-{
-	int pos, pos_exact, pos_undershoot, pos_overshoot;
-	float s;
-	
-	
-	for (int m=0;m<MHEIGHT;m++){
-		double movement = vectorMovimiento[m];
-		ROS_INFO_STREAM("Moving: " << movement);
-		for (int i = 0; i < NUM_STATES; ++i)
-		{
-			pos = i - movement;
-			pos_exact      = (pos) % NUM_STATES;
-			pos_undershoot = (pos - 1) % NUM_STATES;
-			pos_overshoot  = (pos + 1) % NUM_STATES;
-			
-			s = p_exact * localizationArray.data[pos_exact];
-			s += p_undershoot * localizationArray.data[pos_undershoot];
-			s += p_overshoot * localizationArray.data[pos_overshoot];
+	#define DKL 0
+	#define OL 1
+	#define LL 2
+	#define LC 3
+	#define CC 4
+	#define RC 5
+	#define RR 6
+	#define OR 7
+	#define DKR 8
+*/
 
-			matrizMovimiento[m][i] = s;
+	// tengo que enviar el control, (theta, velocidad), basado en el centro del estado en el que estoy @estado y en el que quiero estar @des_state
+	// el estado en el que estoy me lo da localization_array
+	// el estado en el que quiero estar me lo da una maquina de estados arriba
+
+	// tengo que estimar la posicion del estado en el que quiero estar utilizando ransac
+	// la linea central es la mas confiable, pero deberia poder obtener la coordenada aunque no vea lineas
+
+	//Determine the number of lanes seen
+	int lanes_detected = (L > 0);
+	lanes_detected = lanes_detected << 1;
+	lanes_detected = lanes_detected | C > 0;
+	lanes_detected = lanes_detected << 1;
+	lanes_detected = lanes_detected | R > 0;
+
+	/*
+
+	distance covered in one rotation
+	r = 3cm
+	d = 2*pi*r
+
+	RPM = 30
+	velocity by minute
+	v = RPM*d / 60  // cm/seg
+	t = 1/rate; //segundos
+
+	d = v*t
+	
+	*/
+	double d = 2*M_PI*RADIO; //cm, avance de una rueda 
+	double velocity = RPM*d*60; //cm/seg
+	double time = 1/rate_hz; //seg
+	double distance = velocity*time; // cm
+
+	// 1/8 mm sub-pixel resolution = 0.125 SR300 Intel
+	double distancia_pixeles = 1/8 * 1/100 * distance; //pixel_res * conversion a cm * dist_cm
+
+	distancia_pixeles =10;
+	double pix_y = proj_image_h - distancia_pixeles;
+
+
+	ROS_INFO_STREAM("Pixeles para sig mov: " << distancia_pixeles << ", y:" << pix_y);
+
+	geometry_msgs::Point pt_est_Actual;
+	path_planned.cell_height = 1;
+	path_planned.cell_width = 1;
+	path_planned.cells.clear();
+
+	// obtener coordenada del estado actual en el futuro, de acuerdo a la velocidad a la que voy
+	double X_centro = 0;
+	int diferencia_x=0;
+	bool encontrado = false;
+	ROS_INFO_STREAM("Estado: " << estado);
+	int mov_estado_futuro = 0; // para saber si la coordenada que me ayuda a obtener el centro pertenece a otro estado
+	if(C>0 && arr_center.cells[0].x > 0) {
+		// se podria obtener con los polinomios de ransac directo
+		if(L>0 && arr_left.cells[0].x > 0){
+			for(int i=0; i<C;i++){
+				if(abs(arr_center.cells[i].y - pix_y) < threshold_dist_y){
+					//diferencia_x = (arr_center.cells[i].x);
+					mov_estado_futuro-=2; // la coordenada que estoy obteniendo es de 2 estados a la izquierda
+					X_centro = (arr_center.cells[i].x+arr_left.cells[i].x)/2;
+		            
+		            pt_est_Actual.y = arr_center.cells[i].y;
+		            pt_est_Actual.z = 0;
+		            encontrado = true;
+		            break;
+		        }
+			}
+		}
+		else if(R>0 && arr_right.cells[0].x > 0){
+			for(int i=0; i<C;i++){
+				if(abs(arr_center.cells[i].y - pix_y) < threshold_dist_y){
+					//diferencia_x = pixeles_cambio_estado/2;
+					X_centro = (arr_center.cells[i].x+arr_right.cells[i].x)/2;
+	            	pt_est_Actual.y = arr_center.cells[i].y;
+	            	pt_est_Actual.z = 0;
+	            	encontrado = true;
+	            	break;
+				}
+			}
 		}
 	}
+
+	if(encontrado){
+		pt_est_Actual.x = X_centro + diferencia_x;
+		ROS_INFO_STREAM("Estado acual en el futuro: (" << pt_est_Actual.x << ", " << pt_est_Actual.y << ")");
+
+		// obtener la coordenada de los demas estados en el futuro
+		// TODO angulo siguiente movimiento
+		
+		double dif_estado_futuro = 80 + (mov_estado_futuro)*pixeles_cambio_estado;
+
+		double y_ang = proj_image_h-pt_est_Actual.y;
+		double x_ang = pt_est_Actual.x-dif_estado_futuro;
+		ROS_INFO_STREAM("Coord angulo (" << x_ang << "," << y_ang << ") ");
+
+		double angulo_mismo_estado = atan2(y_ang, x_ang); // grados del estado actual al futuro
+		double angulo_rotacion = angulo_mismo_estado - M_PI/2;
+		ROS_INFO_STREAM("Angulo mismo estado: " << angulo_mismo_estado*180/M_PI);
+		ROS_INFO_STREAM("Angulo rotacion: " << angulo_rotacion*180/M_PI);
+		// coordenadas de estados actuales
+		
+
+		double r00 = cos(angulo_rotacion);
+		double r01 = sin(angulo_rotacion);
+		double r10 = -sin(angulo_rotacion);
+		double r11 = cos(angulo_rotacion);
+
+		// rotar @angulo_mismo_estado
+		path_planned.cell_width = NUM_STATES;
+		path_planned.cell_height = 1;
+		path_planned.cells.clear();
+		geometry_msgs::Point pt;
+		for(int i=0;i<NUM_STATES;i++){
+			double x = (i-(estado+mov_estado_futuro))*pixeles_cambio_estado;
+			double y = 0;
+
+			pt.x=x*r00+y*r01 + pt_est_Actual.x;
+			pt.y=x*r10+y*r11 + pt_est_Actual.y;
+			pt.z=0;
+
+			path_planned.cells.push_back(pt);
+
+			ROS_INFO_STREAM("Estado: " <<i << " centro: (" << pt.x << ", " << pt.y << ")");
+		}
+
+		pub_path.publish(path_planned);
+		// estado fijo carril central 5
+		pub_pathxy.publish(path_planned.cells[5]);
+	}
+
+	// obtener el angulo del estado actual al estado deseado
 }
-*/
+
+
+
 void get_localization(const std_msgs::Float32MultiArray& locArray) {
 	// detectar estado de mayor probabilidad para imprimirlo
 
@@ -179,171 +242,9 @@ void get_localization(const std_msgs::Float32MultiArray& locArray) {
 	 	}
 	}
 }
-int det_next_state()
-{
-	// if (pt_x_l < pt_x_des) //ransac izq esta a la izq del pt izq
-	// 		{
-	// 			next_state = -1; //estaria a un edo a la izq
-	// 		} else if ( pt_)
-}
-int det_hit(int state, int pt_x_des)
-{
-	// int hit;
-	// int pt_x_r = 0, pt_x_c = 0, pt_x_l = 0;
-	// int next_state;
-	// pt_x_r = det_point(arr_right);
-	// pt_x_c = det_point(arr_center);
-	// pt_x_l = det_point(arr_left);
-			
-	// switch(pt_x_des)
-	// {
-	// 	case future_points[0]:
-	// 		//determinar pto carril izq
-	// 		det_next_state();
-	// 		break;
-	// 	case future_points[1]:
-	// 		break;
-	// 	case future_points[2]:
-	// 		break;
-
-	// }
 
 
 
-
-
-
-
-	// int lanes_detected = (L > 0);
-	// lanes_detected = lanes_detected << 1;
-	// lanes_detected = lanes_detected | C > 0;
-	// lanes_detected = lanes_detected << 1;
-	// lanes_detected = lanes_detected | R > 0;
-
-	// int hit;
-	// switch(lanes_detected)
-	// {
-	// 	case 0: 
-	// 		//estado actual depende si estoy más cerca de NI o ND
-	// 		hit = state == 0 || state == 5;  
-	// 		break;
-	// 	case 1: 
-	// 		hit = state == 1 ;//|| state == 2 || state == 3;
-	// 		break;
-	// 	case 2: 
-	// 		hit = state == 2 || state == 4;
-	// 		break;
-	// 	case 3: 
-	// 		hit = state == 2 ;//|| state == 3 || state == 4;
-	// 		break;
-	// 	case 4:
-	// 		hit = state == 4; // || state == 3; 
-	// 		break;
-	// 	case 5: 
-	// 		hit = state == 3;
-	// 		break;
-	// 	case 6: 
-	// 		hit = state == 4 ;// || state == 3;
-	// 		break;
-	// 	case 7: 
-	// 		hit = state == 3;
-	// 		break;		
-	// }
-	// ROS_INFO_STREAM("lanes: " << lanes_detected << "\tstate:" << state << "\thit" << hit);
-	// return hit;
-}
-
-std_msgs::Float32MultiArray conv(std_msgs::Float32MultiArray p, int state_to_sense)
-{
-	std_msgs::Float32MultiArray q;
-
-	// for (int i = 0; i < NUM_STATES; ++i)
-	// {
-	// 	if (p.data[i] < 0.001)
-	// 	{
-	// 		q.data.push_back(0.001);
-	// 	} else {
-	// 		bool hit = det_hit(i, state_to_sense);
-	// 		// ROS_INFO_STREAM(p.data[i] << " ==> " << p.data[i] * (hit * p_hit + (1-hit) * p_miss));
-	// 		q.data.push_back(p.data[i] * (hit * p_hit + (1-hit) * p_miss));
-	// 	}
-	// }
-
-	// // normalizacion
-	// float sum = 0;
-	// for (int i = 0; i < NUM_STATES; ++i)
-	// {
-	// 	sum += q.data[i];
-	// }
-	// for (int i = 0; i < NUM_STATES; ++i)
-	// {
-	// 	q.data[i] /= sum;
-	// }
-
-	return q;
-}
-
-
-std_msgs::Float32MultiArray sense(std_msgs::Float32MultiArray prob, int state_to_sense)
-{
-	std_msgs::Float32MultiArray q;
-
-	q = conv(prob, state_to_sense);
-	
-	return q;
-}
-
-void estimate_move()
-{
-	for (int i = 0; i < MHEIGHT; ++i)
-	{
-		// ROS_INFO_STREAM("estimate_move: " <<  i);
-		// ROS_INFO_STREAM("printing..." << p[i]);
-		// ROS_INFO_STREAM("done?");
-		p[i] = move(localizationArray, vectorMovimiento[i]);
-	}
-}
-
-void estimate_next_state()
-{
-	for (int i = 0; i < MHEIGHT; ++i)
-	{
-		p[i] = sense(p[i], vectorMovimiento[i]);
-	}
-}
-
-int det_next_move()
-{	
-	float max = 0;
-	int  next_ctrl = -1;
-	for (int i = 0; i < MHEIGHT; ++i)
-	{
-		if (max < p[i].data[des_state])
-		{
-			ROS_INFO_STREAM("max: "<< max << "\tnext_ctrl: " << next_ctrl) ;
-			max = p[i].data[des_state];
-			next_ctrl = i;
-		}
-	}
-
-	ROS_INFO_STREAM("max: "<< max << "\tnext_ctrl: " << next_ctrl) ;
-	// ROS_ASSERT(res != -1);
-	return future_points_x[next_ctrl];
-
-}
-
-void init_p()
-{	
-	for (int i = 0; i < MHEIGHT; ++i)
-	{
-		for (int j = 0; j < NUM_STATES; ++j)
-		{
-			p[i].data.push_back((float) (1/(float)NUM_STATES));
-		}
-		ROS_INFO_STREAM("p[" << i << "]: " << p[i]);
-	}
-
-}
 
 
 int main(int argc, char** argv){
@@ -351,25 +252,28 @@ int main(int argc, char** argv){
 	ROS_INFO_STREAM("lane_planning_node initialized");
 	ros::NodeHandle nh;
 	ros::NodeHandle priv_nh_("~");
-	ros::Rate loop_rate(rate_hz);
+	
 
 	std::string node_name = ros::this_node::getName();
 
-	priv_nh_.param<int>(node_name+"/corte", corte, 140);
+	priv_nh_.param<int>(node_name+"/RPM", RPM, -30);
+	priv_nh_.param<double>(node_name+"/rate", rate_hz, 10.0);
+	priv_nh_.param<int>(node_name+"/proj_image_h", proj_image_h, 160);
+	priv_nh_.param<int>(node_name+"/threshold_dist_y", threshold_dist_y, 10);
+	priv_nh_.param<int>(node_name+"/pixeles_cambio_estado", pixeles_cambio_estado, 33);
 
 	pub_path = nh.advertise<nav_msgs::GridCells>("/planning", rate_hz);
+	pub_pathxy = nh.advertise<geometry_msgs::Point>("/planningxy", rate_hz);
 	
 	ros::Subscriber sub_pts_left = nh.subscribe("/points/ransac_left",1, &get_pts_left);
 	ros::Subscriber sub_pts_center = nh.subscribe("/points/ransac_center",1, &get_pts_center);
 	ros::Subscriber sub_pts_right = nh.subscribe("/points/ransac_right",1, &get_pts_right);
+
 	ros::Subscriber sub_localization = nh.subscribe("/localization_array",1, &get_localization);
-	ros::Subscriber sub_des_state = nh.subscribe("/desire_state",1, get_des_state);
+
+	ros::Subscriber sub_des_state = nh.subscribe("/planning/desire_state",1, get_des_state);
 	
-	init_p();
-	ROS_INFO_STREAM("p[0];" << p[0]);
-	loop_rate.sleep();
-	loop_rate.sleep();
-	loop_rate.sleep();
+	ros::Rate loop_rate(rate_hz);
 	while(nh.ok())
 	{
 		
@@ -381,22 +285,22 @@ int main(int argc, char** argv){
 	    // ROS_INFO_STREAM("at 3");
 	    // estimate_next_state();
 	    // ROS_INFO_STREAM("at 4");
-	    estimate_move();
+	    planning();
 	    // ROS_INFO_STREAM("at 5");
-	    det_next_move();
-	    ROS_INFO_STREAM("locArr" << localizationArray);
-	    ROS_INFO_STREAM("next p" << p[0]);
-	    ROS_INFO_STREAM("next p" << p[1]);
-	    ROS_INFO_STREAM("next p" << p[2]);
+	    // ROS_INFO_STREAM("locArr" << localizationArray);
+
+
+	    
+	    //ROS_INFO_STREAM("next p" << p[0]);
+	    //ROS_INFO_STREAM("next p" << p[1]);
+	    //ROS_INFO_STREAM("next p" << p[2]);
 	    // ROS_INFO_STREAM("at 6");
-	    pt_to_send.x = det_next_move();
-	    pt_to_send.y = 100;
-	    ROS_INFO_STREAM("Moving to: (" << pt_to_send.x << " , " << pt_to_send.y << " )" ) ; 
-	    pt_to_send.z = 0;
-	    path_planned.cell_width = 1;
-	    path_planned.cell_height = 1;
-	    path_planned.cells.push_back(pt_to_send);
-	    pub_path.publish(path_planned);
+	    
+	    // pt_to_send.x = det_next_move();
+	    // pt_to_send.y = 100;
+	    // ROS_INFO_STREAM("Moving to: (" << pt_to_send.x << " , " << pt_to_send.y << " )" ) ; 
+	    // pt_to_send.z = 0;
+	    
 	    loop_rate.sleep();
 	}
 	return 0;

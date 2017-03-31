@@ -82,6 +82,7 @@ class cLaneDetectionFu
         // subscribers
         ros::Subscriber read_images_;
         ros::Subscriber sub_planning;
+        ros::Subscriber planningxy;
 
         // publishers
         //ros::Publisher publish_images;
@@ -296,6 +297,8 @@ class cLaneDetectionFu
         void ProcessInput(const sensor_msgs::Image::ConstPtr& msg);
 
         void ProcessPlanning(const nav_msgs::GridCells& path);
+
+        void ProcessPlanningXY(const geometry_msgs::Point& path);
         
         void pubRGBImageMsg(cv::Mat& rgb_mat, image_transport::CameraPublisher publisher);
 

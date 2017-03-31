@@ -52,15 +52,19 @@
     
   </node>
 
-  <node name="lane_states_node" pkg="lane_states_original" type="lane_states_node" output="screen" >
+  <node name="lane_states_node" pkg="lane_states_original" type="lane_states_node" >
 	<param name="alpha"	type="double" value="12"/>
   </node>
 
   <node name="lane_planning_prob_node" pkg="lane_planning" type="lane_planning_prob_node" output="screen" >
-    <param name="corte"          type="int" value="90"/>
+    <param name="RPM"              type="int" value="-30"/>
+    <param name="rate"             type="double" value="10.0"/>
+    <param name="proj_image_h"     type="int" value="160"/>
+    <param name="threshold_dist_y" type="int" value="10"/>
+    <param name="pixeles_cambio_estado" type="int" value="16"/>
   </node> 
   
-  <node name="lane_controller_node" pkg="lane_controller" type="lane_controller_node" output="screen" > 
+  <node name="lane_controller_node" pkg="lane_controller" type="lane_controller_node" > 
     <param name="Kp"          type="double" value="0.8"/>
     <param name="Ki"          type="double" value="0"/>
     <param name="Kd"          type="double" value="0.2"/>
