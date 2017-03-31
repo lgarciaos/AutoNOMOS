@@ -61,20 +61,29 @@ int ctrl_action = 0;
 void get_pts_left(const nav_msgs::GridCells& array)
 {
 	arr_left.cells = array.cells;
-	L = array.cell_width;
+	if (array.cells[0].x > 0)
+		L = array.cell_width;
+	else
+		L=0;
 }
 //gets the center points
 void get_pts_center(const nav_msgs::GridCells& array)
 {
 	arr_center.cells = array.cells;
-	C = array.cell_width;
+	if (array.cells[0].x > 0)
+		C = array.cell_width;
+	else
+		C=0;
 }
 
 //gets the right points
 void get_pts_right(const nav_msgs::GridCells& array)
 {
 	arr_right.cells = array.cells;
-	R = array.cell_width;
+	if (array.cells[0].x > 0)
+		R = array.cell_width;
+	else
+		R=0;
 }
 
 //transforms the motion into values for shift >> used before but maybe not useful anymore (290317)

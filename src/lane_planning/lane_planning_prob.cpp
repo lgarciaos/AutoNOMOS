@@ -46,7 +46,10 @@ void get_pts_left(const nav_msgs::GridCells& array)
 {
 	arr_left.cells = array.cells;
 	arr_left.cell_width = array.cell_width;
-	L = array.cell_width;
+	if (array.cells[0].x > 0)
+		L = array.cell_width;
+	else
+		L=0;
 	// lines_sensed = array.cell_width > 0 ?  lines_sensed | 4 : lines_sensed | 0;
 }
 
@@ -54,7 +57,10 @@ void get_pts_center(const nav_msgs::GridCells& array)
 {
 	arr_center.cells = array.cells;
 	arr_center.cell_width = array.cell_width;
-	C = array.cell_width;
+	if (array.cells[0].x > 0)
+		C = array.cell_width;
+	else
+		C=0;
 	// lines_sensed = array.cell_width > 0 ?  lines_sensed | 2 : lines_sensed | 0;
 }
 
@@ -62,7 +68,10 @@ void get_pts_right(const nav_msgs::GridCells& array)
 {
 	arr_right.cells = array.cells;
 	arr_right.cell_width = array.cell_width;
-	R = array.cell_width;
+	if (array.cells[0].x > 0)
+		R = array.cell_width;
+	else
+		R=0;
 	// ROS_INFO_STREAM("Array: " << array);
 	// lines_sensed = array.cell_width > 0 ?  lines_sensed | 1 : lines_sensed | 0;
 }
@@ -140,6 +149,7 @@ void planning(){
 	// 5 |  1  |  0  |  1
 	// 6 |  1  |  1  |  0
 	// 7 |  1  |  1  |  1
+	ROS_INFO_STREAM("lanes detected: " << lanes_detected);
 	switch(lanes_detected){
 		case 0:
 			// TODO que hace cuando no ve nada
@@ -147,19 +157,8 @@ void planning(){
 		case 1:
 		case 2:
 		case 4:
-			if(C>0 && arr_center.cells[0].x > 0) {
-				for(int i=0; i<C;i++){
-					if(abs(arr_center.cells[i].y - pix_y) < threshold_dist_y){
-						diferencia_x = pixeles_cambio_estado;
-						X_centro = (arr_center.cells[i].x);
-			            pt_est_Actual.y = arr_center.cells[i].y;
-			            pt_est_Actual.z = 0;
-			            encontrado = true;
-			            break;
-			        }
-				}
-			}
-			else if(L>0 && arr_left.cells[0].x > 0){
+			
+			if(L>0){
 				for(int i=0; i<L;i++){
 					if(abs(arr_left.cells[i].y - pix_y) < threshold_dist_y){
 						diferencia_x = pixeles_cambio_estado;
@@ -172,7 +171,19 @@ void planning(){
 			        }
 				}
 			}
-			else if(R>0 && arr_right.cells[0].x > 0){
+			else if(C>0) {
+				for(int i=0; i<C;i++){
+					if(abs(arr_center.cells[i].y - pix_y) < threshold_dist_y){
+						diferencia_x = pixeles_cambio_estado;
+						X_centro = (arr_center.cells[i].x);
+			            pt_est_Actual.y = arr_center.cells[i].y;
+			            pt_est_Actual.z = 0;
+			            encontrado = true;
+			            break;
+			        }
+				}
+			}
+			else if(R>0){
 				for(int i=0; i<R;i++){
 					if(abs(arr_right.cells[i].y - pix_y) < threshold_dist_y){
 						diferencia_x = -pixeles_cambio_estado;
@@ -188,9 +199,9 @@ void planning(){
 		case 3:
 		case 6:
 		case 7:
-			if(C>0 && arr_center.cells[0].x > 0) {
+			if(C>0) {
 				// se podria obtener con los polinomios de ransac directo
-				if(L>0 && arr_left.cells[0].x > 0){
+				if(L>0){
 					for(int i=0; i<C;i++){
 						if(abs(arr_center.cells[i].y - pix_y) < threshold_dist_y){
 							//diferencia_x = (arr_center.cells[i].x);
@@ -204,7 +215,7 @@ void planning(){
 				        }
 					}
 				}
-				else if(R>0 && arr_right.cells[0].x > 0){
+				else if(R>0){
 					for(int i=0; i<C;i++){
 						if(abs(arr_center.cells[i].y - pix_y) < threshold_dist_y){
 							//diferencia_x = pixeles_cambio_estado/2;
@@ -219,7 +230,7 @@ void planning(){
 			}
 			break;
 		case 5:
-			if(L>0 && arr_left.cells[0].x > 0){
+			if(L>0){
 				for(int i=0; i<L;i++){
 					if(abs(arr_left.cells[i].y - pix_y) < threshold_dist_y){
 						diferencia_x = pixeles_cambio_estado;
@@ -232,7 +243,7 @@ void planning(){
 			        }
 				}
 			}
-			else if(R>0 && arr_right.cells[0].x > 0){
+			else if(R>0){
 				for(int i=0; i<R;i++){
 					if(abs(arr_right.cells[i].y - pix_y) < threshold_dist_y){
 						diferencia_x = -pixeles_cambio_estado;
@@ -244,7 +255,6 @@ void planning(){
 					}
 				}
 			}
-			break;
 			break;
 	}
 
