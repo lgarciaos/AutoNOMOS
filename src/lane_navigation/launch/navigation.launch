@@ -52,7 +52,7 @@
     
   </node>
 
-  <node name="lane_states_node" pkg="lane_states_original" type="lane_states_node" output="screen" >
+  <node name="lane_states_node" pkg="lane_states_original" type="lane_states_node" >
 	<param name="alpha"	type="double" value="12"/>
   </node>
 
@@ -64,10 +64,10 @@
     <param name="pixeles_cambio_estado" type="int" value="16"/>
   </node> 
   
-  <node name="lane_controller_node" pkg="lane_controller" type="lane_controller_node"  > 
+  <node name="lane_controller_node" pkg="lane_controller" type="lane_controller_node" output="screen"  > 
     <param name="Kp"          type="double" value="0.8"/>
-    <param name="Ki"          type="double" value="0"/>
-    <param name="Kd"          type="double" value="0.2"/>
+    <param name="Ki"          type="double" value="0.2"/>
+    <param name="Kd"          type="double" value="0"/>
     <param name="dt"          type="double" value="1.0"/>
     <param name="pE"          type="double" value="80.0"/>
     <param name="min"         type="double" value="0.0"/>

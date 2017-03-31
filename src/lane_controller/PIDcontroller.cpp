@@ -53,8 +53,8 @@ nav_msgs::GridCells path_planning;
 double getThetaError (double pActual, double pEsperada){
 	// Asumiendo 'y' = 100 fijo, que pE y p estan en unidades: pixeles
 	double x = (pActual - pEsperada);
-	double theta = atan2(x,100);
-	theta = (theta * 180 / PI)/2; // quite el /2
+	double theta = atan2(100,x);
+	theta = (theta * 180 / PI); // quite el /2
 	// theta = -theta; // por correccion con el carro 90 es izquierda
 	// Regresa valores entre -45 y 45 grados
 
@@ -106,9 +106,9 @@ void get_pathxy(const geometry_msgs::Point& point){
 				p = getThetaError(posActual, posEsp);
 
 				// El servomotor del coche siempre tiene que estar en 45 grados
-				pid_res = PIDtime(45, p, dt, max, min, Kp, Kd, Ki);
+				pid_res = PIDtime(90, p, dt, max, min, Kp, Kd, Ki);
 
-				// pid_res = 45 + pid_res; // por detalle con el carro de los angulos
+				pid_res = 45 + pid_res; // por detalle con el carro de los angulos
 
 				// Restriction
 				if( pid_res > max )
