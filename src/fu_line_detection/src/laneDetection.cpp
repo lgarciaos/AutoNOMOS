@@ -11,6 +11,8 @@ static const uint32_t MY_ROS_QUEUE_SIZE = 1;
 
 #define RATE_HZ 30
 
+#define NUM_STATES 9 
+
 image_transport::CameraPublisher image_publisher;
 image_transport::CameraPublisher image_publisher_ransac;
 image_transport::CameraPublisher image_publisher_lane_markings;
@@ -153,6 +155,7 @@ cLaneDetectionFu::cLaneDetectionFu(ros::NodeHandle nh)
     read_images_ = nh.subscribe(nh_.resolveName(camera_name), MY_ROS_QUEUE_SIZE, &cLaneDetectionFu::ProcessInput,this);
 
     sub_planning = nh.subscribe("/planning", MY_ROS_QUEUE_SIZE, &cLaneDetectionFu::ProcessPlanning,this);
+    sub_localization = nh.subscribe("/localization_array", MY_ROS_QUEUE_SIZE, &cLaneDetectionFu::get_localization, this);
 
     planningxy = nh.subscribe("/planningxy", MY_ROS_QUEUE_SIZE, &cLaneDetectionFu::ProcessPlanningXY,this);
 
@@ -501,17 +504,23 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
             }
         }
 
+        // PLANEACION
         for(int i=0; i<path_planned.cell_width;i++) {
-            if(path_planned.cells[i].x < proj_image_w && path_planned.cells[i].y < proj_image_h) {
+            if(path_planned.cells[i].x < proj_image_w && path_planned.cells[i].y + 6 < proj_image_h) {
                 cv::Point pointPath = cv::Point(path_planned.cells[i].x, path_planned.cells[i].y);
+                cv::Point pointText = cv::Point(path_planned.cells[i].x, path_planned.cells[i].y + 6);
+                cv::Point pointTextEstado = cv::Point(80, 155);
+
                 // center, radius, color, thickness
                 cv::circle(transformedImagePaintableRansac,pointPath,2,cv::Scalar(200,200,0),-1);
-                ROS_INFO_STREAM("X: " << pointPath.x << ", Y: " << pointPath.y);
+                cv::putText(transformedImagePaintableRansac,std::to_string(i),pointText,FONT_HERSHEY_SIMPLEX,.4,cv::Scalar(0,221,237));
+                cv::putText(transformedImagePaintableRansac,std::to_string(estado),pointTextEstado,FONT_HERSHEY_SIMPLEX,.4,cv::Scalar(200,221,0));
+                // ROS_INFO_STREAM("X: " << pointPath.x << ", Y: " << pointPath.y);
             }
         }
 
         cv::Point pun_des = cv::Point(punto_des.x, punto_des.y);
-        cv::circle(transformedImagePaintableRansac,pun_des,3,cv::Scalar(255,255,0),-1);
+        cv::circle(transformedImagePaintableRansac,pun_des,3,cv::Scalar(0,221,237),-1);
 
 
         pub_ransac_left.publish(array_ransac_left);
@@ -865,6 +874,24 @@ void cLaneDetectionFu::ProcessPlanning(const nav_msgs::GridCells& path){
 
 void cLaneDetectionFu::ProcessPlanningXY(const geometry_msgs::Point& path){
     punto_des = path;
+}
+
+void cLaneDetectionFu::get_localization(const std_msgs::Float32MultiArray& locArray) {
+    // detectar estado de mayor probabilidad para imprimirlo
+
+    float max=0;
+    for(int i=0;i<NUM_STATES;i++){
+        if(locArray.data[i]>max){
+            max=locArray.data[i];
+        }
+    }
+
+    for(int i=0;i<NUM_STATES;i++){
+        if(locArray.data[i]==max){
+            // ROS_INFO_STREAM("Estas en:" << nombre_estado[i]);
+            estado = i;
+        }
+    }
 }
 
 /* LaneMarkingDetector methods */

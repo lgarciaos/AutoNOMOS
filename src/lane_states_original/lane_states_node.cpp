@@ -274,7 +274,6 @@ float det_prob(int edo_ini, int ctrl_action, int edo_fin)
 
 std_msgs::Float32MultiArray move(std_msgs::Float32MultiArray prob)
 {
-	ROS_INFO_STREAM("move");
 	std_msgs::Float32MultiArray q;
 	for (int i = 0; i < NUM_STATES; ++i)
 	{
@@ -367,11 +366,11 @@ int main(int argc, char** argv){
 
 	    ROS_INFO_STREAM("Arr after sensed");
 		ROS_INFO_STREAM("[" << p.data[0] << "," << p.data[1] << "," << p.data[2] << ","<< p.data[3] << ","<< p.data[4] << ","<< p.data[5] << "," << p.data[6] << "," << p.data[7] << ","<< p.data[8] << "]");
-		ROS_INFO_STREAM("Applying movement: ");
+		//ROS_INFO_STREAM("Applying movement: ");
 	    
-	    p = move(p);
+	    // p = move(p);
 
-	    ROS_INFO_STREAM("[" << p.data[0] << "," << p.data[1] << "," << p.data[2] << ","<< p.data[3] << ","<< p.data[4] << ","<< p.data[5] << "," << p.data[6] << "," << p.data[7] << ","<< p.data[8] << "]");
+	    // ROS_INFO_STREAM("[" << p.data[0] << "," << p.data[1] << "," << p.data[2] << ","<< p.data[3] << ","<< p.data[4] << ","<< p.data[5] << "," << p.data[6] << "," << p.data[7] << ","<< p.data[8] << "]");
 		
 	    pub_loc.publish(p);
 

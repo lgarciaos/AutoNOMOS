@@ -35,6 +35,7 @@ THIS SOFTWARE IS PROVIDED BY AUDI AG AND CONTRIBUTORS “AS IS” AND ANY EXPRESS OR
 #include <ros/ros.h>
 #include <sensor_msgs/Image.h>
 #include <std_msgs/Float32.h>
+#include <std_msgs/Float32MultiArray.h>
 #include <sensor_msgs/image_encodings.h>
 #include <cv_bridge/cv_bridge.h>
 #include <opencv2/imgproc/imgproc.hpp>
@@ -83,6 +84,7 @@ class cLaneDetectionFu
         ros::Subscriber read_images_;
         ros::Subscriber sub_planning;
         ros::Subscriber planningxy;
+        ros::Subscriber sub_localization;
 
         // publishers
         //ros::Publisher publish_images;
@@ -125,6 +127,8 @@ class cLaneDetectionFu
         int polyY1;
         int polyY2;
         int polyY3;
+
+        int estado;
         
 
         /**
@@ -363,6 +367,8 @@ class cLaneDetectionFu
         ePosition maxProportion();
 
         void config_callback(line_detection_fu::LaneDetectionConfig &config, uint32_t level);
+
+        void get_localization(const std_msgs::Float32MultiArray& locArray);
         
 };
 
