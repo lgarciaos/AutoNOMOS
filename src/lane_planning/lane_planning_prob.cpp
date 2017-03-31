@@ -75,17 +75,6 @@ void get_des_state(const std_msgs::Int16& val)
 
 
 void planning(){
-/*
-	#define DKL 0
-	#define OL 1
-	#define LL 2
-	#define LC 3
-	#define CC 4
-	#define RC 5
-	#define RR 6
-	#define OR 7
-	#define DKR 8
-*/
 
 	// tengo que enviar el control, (theta, velocidad), basado en el centro del estado en el que estoy @estado y en el que quiero estar @des_state
 	// el estado en el que estoy me lo da localization_array
@@ -140,35 +129,126 @@ void planning(){
 	bool encontrado = false;
 	ROS_INFO_STREAM("Estado: " << estado);
 	int mov_estado_futuro = 0; // para saber si la coordenada que me ayuda a obtener el centro pertenece a otro estado
-	if(C>0 && arr_center.cells[0].x > 0) {
-		// se podria obtener con los polinomios de ransac directo
-		if(L>0 && arr_left.cells[0].x > 0){
-			for(int i=0; i<C;i++){
-				if(abs(arr_center.cells[i].y - pix_y) < threshold_dist_y){
-					//diferencia_x = (arr_center.cells[i].x);
-					mov_estado_futuro-=2; // la coordenada que estoy obteniendo es de 2 estados a la izquierda
-					X_centro = (arr_center.cells[i].x+arr_left.cells[i].x)/2;
-		            
-		            pt_est_Actual.y = arr_center.cells[i].y;
-		            pt_est_Actual.z = 0;
-		            encontrado = true;
-		            break;
-		        }
-			}
-		}
-		else if(R>0 && arr_right.cells[0].x > 0){
-			for(int i=0; i<C;i++){
-				if(abs(arr_center.cells[i].y - pix_y) < threshold_dist_y){
-					//diferencia_x = pixeles_cambio_estado/2;
-					X_centro = (arr_center.cells[i].x+arr_right.cells[i].x)/2;
-	            	pt_est_Actual.y = arr_center.cells[i].y;
-	            	pt_est_Actual.z = 0;
-	            	encontrado = true;
-	            	break;
+
+	//   | 	L  |  C  |  R
+	//===================== 
+	// 0 |  0  |  0  |  0
+	// 1 |  0  |  0  |  1
+	// 2 |  0  |  1  |  0
+	// 3 |  0  |  1  |  1
+	// 4 |  1  |  0  |  0
+	// 5 |  1  |  0  |  1
+	// 6 |  1  |  1  |  0
+	// 7 |  1  |  1  |  1
+	switch(lanes_detected){
+		case 0:
+			// TODO que hace cuando no ve nada
+			break;
+		case 1:
+		case 2:
+		case 4:
+			if(C>0 && arr_center.cells[0].x > 0) {
+				for(int i=0; i<C;i++){
+					if(abs(arr_center.cells[i].y - pix_y) < threshold_dist_y){
+						diferencia_x = pixeles_cambio_estado;
+						X_centro = (arr_center.cells[i].x);
+			            pt_est_Actual.y = arr_center.cells[i].y;
+			            pt_est_Actual.z = 0;
+			            encontrado = true;
+			            break;
+			        }
 				}
 			}
-		}
+			else if(L>0 && arr_left.cells[0].x > 0){
+				for(int i=0; i<L;i++){
+					if(abs(arr_left.cells[i].y - pix_y) < threshold_dist_y){
+						diferencia_x = pixeles_cambio_estado;
+						X_centro = (arr_left.cells[i].x);
+			            mov_estado_futuro-=2;
+			            pt_est_Actual.y = arr_center.cells[i].y;
+			            pt_est_Actual.z = 0;
+			            encontrado = true;
+			            break;
+			        }
+				}
+			}
+			else if(R>0 && arr_right.cells[0].x > 0){
+				for(int i=0; i<R;i++){
+					if(abs(arr_right.cells[i].y - pix_y) < threshold_dist_y){
+						diferencia_x = -pixeles_cambio_estado;
+						X_centro = (arr_right.cells[i].x);
+		            	pt_est_Actual.y = arr_center.cells[i].y;
+		            	pt_est_Actual.z = 0;
+		            	encontrado = true;
+		            	break;
+					}
+				}
+			}
+			break;
+		case 3:
+		case 6:
+		case 7:
+			if(C>0 && arr_center.cells[0].x > 0) {
+				// se podria obtener con los polinomios de ransac directo
+				if(L>0 && arr_left.cells[0].x > 0){
+					for(int i=0; i<C;i++){
+						if(abs(arr_center.cells[i].y - pix_y) < threshold_dist_y){
+							//diferencia_x = (arr_center.cells[i].x);
+							mov_estado_futuro-=2; // la coordenada que estoy obteniendo es de 2 estados a la izquierda
+							X_centro = (arr_center.cells[i].x+arr_left.cells[i].x)/2;
+				            
+				            pt_est_Actual.y = arr_center.cells[i].y;
+				            pt_est_Actual.z = 0;
+				            encontrado = true;
+				            break;
+				        }
+					}
+				}
+				else if(R>0 && arr_right.cells[0].x > 0){
+					for(int i=0; i<C;i++){
+						if(abs(arr_center.cells[i].y - pix_y) < threshold_dist_y){
+							//diferencia_x = pixeles_cambio_estado/2;
+							X_centro = (arr_center.cells[i].x+arr_right.cells[i].x)/2;
+			            	pt_est_Actual.y = arr_center.cells[i].y;
+			            	pt_est_Actual.z = 0;
+			            	encontrado = true;
+			            	break;
+						}
+					}
+				}
+			}
+			break;
+		case 5:
+			if(L>0 && arr_left.cells[0].x > 0){
+				for(int i=0; i<L;i++){
+					if(abs(arr_left.cells[i].y - pix_y) < threshold_dist_y){
+						diferencia_x = pixeles_cambio_estado;
+						X_centro = (arr_left.cells[i].x);
+			            mov_estado_futuro-=2;
+			            pt_est_Actual.y = arr_center.cells[i].y;
+			            pt_est_Actual.z = 0;
+			            encontrado = true;
+			            break;
+			        }
+				}
+			}
+			else if(R>0 && arr_right.cells[0].x > 0){
+				for(int i=0; i<R;i++){
+					if(abs(arr_right.cells[i].y - pix_y) < threshold_dist_y){
+						diferencia_x = -pixeles_cambio_estado;
+						X_centro = (arr_right.cells[i].x);
+		            	pt_est_Actual.y = arr_center.cells[i].y;
+		            	pt_est_Actual.z = 0;
+		            	encontrado = true;
+		            	break;
+					}
+				}
+			}
+			break;
+			break;
 	}
+
+	
 
 	if(encontrado){
 		pt_est_Actual.x = X_centro + diferencia_x;

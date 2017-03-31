@@ -47,24 +47,24 @@ ros::Publisher pub_steering;
 nav_msgs::GridCells path_planning;
 
 /*
-	@param pE posicion origen (del vehiculo)
-	@param p posicion destino
+	@param pActual posicion origen (del vehiculo)
+	@param pEsperada posicion destino
 */
-double getThetaError (double pE, double p){
+double getThetaError (double pActual, double pEsperada){
 	// Asumiendo 'y' = 100 fijo, que pE y p estan en unidades: pixeles
-	double x = (pE - p);
-	double theta = atan2(x,100);
-	theta = (theta * 180 / PI)/2;
-	theta = -theta;
+	double x = (pActual - pEsperada);
+	double theta = atan2(100,x);
+	theta = (theta * 180 / PI); // quite el /2
+	// theta = -theta; // por correccion con el carro 90 es izquierda
 	// Regresa valores entre -45 y 45 grados
 
 	return theta;
 
 }
 
-double PIDtime(double pE, double p, double dt, double max, double min, double Kp, double Kd, double Ki){
+double PIDtime(double anguloDeseado, double anguloDestino, double dt, double max, double min, double Kp, double Kd, double Ki){
 	// ROS_INFO_STREAM("PID time");
-	double error = pE - p;
+	double error = anguloDeseado - anguloDestino;
 	double pOut = Kp * error;
 	integral += error * dt;
 	double iOut = Ki * integral;
@@ -74,13 +74,6 @@ double PIDtime(double pE, double p, double dt, double max, double min, double Kp
 
 	// correccion en el carro
 		// output += 45; 
-
-
-    // Restriction
-	if( output > max )
-		output = max;
-	else if( output < min )
-		output = min;
 
 	// cambiar los sentidos
 	// output = 90-output;
@@ -106,15 +99,24 @@ void get_pathxy(const geometry_msgs::Point& point){
 			if(point.x >= 0) {
 				p = point.x;
 
-
+				double posEsp = p;
+				double posActual = pE; 
 				// ROS_INFO_STREAM("PID: posPixel Esperada: " << pE << ", posPixel Actual:" << p );
 				// 'p' en terminos de theta en grados de -45 a 45
-				p = getThetaError(pE, p);
+				p = getThetaError(posActual, posEsp);
 
 				// El servomotor del coche siempre tiene que estar en 45 grados
-				pid_res = PIDtime(45, p, dt, max, min, Kp, Kd, Ki);
+				pid_res = PIDtime(90, p, dt, max, min, Kp, Kd, Ki);
 
-				ROS_INFO_STREAM("PID: errorTheta: " << p << ", ajustePID Actual:" << pid_res );
+				pid_res = 45 + pid_res; // por detalle con el carro de los angulos
+
+				// Restriction
+				if( pid_res > max )
+					pid_res = max;
+				else if( pid_res < min )
+					pid_res = min;
+
+				ROS_INFO_STREAM("PosActual:" << posActual <<", posEsperada: " << posEsp << " PID: errorTheta: " << p << ", ajustePID:" << pid_res );
 
 				value_motor.data = velocity;
 				value_steering.data = pid_res;

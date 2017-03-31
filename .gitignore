@@ -4,9 +4,4 @@ build/
 install/
 logs/
 .catkin_tools/
-devel/lib
-devel/share
-devel/.*
-devel/_*
-devel/setup*
-devel/etc
+devel/
