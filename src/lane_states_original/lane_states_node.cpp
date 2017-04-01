@@ -191,20 +191,30 @@ int det_hit (int state)
 	//switch depending on the state to eval
 	switch (state)
 	{
+		//   | 	L  |  C  |  R
+		//===================== 
+		// 0 |  0  |  0  |  0
+		// 1 |  0  |  0  |  1
+		// 2 |  0  |  1  |  0
+		// 3 |  0  |  1  |  1
+		// 4 |  1  |  0  |  0
+		// 5 |  1  |  0  |  1
+		// 6 |  1  |  1  |  0
+		// 7 |  1  |  1  |  1
 		case 0:	//is hit if there are no lines
 			hit = lanes_detected == 0;
 			// if(hit) ROS_INFO_STREAM("Hit at state: " << state);
 			break;
-		case 1: //is hit 
+		case 1: //fuera izquierda
 			hit = lanes_detected == 1;
 			// if(hit) ROS_INFO_STREAM("Hit at state: " << state);
 			break;
 		case 2: 
-			hit = cc && lanes_detected > 1;
+			hit = cc && (lanes_detected == 2 || lanes_detected == 3);
 			// if(hit) ROS_INFO_STREAM("Hit at state: " << state);
 			break;
 		case 3: 
-			hit = !(rr || cc || ll) && (lanes_detected > 1 && lanes_detected < 7); 
+			hit = !(rr || cc || ll) && (lanes_detected == 2 || lanes_detected == 3 || lanes_detected == 6); 
 			// if(hit) ROS_INFO_STREAM("Hit at state: " << state);
 			break;
 		case 4:
@@ -212,15 +222,15 @@ int det_hit (int state)
 			// if(hit) ROS_INFO_STREAM("Hit at state: " << state);
 			break;
 		case 5:
-			hit = !(cc || rr || ll) && lanes_detected > 2 ;
+			hit = !(cc || rr || ll) && (lanes_detected == 2 || lanes_detected == 3 || lanes_detected == 6 || lanes_detected == 7) ;
 			// if(hit) ROS_INFO_STREAM("Hit at state: " << state);
 			break;
 		case 6:
-			hit = rr && lanes_detected > 1;
+			hit = rr && (lanes_detected == 3 || lanes_detected == 7);
 			// if(hit) ROS_INFO_STREAM("Hit at state: " << state);
 			break;
 		case 7:
-			hit = lanes_detected == 4 || lanes_detected == 2 || lanes_detected == 6;
+			hit = lanes_detected == 4;
 			// if(hit) ROS_INFO_STREAM("Hit at state: " << state);
 			break;
 		case 8:
@@ -346,7 +356,7 @@ std_msgs::Float32MultiArray move(std_msgs::Float32MultiArray prob)
         s += p_overshoot * prob.data[mod2];
 		q.data.push_back(s);
 
-	//	ROS_INFO_STREAM("Exact: " << mod << " Under: " << mod1 << " Over: " << mod2);
+		// ROS_INFO_STREAM("Exact: " << mod << " Under: " << mod1 << " Over: " << mod2);
 	}
 	return q;
 }
