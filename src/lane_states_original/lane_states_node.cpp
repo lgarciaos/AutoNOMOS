@@ -295,17 +295,18 @@ std_msgs::Float32MultiArray move(std_msgs::Float32MultiArray prob)
 
 	double angulo_real = 0.0;
 	if(ctrl_action>=0){
-		angulo_real = 90-ctrl_action;
+		angulo_real = (ctrl_action-45);
 	}
 	else {
 		angulo_real = 90;
 	}
 	
+
 	double dist_x = cos(angulo_real)*nav_velocity_pixels;
 	int U = 0;
 
 	
-	if(angulo_real > 43 && angulo_real < 48){
+	if(angulo_real > -5 && angulo_real < 5){
 		U = 0;
 		p_exact = .9;
 		p_undershoot = .05;
