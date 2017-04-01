@@ -42,8 +42,8 @@ std_msgs::Float32MultiArray p;
 
 
 
-float p_hit = 0.95;
-float p_miss = 0.05; 
+float p_hit = 0.99;
+float p_miss = 0.01; 
 
 float alpha = 12; //TODO
 
@@ -201,39 +201,39 @@ int det_hit (int state)
 		// 5 |  1  |  0  |  1
 		// 6 |  1  |  1  |  0
 		// 7 |  1  |  1  |  1
-		case 0:	//is hit if there are no lines
+		case 0:	//NSI
 			hit = lanes_detected == 0;
 			// if(hit) ROS_INFO_STREAM("Hit at state: " << state);
 			break;
-		case 1: //fuera izquierda
+		case 1: //FI
 			hit = lanes_detected == 1;
 			// if(hit) ROS_INFO_STREAM("Hit at state: " << state);
 			break;
-		case 2: 
+		case 2:  // LL
 			hit = cc && (lanes_detected == 2 || lanes_detected == 3);
 			// if(hit) ROS_INFO_STREAM("Hit at state: " << state);
 			break;
-		case 3: 
-			hit = !(rr || cc || ll) && (lanes_detected == 3 || lanes_detected == 6); 
+		case 3: //LC
+			hit = !(rr || cc || ll) && (lanes_detected >= 1 && lanes_detected <= 3); 
 			// if(hit) ROS_INFO_STREAM("Hit at state: " << state);
 			break;
-		case 4:
-			hit = (cc && lanes_detected > 1 ) || (rr && lanes_detected > 1 && lanes_detected < 7);
+		case 4: //CC
+			hit = (cc || rr ) && (lanes_detected >= 1 && lanes_detected <= 7);
 			// if(hit) ROS_INFO_STREAM("Hit at state: " << state);
 			break;
-		case 5:
-			hit = !(cc || rr || ll) && (lanes_detected == 3 || lanes_detected == 6 || lanes_detected == 7) ;
+		case 5: //RC
+			hit = !(cc || rr || ll) && (lanes_detected >= 1 && lanes_detected <= 7) ;
 			// if(hit) ROS_INFO_STREAM("Hit at state: " << state);
 			break;
-		case 6:
-			hit = rr && (lanes_detected == 3 || lanes_detected == 7);
+		case 6: //RR
+			hit = rr && (lanes_detected == 2 || lanes_detected == 4 || lanes_detected == 6);
 			// if(hit) ROS_INFO_STREAM("Hit at state: " << state);
 			break;
-		case 7:
-			hit = lanes_detected == 4;
+		case 7: //FD
+			hit = (lanes_detected == 2 || lanes_detected == 4);
 			// if(hit) ROS_INFO_STREAM("Hit at state: " << state);
 			break;
-		case 8:
+		case 8: //NSD
 			hit = lanes_detected == 0;
 			// if(hit) ROS_INFO_STREAM("Hit at state: " << state);
 			break;
@@ -246,19 +246,30 @@ int det_hit (int state)
 std_msgs::Float32MultiArray conv(std_msgs::Float32MultiArray p)
 {
 	std_msgs::Float32MultiArray q;
+	int hits[NUM_STATES];
 	for (int i = 0; i < NUM_STATES; ++i)
 	{	
 		// ROS_INFO_STREAM("-------------------------" << i << "------------------------"); 
+		/*
 		if (p.data[i] < 0.0001)
 		{
 			q.data.push_back(0.0001);
 		} else {
-			bool hit = det_hit(i);
-			double prob = p.data[i] * (hit * p_hit + (1-hit) * p_miss);
-			// ROS_INFO_STREAM(p.data[i] << " ==> " << prob);
-			q.data.push_back(prob);
+			
 		}
+		*/
+		int hit = det_hit(i);
+		hits[i]=hit;
+
+		double prob = p.data[i] * (hit * p_hit + (1-hit) * p_miss);
+		// ROS_INFO_STREAM(p.data[i] << " ==> " << prob);
+		q.data.push_back(prob);
 	}
+
+
+	const char * format = "[   %d,    %d,    %d,    %d,    %d,    %d,    %d,    %d,    %d]\n";
+  	printf (format, hits[0],hits[1],hits[2],hits[3],hits[4],hits[5],hits[6],hits[7],hits[8]);
+	
 
 	// normalizacion
 	float sum = 0;
@@ -281,14 +292,6 @@ std_msgs::Float32MultiArray sense(std_msgs::Float32MultiArray prob)
 	std_msgs::Float32MultiArray q;
 	q = conv(prob);
 	return q;
-}
-
-float det_prob(int edo_ini, int ctrl_action, int edo_fin)
-{
-	float prob = -1;
-	prob = (1 - fabs(edo_fin - edo_ini) / NUM_STATES);
-	// prob *= 0.98;
-	return prob;
 }
 
 std_msgs::Float32MultiArray move(std_msgs::Float32MultiArray prob)
@@ -316,25 +319,32 @@ std_msgs::Float32MultiArray move(std_msgs::Float32MultiArray prob)
 	int U = 0;
 
 	
+	p_exact = .2;
+	p_undershoot = .6;
+	p_overshoot = .2;
+
 	if(angulo_real > -5 && angulo_real < 5){
 		U = 0;
-		p_exact = .9;
-		p_undershoot = .05;
-		p_overshoot = .05;
+		//p_exact = .9;
+		//p_undershoot = .05;
+		//p_overshoot = .05;
 	}
 	else{
-		p_exact = abs(dist_x)/pixeles_cambio_estado;
-		p_overshoot = 0.01;
-		p_undershoot = 1-(abs(dist_x)/pixeles_cambio_estado)-p_overshoot;
-		
+		//p_exact = abs(dist_x)/pixeles_cambio_estado;
+		//p_overshoot = 0.01;
+		//p_undershoot = 1-(abs(dist_x)/pixeles_cambio_estado)-p_overshoot;
 		if(dist_x > 0){
-			U=-1;
+			U=-1; //mov izquierda
 		}
 		else{
-			U=1;
+			U=1; // mov derecha
 		}
+		
 	}
-	ROS_INFO_STREAM("Angulo: " << angulo_real<<", U: "<<U<<", mov_pixeles: " << dist_x << ", prob: " << p_exact + p_undershoot + p_overshoot);
+
+	
+
+	ROS_INFO_STREAM("Angulo: " << angulo_real<<", U: "<<U<<", mov_pixeles: " << U==0?"Derecho":(U>0?"Derecha":"Izquierda") );
 
 	ROS_INFO_STREAM("pExact: "<<p_exact<<", pUndershoot: "<<p_undershoot<<", pOvershoot: "<<p_overshoot);
 	
@@ -343,17 +353,31 @@ std_msgs::Float32MultiArray move(std_msgs::Float32MultiArray prob)
 	{
 		double s = 0.0;
 		
-		int mod = (i+U) % NUM_STATES;
-		if(mod<0) mod = NUM_STATES+mod;
-		s = p_exact * prob.data[mod];
+		int mov = i+U;
+		if(mov < 0){
+			mov=0;
+		} else if (mov > NUM_STATES-1){
+			mov = NUM_STATES-1;
+		}
 
-		int mod1 = (i) % NUM_STATES;
-		if(mod1<0) mod1 = NUM_STATES+mod1;
-        s += p_undershoot * prob.data[mod1];
+		//int mod = (i+U) % NUM_STATES;
+		//if(mod<0) mod = NUM_STATES+mod;
+		s = p_exact * prob.data[mov];
 
-        int mod2 = (i+2*U) % NUM_STATES;
-		if(mod2<0) mod2 = NUM_STATES+mod2;
-        s += p_overshoot * prob.data[mod2];
+		//int mod1 = (i) % NUM_STATES;
+		//if(mod1<0) mod1 = NUM_STATES+mod1;
+
+        s += p_undershoot * prob.data[i];
+
+        //int mod2 = (i+2*U) % NUM_STATES;
+		//if(mod2<0) mod2 = NUM_STATES+mod2;
+        mov = i+2*U;
+		if(mov < 0){
+			mov=0;
+		} else if (mov > NUM_STATES-1){
+			mov = NUM_STATES-1;
+		}
+        s += p_overshoot * prob.data[mov];
 		q.data.push_back(s);
 
 		// ROS_INFO_STREAM("Exact: " << mod << " Under: " << mod1 << " Over: " << mod2);
