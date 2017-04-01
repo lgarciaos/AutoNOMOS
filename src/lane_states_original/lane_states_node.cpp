@@ -239,9 +239,9 @@ std_msgs::Float32MultiArray conv(std_msgs::Float32MultiArray p)
 	for (int i = 0; i < NUM_STATES; ++i)
 	{	
 		// ROS_INFO_STREAM("-------------------------" << i << "------------------------"); 
-		if (p.data[i] < 0.001)
+		if (p.data[i] < 0.000001)
 		{
-			q.data.push_back(0.001);
+			q.data.push_back(0.000001);
 		} else {
 			bool hit = det_hit(i);
 			double prob = p.data[i] * (hit * p_hit + (1-hit) * p_miss);

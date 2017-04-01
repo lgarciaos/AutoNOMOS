@@ -886,10 +886,11 @@ void cLaneDetectionFu::get_localization(const std_msgs::Float32MultiArray& locAr
         }
     }
 
-    for(int i=0;i<NUM_STATES;i++){
+    for(int i=NUM_STATES-1;i>=0;i--){
         if(locArray.data[i]==max){
             // ROS_INFO_STREAM("Estas en:" << nombre_estado[i]);
             estado = i;
+            break;
         }
     }
 }
