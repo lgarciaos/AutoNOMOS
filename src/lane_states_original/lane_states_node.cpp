@@ -42,8 +42,8 @@ std_msgs::Float32MultiArray p;
 
 
 
-float p_hit = 0.6;
-float p_miss = 0.2; 
+float p_hit = 0.95;
+float p_miss = 0.05; 
 
 float alpha = 12; //TODO
 
@@ -54,7 +54,7 @@ int C = 0;
 int R = 0;
 int des_state = 3;
 
-int ctrl_action = 0;
+int ctrl_action = 45;
 
 double nav_velocity_pixels = 0.0;
 int RPM = 0;
@@ -239,9 +239,9 @@ std_msgs::Float32MultiArray conv(std_msgs::Float32MultiArray p)
 	for (int i = 0; i < NUM_STATES; ++i)
 	{	
 		// ROS_INFO_STREAM("-------------------------" << i << "------------------------"); 
-		if (p.data[i] < 0.000001)
+		if (p.data[i] < 0.0001)
 		{
-			q.data.push_back(0.000001);
+			q.data.push_back(0.0001);
 		} else {
 			bool hit = det_hit(i);
 			double prob = p.data[i] * (hit * p_hit + (1-hit) * p_miss);
@@ -346,7 +346,7 @@ std_msgs::Float32MultiArray move(std_msgs::Float32MultiArray prob)
         s += p_overshoot * prob.data[mod2];
 		q.data.push_back(s);
 
-		ROS_INFO_STREAM("Exact: " << mod << " Under: " << mod1 << " Over: " << mod2);
+	//	ROS_INFO_STREAM("Exact: " << mod << " Under: " << mod1 << " Over: " << mod2);
 	}
 	return q;
 }
@@ -418,9 +418,9 @@ int main(int argc, char** argv){
 
 	pub_loc = nh.advertise<std_msgs::Float32MultiArray>("/localization_array", MY_ROS_QUEUE_SIZE);
 
-	ros::Subscriber sub_pts_left = nh.subscribe("/points/ransac_left", MY_ROS_QUEUE_SIZE, get_pts_left);
-	ros::Subscriber sub_pts_center = nh.subscribe("/points/ransac_center", MY_ROS_QUEUE_SIZE, get_pts_center);
-	ros::Subscriber sub_pts_right = nh.subscribe("/points/ransac_right", MY_ROS_QUEUE_SIZE, get_pts_right);
+	ros::Subscriber sub_pts_left = nh.subscribe("/points/left", MY_ROS_QUEUE_SIZE, get_pts_left);
+	ros::Subscriber sub_pts_center = nh.subscribe("/points/center", MY_ROS_QUEUE_SIZE, get_pts_center);
+	ros::Subscriber sub_pts_right = nh.subscribe("/points/right", MY_ROS_QUEUE_SIZE, get_pts_right);
 	ros::Subscriber sub_mov = nh.subscribe("/manual_control/steering", MY_ROS_QUEUE_SIZE, get_ctrl_action);
 	ros::Subscriber sub_des_state = nh.subscribe("/desire_state", MY_ROS_QUEUE_SIZE, get_des_state);
 	
