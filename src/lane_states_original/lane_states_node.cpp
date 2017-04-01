@@ -42,8 +42,8 @@ std_msgs::Float32MultiArray p;
 
 
 
-float p_hit = 0.6;
-float p_miss = 0.2; 
+float p_hit = 0.95;
+float p_miss = 0.05; 
 
 float alpha = 12; //TODO
 
@@ -54,7 +54,7 @@ int C = 0;
 int R = 0;
 int des_state = 3;
 
-int ctrl_action = 0;
+int ctrl_action = 45;
 
 double nav_velocity_pixels = 0.0;
 int RPM = 0;
@@ -222,7 +222,7 @@ int det_hit (int state)
 			// if(hit) ROS_INFO_STREAM("Hit at state: " << state);
 			break;
 		case 5:
-			hit = (!(cc || rr || ll) && (lanes_detected == 3 || lanes_detected == 6 || lanes_detected == 7) ;
+			hit = !(cc || rr || ll) && (lanes_detected == 3 || lanes_detected == 6 || lanes_detected == 7) ;
 			// if(hit) ROS_INFO_STREAM("Hit at state: " << state);
 			break;
 		case 6:
@@ -249,9 +249,9 @@ std_msgs::Float32MultiArray conv(std_msgs::Float32MultiArray p)
 	for (int i = 0; i < NUM_STATES; ++i)
 	{	
 		// ROS_INFO_STREAM("-------------------------" << i << "------------------------"); 
-		if (p.data[i] < 0.000001)
+		if (p.data[i] < 0.0001)
 		{
-			q.data.push_back(0.000001);
+			q.data.push_back(0.0001);
 		} else {
 			bool hit = det_hit(i);
 			double prob = p.data[i] * (hit * p_hit + (1-hit) * p_miss);
