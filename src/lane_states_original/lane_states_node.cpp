@@ -157,8 +157,8 @@ int det_hit (int state)
 	lanes_detected = lanes_detected << 1;
 	lanes_detected = lanes_detected | R > 0;
 
-	//ROS_INFO_STREAM("lanes detected: " << lanes_detected);
-	//ROS_INFO_STREAM("R: " << R << ", C: " << C << ", L: "<< L);
+	ROS_INFO_STREAM("lanes detected: " << lanes_detected);
+	ROS_INFO_STREAM("R: " << R << ", C: " << C << ", L: "<< L);
 	geometry_msgs::Point pt_r ;
 	geometry_msgs::Point pt_c ;
 	geometry_msgs::Point pt_l ;
@@ -186,7 +186,7 @@ int det_hit (int state)
 	//ROS_INFO_STREAM("rr: " << rr << "\tcc: " << cc << "\tll: " << ll << "\tlanes: " << lanes_detected);
 	//ROS_INFO_STREAM("dist_rr: " << dist_rr << "\tdist_cc: " << dist_cc << "\tdist_ll: " << dist_ll << "\talpha: " << alpha);
 	
-	//var to return
+	//var to returns
 	int hit;
 	//switch depending on the state to eval
 	switch (state)
@@ -218,7 +218,7 @@ int det_hit (int state)
 			// if(hit) ROS_INFO_STREAM("Hit at state: " << state);
 			break;
 		case 4:
-			hit = (cc && lanes_detected > 1 ) || (rr && lanes_detected > 1 && lanes_detected < 7);
+			hit = (cc && lanes_detected >= 1 ) || (rr && lanes_detected >= 1 && lanes_detected < 7);
 			// if(hit) ROS_INFO_STREAM("Hit at state: " << state);
 			break;
 		case 5:
@@ -226,11 +226,11 @@ int det_hit (int state)
 			// if(hit) ROS_INFO_STREAM("Hit at state: " << state);
 			break;
 		case 6:
-			hit = rr && (lanes_detected == 3 || lanes_detected == 7);
+			hit = rr && (lanes_detected ==1 || lanes_detected == 3 || lanes_detected == 7);
 			// if(hit) ROS_INFO_STREAM("Hit at state: " << state);
 			break;
 		case 7:
-			hit = lanes_detected == 4;
+			hit = lanes_detected == 4 || lanes_detected == 2;
 			// if(hit) ROS_INFO_STREAM("Hit at state: " << state);
 			break;
 		case 8:
@@ -249,9 +249,9 @@ std_msgs::Float32MultiArray conv(std_msgs::Float32MultiArray p)
 	for (int i = 0; i < NUM_STATES; ++i)
 	{	
 		// ROS_INFO_STREAM("-------------------------" << i << "------------------------"); 
-		if (p.data[i] < 0.0001)
+		if (p.data[i] < 0.001)
 		{
-			q.data.push_back(0.0001);
+			q.data.push_back(0.001);
 		} else {
 			bool hit = det_hit(i);
 			double prob = p.data[i] * (hit * p_hit + (1-hit) * p_miss);
