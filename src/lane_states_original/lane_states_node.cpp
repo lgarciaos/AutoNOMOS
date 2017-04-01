@@ -9,10 +9,10 @@
 #include <std_msgs/Int16.h>
 #include <string>
 #include <sstream>
-
+//#include <random>
 
 #define NUM_STATES 9 
-
+#define HEIGHT 90
 geometry_msgs::Twist destiny_position;
 double rate_hz = 1;
 ros::Publisher pub_loc;
@@ -35,6 +35,9 @@ float c4 [6] = {1/40, 1/40, 1/40, 0.30, 0.60, 1/40};
 float c5 [6] = {0.02, 0.02, 0.02, 0.90, 0.02, 0.02};
 float c6 [6] = {1/40, 1/40, 1/40, 0.30, 0.60, 1/40};
 float c7 [6] = {0.02, 0.02, 0.02, 0.90, 0.02, 0.02};
+					// dist  0    1       2     3     4     5     6    7     8 
+					// 1..9 = n*(n+1)/2  ==> 9*10/2 = 9*5 = 45    
+float prob_dist_edo [9] = {9/45.0, 8/45.0, 7/45.0, 6/45.0, 5/45.0, 4/45.0, 3/45.0, 2/45.0, 1/45.0};
 
 std::string nombre_estado [NUM_STATES] = {"NS Izquierda", "Fuera Izquierda", "Carril Izquierdo", "Carril Derecho", "Fuera Derecha", "NS Derecha"};
 
@@ -155,8 +158,8 @@ int det_hit (int state)
 	bool cc = dist_cc < alpha;
 	bool ll = dist_ll < alpha;
 	//printing for debugging
-	ROS_INFO_STREAM("rr: " << rr << "\tcc: " << cc << "\tll: " << ll << "\tlanes: " << lanes_detected);
-	ROS_INFO_STREAM("dist_rr: " << dist_rr << "\tdist_cc: " << dist_cc << "\tdist_ll: " << dist_ll << "\talpha: " << alpha);
+	//ROS_INFO_STREAM("rr: " << rr << "\tcc: " << cc << "\tll: " << ll << "\tlanes: " << lanes_detected);
+	//ROS_INFO_STREAM("dist_rr: " << dist_rr << "\tdist_cc: " << dist_cc << "\tdist_ll: " << dist_ll << "\talpha: " << alpha);
 	
 	//var to return
 	int hit;
@@ -165,39 +168,39 @@ int det_hit (int state)
 	{
 		case 0:	//is hit if there are no lines
 			hit = lanes_detected == 0;
-			if(hit) ROS_INFO_STREAM("Hit at state: " << state);
+			// if(hit) ROS_INFO_STREAM("Hit at state: " << state);
 			break;
 		case 1: //is hit 
 			hit = lanes_detected == 1;
-			if(hit) ROS_INFO_STREAM("Hit at state: " << state);
+			// if(hit) ROS_INFO_STREAM("Hit at state: " << state);
 			break;
 		case 2: 
 			hit = cc && lanes_detected > 1;
-			if(hit) ROS_INFO_STREAM("Hit at state: " << state);
+			// if(hit) ROS_INFO_STREAM("Hit at state: " << state);
 			break;
 		case 3: 
 			hit = !(rr || cc || ll) && lanes_detected < 7; 
-		if(hit) ROS_INFO_STREAM("Hit at state: " << state);
+		//     if(hit) ROS_INFO_STREAM("Hit at state: " << state);
 			break;
 		case 4:
 			hit = cc && lanes_detected > 1  || rr && lanes_detected > 1 && lanes_detected < 7;
-			if(hit) ROS_INFO_STREAM("Hit at state: " << state);
+			// if(hit) ROS_INFO_STREAM("Hit at state: " << state);
 			break;
 		case 5:
 			hit = !(cc || rr || ll) || lanes_detected > 2 ;
-			if(hit) ROS_INFO_STREAM("Hit at state: " << state);
+			// if(hit) ROS_INFO_STREAM("Hit at state: " << state);
 			break;
 		case 6:
 			hit = rr && lanes_detected > 1;
-			if(hit) ROS_INFO_STREAM("Hit at state: " << state);
+			// if(hit) ROS_INFO_STREAM("Hit at state: " << state);
 			break;
 		case 7:
 			hit = lanes_detected == 4 || lanes_detected == 2 || lanes_detected == 6;
-			if(hit) ROS_INFO_STREAM("Hit at state: " << state);
+			// if(hit) ROS_INFO_STREAM("Hit at state: " << state);
 			break;
 		case 8:
 			hit = lanes_detected == 0;
-			if(hit) ROS_INFO_STREAM("Hit at state: " << state);
+			// if(hit) ROS_INFO_STREAM("Hit at state: " << state);
 			break;
 			
 	}
@@ -211,13 +214,13 @@ std_msgs::Float32MultiArray conv(std_msgs::Float32MultiArray p)
 
 	for (int i = 0; i < NUM_STATES; ++i)
 	{	
-		ROS_INFO_STREAM("-------------------------" << i << "------------------------"); 
+		//ROS_INFO_STREAM("-------------------------" << i << "------------------------"); 
 		if (p.data[i] < 0.001)
 		{
 			q.data.push_back(0.001);
 		} else {
 			bool hit = det_hit(i);
-			 ROS_INFO_STREAM(p.data[i] << " ==> " << p.data[i] * (hit * p_hit + (1-hit) * p_miss));
+			 //ROS_INFO_STREAM(p.data[i] << " ==> " << p.data[i] * (hit * p_hit + (1-hit) * p_miss));
 			q.data.push_back(p.data[i] * (hit * p_hit + (1-hit) * p_miss));
 		}
 	}
@@ -249,11 +252,65 @@ std_msgs::Float32MultiArray sense(std_msgs::Float32MultiArray prob)
 	return q;
 }
 
+// int comb(int n, int r)
+// {
+// 	int i, j;
+// 	int row[101];
+// 	row[0] = 1;
+// 	for (int i = 1; i <= n; ++i)
+// 	{
+// 		for (int j = i; j > 0; j--)
+// 		{
+// 			row[j] += row[ j - 1];
+// 		}
+// 		/* code */
+// 	}
+
+// 	return row[r];
+// }
+
+int combinaciones( int n, int r )
+{
+//     unsigned long long
+// choose(unsigned long long n, unsigned long long k) {
+	//ROS_INFO_STREAM("At Comnbs");
+ 	double cnm = 1;
+ 	if (n < r) return 0;
+    long long f[n + 1];
+    f[0] = 1;
+    for (int i = 1; i <= n; i++)
+        f[i] = i * f[i - 1];
+    // return f[n] / f[r] / f[n - r];
+    long long res = f[n] / f[r] / f[n - r];
+    // ROS_INFO_STREAM(n <<"C" << r << " = " << res );
+	
+	//ROS_INFO_STREAM("v: " <<v);
+    return (int)res;
+// }
+}
+
 float det_prob(int edo_ini, int ctrl_action, int edo_fin)
 {
-	float prob = -1;
-	prob = (1 - fabs(edo_fin - edo_ini) / NUM_STATES);
-	// prob *= 0.98;
+	double prob = -1;
+	
+	int n = NUM_STATES, k = edo_ini;
+	float p_bin = -1;
+
+	// ctrl_action = (90 - ctrl_action); //Might be neccesary to fix steering direction
+
+	int sig_edo = 90 / tan(ctrl_action * HEIGHT * M_PI / 180);
+	sig_edo = edo_fin + sig_edo / 10;
+
+	p_bin = (sig_edo ) / (float)(NUM_STATES) ;
+
+
+	if(edo_ini == 6)
+	{
+		ROS_INFO_STREAM("n: " << n << " k: " << k << " p_bin: " << p_bin << " p_bin**k: " << pow(p_bin, k) << " 1-p_bin**(n-k): " << pow(1-p_bin, (n-k)) << " nCk: " << combinaciones(n,k));
+		ROS_INFO_STREAM("prob: " << combinaciones(n,k) * pow(p_bin, k) * pow(1-p_bin, (n-k)) );
+	}
+	prob = combinaciones(n,k) * pow(p_bin, k) * pow(1-p_bin, (n-k));
+	
 
 	return prob;
 }
@@ -269,7 +326,9 @@ std_msgs::Float32MultiArray move(std_msgs::Float32MultiArray prob)
 	{
 		for (int edo_ini = 0; edo_ini < NUM_STATES; ++edo_ini)
 		{
-			// ROS_INFO_STREAM("det_prob: " <<  det_prob(edo_ini, ctrl_action, edo_fin));
+			//if(edo_ini == 0) ROS_INFO_STREAM("det_prob: " <<  det_prob(edo_ini, ctrl_action, edo_fin));
+			// combinaciones(edo_ini, edo_fin);
+			//if(edo_ini == 6) ROS_INFO_STREAM("edo_ini " << edo_ini << " probs: " << det_prob(edo_ini, ctrl_action, edo_fin));
 			q.data[edo_fin] += prob.data[edo_ini] * det_prob(edo_ini, ctrl_action, edo_fin);
 		}
 		// ROS_INFO_STREAM("[" << q.data[0] << "," << q.data[1] << "," << q.data[2] << ","<< q.data[3] << ","<< q.data[4] << ","<< q.data[5] << "," << q.data[6] << "," << q.data[7] << ","<< q.data[8] << "]");
@@ -331,7 +390,9 @@ int main(int argc, char** argv){
 	for (int i = 0; i < NUM_STATES; ++i)
 	{
 		p.data.push_back((float) (1/(float)NUM_STATES));
+		std::cout << prob_dist_edo[i];
 	}
+	ROS_INFO_STREAM("");
 	ROS_INFO_STREAM("Array initialization: \n" << p);
 
 	pub_loc = nh.advertise<std_msgs::Float32MultiArray>("/localization_array", rate_hz);
