@@ -506,9 +506,9 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
 
         // PLANEACION
         for(int i=0; i<path_planned.cell_width;i++) {
-            if(path_planned.cells[i].x < proj_image_w && path_planned.cells[i].y + 6 < proj_image_h) {
+            if(path_planned.cells[i].x < proj_image_w && path_planned.cells[i].y - 10 > 0) {
                 cv::Point pointPath = cv::Point(path_planned.cells[i].x, path_planned.cells[i].y);
-                cv::Point pointText = cv::Point(path_planned.cells[i].x, path_planned.cells[i].y + 6);
+                cv::Point pointText = cv::Point(path_planned.cells[i].x, path_planned.cells[i].y - 10);
                 cv::Point pointTextEstado = cv::Point(80, 155);
 
                 // center, radius, color, thickness

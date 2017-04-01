@@ -37,6 +37,7 @@ int C;
 int proj_image_h=0;
 int threshold_dist_y=0;
 int pixeles_cambio_estado=0;
+double nav_velocity_pixels = 0.0;
 
 std::string nombre_estado [NUM_STATES] = {"Dont Know Left", "Out Left", "Left Left", "Left Center", "Center Center", "Right Center", "Out Right", "Dont Know Right"};
 int des_state = 3;
@@ -81,6 +82,14 @@ void get_des_state(const std_msgs::Int16& val)
 	des_state = val.data;
 }
 
+double navigation_velocity_pixels() {
+	double d = 0.0862*RADIO; //mm, avance de una rueda 
+	double velocity = -RPM*d/60; //mm/seg
+	double time = 1/rate_hz; //seg
+	double distance = velocity*time; // mm
+	distance /= 66;
+	return distance;
+}
 
 
 void planning(){
@@ -99,27 +108,10 @@ void planning(){
 	lanes_detected = lanes_detected << 1;
 	lanes_detected = lanes_detected | R > 0;
 
-	/*
-
-	distance covered in one rotation
-	r = 3cm
-	d = 2*pi*r
-
-	RPM = 30
-	velocity by minute
-	v = RPM*d / 60  // cm/seg
-	t = 1/rate; //segundos
-
-	d = v*t
 	
-	*/
-	double d = 0.0862*RADIO; //cm, avance de una rueda 
-	double velocity = RPM*d/60; //cm/seg
-	double time = 1/rate_hz; //seg
-	double distance = velocity*time; // cm
 
 	// 1/8 mm sub-pixel resolution = 0.125 SR300 Intel
-	double distancia_pixeles = distance / 66; //pixel_res * conversion a cm * dist_cm
+	double distancia_pixeles =  nav_velocity_pixels; //pixel_res * conversion a cm * dist_cm, un pixel equivale a 66mm
 
 	if(distancia_pixeles < 2){
 		distancia_pixeles=2;
@@ -355,16 +347,17 @@ int main(int argc, char** argv){
 	priv_nh_.param<int>(node_name+"/threshold_dist_y", threshold_dist_y, 10);
 	priv_nh_.param<int>(node_name+"/pixeles_cambio_estado", pixeles_cambio_estado, 33);
 
-	pub_path = nh.advertise<nav_msgs::GridCells>("/planning", rate_hz);
-	pub_pathxy = nh.advertise<geometry_msgs::Point>("/planningxy", rate_hz);
+	pub_path = nh.advertise<nav_msgs::GridCells>("/planning", MY_ROS_QUEUE_SIZE);
+	pub_pathxy = nh.advertise<geometry_msgs::Point>("/planningxy", MY_ROS_QUEUE_SIZE);
 	
-	ros::Subscriber sub_pts_left = nh.subscribe("/points/ransac_left",1, &get_pts_left);
-	ros::Subscriber sub_pts_center = nh.subscribe("/points/ransac_center",1, &get_pts_center);
-	ros::Subscriber sub_pts_right = nh.subscribe("/points/ransac_right",1, &get_pts_right);
+	ros::Subscriber sub_pts_left = nh.subscribe("/points/ransac_left",MY_ROS_QUEUE_SIZE, &get_pts_left);
+	ros::Subscriber sub_pts_center = nh.subscribe("/points/ransac_center",MY_ROS_QUEUE_SIZE, &get_pts_center);
+	ros::Subscriber sub_pts_right = nh.subscribe("/points/ransac_right",MY_ROS_QUEUE_SIZE, &get_pts_right);
 
-	ros::Subscriber sub_localization = nh.subscribe("/localization_array",1, &get_localization);
+	ros::Subscriber sub_localization = nh.subscribe("/localization_array",MY_ROS_QUEUE_SIZE, &get_localization);
+	ros::Subscriber sub_des_state = nh.subscribe("/planning/desire_state",MY_ROS_QUEUE_SIZE, get_des_state);
 
-	ros::Subscriber sub_des_state = nh.subscribe("/planning/desire_state",1, get_des_state);
+	nav_velocity_pixels = navigation_velocity_pixels();
 	
 	ros::Rate loop_rate(rate_hz);
 	while(nh.ok())
