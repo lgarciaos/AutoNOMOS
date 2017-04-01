@@ -158,7 +158,7 @@ int det_hit (int state)
 	lanes_detected = lanes_detected | R > 0;
 
 	//ROS_INFO_STREAM("lanes detected: " << lanes_detected);
-	//ROS_INFO_STREAM("R: " << R << ", C: " << C << ", L: "<< L);
+	ROS_INFO_STREAM("R: " << R << ", C: " << C << ", L: "<< L);
 	geometry_msgs::Point pt_r ;
 	geometry_msgs::Point pt_c ;
 	geometry_msgs::Point pt_l ;
@@ -344,7 +344,17 @@ std_msgs::Float32MultiArray move(std_msgs::Float32MultiArray prob)
 
 	
 
-	ROS_INFO_STREAM("Angulo: " << angulo_real<<", U: "<<U<<", mov_pixeles: " << U==0?"Derecho":(U>0?"Derecha":"Izquierda") );
+	ROS_INFO_STREAM("Angulo: " << angulo_real<<", U: "<<U );
+
+	if(U==0){
+		ROS_INFO_STREAM("Movimiento: Frente");
+	} else {
+		if(U>0) {
+			ROS_INFO_STREAM("Movimiento: Derecha");
+		} else {
+			ROS_INFO_STREAM("Movimiento: Izquierda");
+		}
+	}
 
 	ROS_INFO_STREAM("pExact: "<<p_exact<<", pUndershoot: "<<p_undershoot<<", pOvershoot: "<<p_overshoot);
 	
