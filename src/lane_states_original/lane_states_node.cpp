@@ -157,7 +157,7 @@ int det_hit (int state)
 	lanes_detected = lanes_detected << 1;
 	lanes_detected = lanes_detected | R > 0;
 
-	//ROS_INFO_STREAM("lanes detected: " << lanes_detected);
+	ROS_INFO_STREAM("lanes detected: " << lanes_detected);
 	ROS_INFO_STREAM("R: " << R << ", C: " << C << ", L: "<< L);
 	geometry_msgs::Point pt_r ;
 	geometry_msgs::Point pt_c ;
@@ -186,7 +186,7 @@ int det_hit (int state)
 	//ROS_INFO_STREAM("rr: " << rr << "\tcc: " << cc << "\tll: " << ll << "\tlanes: " << lanes_detected);
 	//ROS_INFO_STREAM("dist_rr: " << dist_rr << "\tdist_cc: " << dist_cc << "\tdist_ll: " << dist_ll << "\talpha: " << alpha);
 	
-	//var to return
+	//var to returns
 	int hit;
 	//switch depending on the state to eval
 	switch (state)
@@ -251,9 +251,9 @@ std_msgs::Float32MultiArray conv(std_msgs::Float32MultiArray p)
 	{	
 		// ROS_INFO_STREAM("-------------------------" << i << "------------------------"); 
 		/*
-		if (p.data[i] < 0.0001)
+		if (p.data[i] < 0.001)
 		{
-			q.data.push_back(0.0001);
+			q.data.push_back(0.001);
 		} else {
 			
 		}
