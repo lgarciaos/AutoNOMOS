@@ -214,7 +214,7 @@ int det_hit (int state)
 			// if(hit) ROS_INFO_STREAM("Hit at state: " << state);
 			break;
 		case 3: 
-			hit = !(rr || cc || ll) && (lanes_detected == 2 || lanes_detected == 3 || lanes_detected == 6); 
+			hit = !(rr || cc || ll) && (lanes_detected == 3 || lanes_detected == 6); 
 			// if(hit) ROS_INFO_STREAM("Hit at state: " << state);
 			break;
 		case 4:
@@ -222,7 +222,7 @@ int det_hit (int state)
 			// if(hit) ROS_INFO_STREAM("Hit at state: " << state);
 			break;
 		case 5:
-			hit = (!(cc || rr || ll) && (lanes_detected == 2 || lanes_detected == 3 || lanes_detected == 6 || lanes_detected == 7) ;
+			hit = (!(cc || rr || ll) && (lanes_detected == 3 || lanes_detected == 6 || lanes_detected == 7) ;
 			// if(hit) ROS_INFO_STREAM("Hit at state: " << state);
 			break;
 		case 6:
