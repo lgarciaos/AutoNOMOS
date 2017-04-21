@@ -25,7 +25,7 @@
     <param name="laneMarkingSquaredThreshold"   type="int"    value="36"/>
     <param name="angleAdjacentLeg"              type="int"    value="18"/>
     <param name="scanlinesVerticalDistance"     type="int"    value="2"/>
-    <param name="scanlinesMaxCount"             type="int"    value="100"/>
+    <param name="scanlinesMaxCount"             type="int"    value="200"/>
     <param name="polyY1"                        type="int"    value="155"/>
     <param name="polyY2"                        type="int"    value="145"/>    
     <param name="polyY3"                        type="int"    value="130"/>    
@@ -54,11 +54,12 @@
 
   <node name="lane_states_node" pkg="lane_states_original" type="lane_states_node" output="screen" >
     <param name="RPM"              type="int" value="-30"/>
-	<param name="alpha"	type="double" value="12"/>
+	<param name="alpha"	           type="double" value="9"/>
     <param name="rate"             type="double" value="10.0"/>
     <param name="pixeles_cambio_estado" type="int" value="16"/>
   </node>
 
+  <!--
   <node name="lane_planning_prob_node" pkg="lane_planning" type="lane_planning_prob_node"  >
     <param name="RPM"              type="int" value="-30"/>
     <param name="rate"             type="double" value="10.0"/>
@@ -66,5 +67,6 @@
     <param name="threshold_dist_y" type="int" value="10"/>
     <param name="pixeles_cambio_estado" type="int" value="16"/>
   </node> 
- 
+  -->
+
 </launch>
