@@ -31,6 +31,8 @@ nav_msgs::GridCells path_planned;
 geometry_msgs::Point pt_to_send;
 
 int estado = -1;
+int countEstados = 0;
+
 int R;
 int L;
 int C;
@@ -144,65 +146,35 @@ void planning(){
 	// 5 |  1  |  0  |  1
 	// 6 |  1  |  1  |  0
 	// 7 |  1  |  1  |  1
-	ROS_INFO_STREAM("lanes detected: " << lanes_detected);
-	switch(lanes_detected){
-		case 0:
-			// TODO que hace cuando no ve nada
-			break;
-		case 1:
-		case 2:
-		case 4:
-			
-			if(L>0){
-				for(int i=0; i<L;i++){
-					if(abs(arr_left.cells[i].y - pix_y) < threshold_dist_y){
-						diferencia_x = pixeles_cambio_estado;
-						X_centro = (arr_left.cells[i].x);
-			            mov_estado_futuro-=2;
-			            pt_est_Actual.y = arr_center.cells[i].y;
-			            pt_est_Actual.z = 0;
-			            encontrado = true;
-			            break;
-			        }
-				}
-			}
-			else if(C>0) {
-				for(int i=0; i<C;i++){
-					if(abs(arr_center.cells[i].y - pix_y) < threshold_dist_y){
-						diferencia_x = pixeles_cambio_estado;
-						X_centro = (arr_center.cells[i].x);
-			            pt_est_Actual.y = arr_center.cells[i].y;
-			            pt_est_Actual.z = 0;
-			            encontrado = true;
-			            break;
-			        }
-				}
-			}
-			else if(R>0){
-				for(int i=0; i<R;i++){
-					if(abs(arr_right.cells[i].y - pix_y) < threshold_dist_y){
-						diferencia_x = -pixeles_cambio_estado;
-						X_centro = (arr_right.cells[i].x);
-		            	pt_est_Actual.y = arr_center.cells[i].y;
-		            	pt_est_Actual.z = 0;
-		            	encontrado = true;
-		            	break;
+	ROS_INFO_STREAM("lanes detected planning: " << lanes_detected);
+	if(countEstados == 1) {
+		// estoy a la derecha
+		switch(lanes_detected){
+			case 0:
+				// TODO que hace cuando no ve nada
+				break;
+			case 1:
+			case 2:
+			case 4:
+				// solo 1 carril
+				if(L>0){
+					for(int i=0; i<L;i++){
+						if(abs(arr_left.cells[i].y - pix_y) < threshold_dist_y){
+							diferencia_x = pixeles_cambio_estado;
+							X_centro = (arr_left.cells[i].x);
+				            mov_estado_futuro-=2;
+				            pt_est_Actual.y = arr_center.cells[i].y;
+				            pt_est_Actual.z = 0;
+				            encontrado = true;
+				            break;
+				        }
 					}
 				}
-			}
-			break;
-		case 3:
-		case 6:
-		case 7:
-			if(C>0) {
-				// se podria obtener con los polinomios de ransac directo
-				if(L>0){
+				else if(C>0) {
 					for(int i=0; i<C;i++){
 						if(abs(arr_center.cells[i].y - pix_y) < threshold_dist_y){
-							//diferencia_x = (arr_center.cells[i].x);
-							mov_estado_futuro-=2; // la coordenada que estoy obteniendo es de 2 estados a la izquierda
-							X_centro = (arr_center.cells[i].x+arr_left.cells[i].x)/2;
-				            
+							diferencia_x = pixeles_cambio_estado;
+							X_centro = (arr_center.cells[i].x);
 				            pt_est_Actual.y = arr_center.cells[i].y;
 				            pt_est_Actual.z = 0;
 				            encontrado = true;
@@ -211,10 +183,10 @@ void planning(){
 					}
 				}
 				else if(R>0){
-					for(int i=0; i<C;i++){
-						if(abs(arr_center.cells[i].y - pix_y) < threshold_dist_y){
-							//diferencia_x = pixeles_cambio_estado/2;
-							X_centro = (arr_center.cells[i].x+arr_right.cells[i].x)/2;
+					for(int i=0; i<R;i++){
+						if(abs(arr_right.cells[i].y - pix_y) < threshold_dist_y){
+							diferencia_x = -pixeles_cambio_estado;
+							X_centro = (arr_right.cells[i].x);
 			            	pt_est_Actual.y = arr_center.cells[i].y;
 			            	pt_est_Actual.z = 0;
 			            	encontrado = true;
@@ -222,56 +194,111 @@ void planning(){
 						}
 					}
 				}
-			}
-			break;
-		case 5:
-			if(L>0){
-				for(int i=0; i<L;i++){
-					if(abs(arr_left.cells[i].y - pix_y) < threshold_dist_y){
-						diferencia_x = pixeles_cambio_estado;
-						X_centro = (arr_left.cells[i].x);
-			            mov_estado_futuro-=2;
-			            pt_est_Actual.y = arr_center.cells[i].y;
-			            pt_est_Actual.z = 0;
-			            encontrado = true;
-			            break;
-			        }
-				}
-			}
-			else if(R>0){
-				for(int i=0; i<R;i++){
-					if(abs(arr_right.cells[i].y - pix_y) < threshold_dist_y){
-						diferencia_x = -pixeles_cambio_estado;
-						X_centro = (arr_right.cells[i].x);
-		            	pt_est_Actual.y = arr_center.cells[i].y;
-		            	pt_est_Actual.z = 0;
-		            	encontrado = true;
-		            	break;
+				break;
+			case 3:
+			case 6:
+			case 7:
+				// 2 o 3 carriles
+				if(C>0) {
+					// se podria obtener con los polinomios de ransac directo
+					if(L>0){
+						for(int i=0; i<C;i++){
+							if(abs(arr_center.cells[i].y - pix_y) < threshold_dist_y){
+								//diferencia_x = (arr_center.cells[i].x);
+								mov_estado_futuro-=2; // la coordenada que estoy obteniendo es de 2 estados a la izquierda
+								X_centro = (arr_center.cells[i].x+arr_left.cells[i].x)/2;
+					            
+					            pt_est_Actual.y = arr_center.cells[i].y;
+					            pt_est_Actual.z = 0;
+					            encontrado = true;
+					            break;
+					        }
+						}
+					}
+					else if(R>0){
+						for(int i=0; i<C;i++){
+							if(abs(arr_center.cells[i].y - pix_y) < threshold_dist_y){
+								//diferencia_x = pixeles_cambio_estado/2;
+								X_centro = (arr_center.cells[i].x+arr_right.cells[i].x)/2;
+				            	pt_est_Actual.y = arr_center.cells[i].y;
+				            	pt_est_Actual.z = 0;
+				            	encontrado = true;
+				            	break;
+							}
+						}
 					}
 				}
-			}
-			break;
+				break;
+			case 5:
+				if(L>0){
+					for(int i=0; i<L;i++){
+						if(abs(arr_left.cells[i].y - pix_y) < threshold_dist_y){
+							diferencia_x = pixeles_cambio_estado;
+							X_centro = (arr_left.cells[i].x);
+				            mov_estado_futuro-=2;
+				            pt_est_Actual.y = arr_center.cells[i].y;
+				            pt_est_Actual.z = 0;
+				            encontrado = true;
+				            break;
+				        }
+					}
+				}
+				else if(R>0){
+					for(int i=0; i<R;i++){
+						if(abs(arr_right.cells[i].y - pix_y) < threshold_dist_y){
+							diferencia_x = -pixeles_cambio_estado;
+							X_centro = (arr_right.cells[i].x);
+			            	pt_est_Actual.y = arr_center.cells[i].y;
+			            	pt_est_Actual.z = 0;
+			            	encontrado = true;
+			            	break;
+						}
+					}
+				}
+				break;
+		}
 	}
-
+	else{
+		if(lanes_detected == 3 || lanes_detected == 7) {
+			for(int i=0; i<C;i++){
+				if(abs(arr_center.cells[i].y - pix_y) < threshold_dist_y){
+					X_centro = (arr_center.cells[i].x+arr_right.cells[i].x)/2;
+	            	pt_est_Actual.y = arr_center.cells[i].y;
+	            	pt_est_Actual.z = 0;
+	            	encontrado = true;
+	            	break;
+				}
+			}
+		} else {
+			diferencia_x = 0;
+			X_centro = 80;
+			// mov_estado_futuro=0;
+	    	pt_est_Actual.y = proj_image_h;
+	    	pt_est_Actual.z = 0;
+	    	encontrado = true;
+		}
+		
+	}
 	
 
 	if(encontrado){
 		pt_est_Actual.x = X_centro + diferencia_x;
+
 		ROS_INFO_STREAM("Estado acual en el futuro: (" << pt_est_Actual.x << ", " << pt_est_Actual.y << ")");
 
 		// obtener la coordenada de los demas estados en el futuro
 		// TODO angulo siguiente movimiento
 		
 		double dif_estado_futuro = 80 + (mov_estado_futuro)*pixeles_cambio_estado;
-
+		
 		double y_ang = proj_image_h-pt_est_Actual.y;
 		double x_ang = pt_est_Actual.x-dif_estado_futuro;
-		ROS_INFO_STREAM("Coord angulo (" << x_ang << "," << y_ang << ") ");
+		
 
 		double angulo_mismo_estado = atan2(y_ang, x_ang); // grados del estado actual al futuro
 		double angulo_rotacion = angulo_mismo_estado - M_PI/2;
-		ROS_INFO_STREAM("Angulo mismo estado: " << angulo_mismo_estado*180/M_PI);
-		ROS_INFO_STREAM("Angulo rotacion: " << angulo_rotacion*180/M_PI);
+		
+		ROS_INFO_STREAM("Coord angulo (" << x_ang << "," << y_ang << ") " << ", Angulo mismo estado: " << angulo_mismo_estado*180/M_PI << ", Angulo rotacion: " << angulo_rotacion*180/M_PI);
 		// coordenadas de estados actuales
 		
 
@@ -295,7 +322,7 @@ void planning(){
 
 			path_planned.cells.push_back(pt);
 
-			ROS_INFO_STREAM("Estado: " <<i << " centro: (" << pt.x << ", " << pt.y << ")");
+			// ROS_INFO_STREAM("Estado: " <<i << " centro: (" << pt.x << ", " << pt.y << ")");
 		}
 
 		pub_path.publish(path_planned);
@@ -320,12 +347,12 @@ void get_localization(const std_msgs::Float32MultiArray& locArray) {
 	 	}
 	}
 
-
+	countEstados=0;
 	for(int i=NUM_STATES-1;i>=0;i--){
         if(locArray.data[i]==max){
             // ROS_INFO_STREAM("Estas en:" << nombre_estado[i]);
             estado = i;
-            break;
+            countEstados++;
         }
     }
 }

@@ -23,9 +23,15 @@
 #include <std_msgs/Float32MultiArray.h>
 #include <nav_msgs/GridCells.h>
 #include <std_msgs/Int16.h>
+#include <geometry_msgs/Twist.h>
 
 #define PI 3.14159265
 
+int librarobstaculo = 0;
+double distancialibrarobstaculo=0;
+double distancia_librarobstaculomasmenos=0.1;
+double pendienteTrancazo =0.0;
+bool rebasando = false;
 
 double rate_hz = 10;
 
@@ -40,12 +46,15 @@ double prevError = 0;
 double integral = 0;
 double pE;
 double velocity;
+geometry_msgs::Twist velocity_msg;
+geometry_msgs::Twist positionObj;
 
 ros::Publisher pub_speed;
 ros::Publisher pub_steering;
 
 nav_msgs::GridCells path_planning;
 
+double theta = 0.0; 
 /*
 	@param pActual posicion origen (del vehiculo)
 	@param pEsperada posicion destino
@@ -64,16 +73,14 @@ double getThetaError (double pActual, double pEsperada){
 
 double PIDtime(double pActual, double pDestino, double dt, double max, double min, double Kp, double Kd, double Ki){
 	// ROS_INFO_STREAM("PID time");
-	double error = getThetaError(pActual, pDestino);
-	ROS_INFO_STREAM("Error theta: " << error);
+	theta= getThetaError(pActual, pDestino);
+	double error = theta;
 	double pOut = Kp * error;
 	integral += error * dt;
 	double iOut = Ki * integral;
 	double derivative = (error - prevError) / dt;
 	double dOut = Kd * derivative;
 	double output = pOut + iOut + dOut;
-	ROS_INFO_STREAM("PIDres: " << output);
-	
 
 	// correccion en el carro
 		// output += 45; 
@@ -86,8 +93,20 @@ double PIDtime(double pActual, double pDestino, double dt, double max, double mi
 	return output;
 }
 
-void get_pathxy(const geometry_msgs::Point& point){
-		//path_planning.cells = path.cells;
+
+void get_lidar(const geometry_msgs::Twist& msg) {
+	positionObj.linear.x = msg.linear.x;
+	positionObj.linear.y = msg.linear.y;
+    positionObj.angular.z = msg.linear.z; 
+}
+
+void get_vel_vec(const geometry_msgs::Twist& msg) {
+	velocity_msg.linear.x = msg.linear.x;
+	velocity_msg.linear.y = msg.linear.y;
+    velocity_msg.angular.z = msg.linear.z; 
+
+
+    //path_planning.cells = path.cells;
 		//path_planning.cell_width = path.cell_width;
 
 		// ROS_INFO_STREAM("cells_width: " << path_planning.cell_width);
@@ -99,27 +118,53 @@ void get_pathxy(const geometry_msgs::Point& point){
 			std_msgs::Int16 value_steering;
 
 
-			if(point.x >= 0) {
+			if(velocity_msg.linear.x >= 0) {
 				// p = point.x;
 
-				double posEsp = point.x;
+				double posEsp = velocity_msg.linear.x;
 				double posActual = pE; 
 				// ROS_INFO_STREAM("PID: posPixel Esperada: " << pE << ", posPixel Actual:" << p );
 				// 'p' en terminos de theta en grados de -45 a 45
 				// p = getThetaError(posActual, posEsp);
 
+				
+				// OBSTACULO
+				if(librarobstaculo){
+					double distanciaObstaculo = sqrt((velocity_msg.linear.x*velocity_msg.linear.x)+(velocity_msg.linear.y*velocity_msg.linear.y));
+					if((positionObj.angular.z > 70 && positionObj.angular.z < 120)){
+						
+						if(distanciaObstaculo < distancialibrarobstaculo){
+							//APLICAR CORRECCION a la IZQUIERDA
+							posEsp -= velocity*pendienteTrancazo; // -100px talvez
+							// activar rebasando
+							rebasando = true;
+						}
+					}
+					else if(positionObj.angular.z < -70 && positionObj.angular.z > -120) {
+						// si rebasando
+
+						if(distanciaObstaculo < distancialibrarobstaculo){
+
+							posEsp += velocity*pendienteTrancazo; // -100px talvez
+							// activar rebasando
+							rebasando = false;
+						}
+					}
+				}
+
+
 				// El servomotor del coche siempre tiene que estar en 45 grados
 				p = PIDtime(posActual, posEsp, dt, max, min, Kp, Kd, Ki);
 
 				pid_res = 45 + p; // por detalle con el carro de los angulos
-				ROS_INFO_STREAM("Servo: " << pid_res);
+
 				// Restriction
 				if( pid_res > max )
 					pid_res = max;
 				else if( pid_res < min )
 					pid_res = min;
 
-				//ROS_INFO_STREAM("PosActual:" << posActual <<", posEsperada: " << posEsp << " PID: errorTheta: " << p << ", ajustePID:" << pid_res );
+				ROS_INFO_STREAM("Error theta:" << theta <<", Res PID: " << p << ", Senal Servo:" << pid_res );
 
 				value_motor.data = velocity;
 				value_steering.data = pid_res;
@@ -128,12 +173,13 @@ void get_pathxy(const geometry_msgs::Point& point){
 				pub_steering.publish(value_steering); 
 
 				// ROS_INFO_STREAM("velocity: " << value_motor.data << ", steering: " << value_steering.data << " )");
+					
 			}
 			else{
 			// talvez ir derecho
 			}
-		
 }
+
 
 
 int main(int argc, char** argv){
@@ -158,14 +204,24 @@ int main(int argc, char** argv){
 		priv_nh_.param<double>(node_name+"/max", max, 90.0);
 		priv_nh_.param<double>(node_name+"/velocity", velocity, 30.0);
 
+		priv_nh_.param<int>(node_name+"/activa_librarobstaculo", librarobstaculo, 0);
+		priv_nh_.param<double>(node_name+"/distancia_librarobstaculo", distancialibrarobstaculo, 9.0);
+		priv_nh_.param<double>(node_name+"/distancia_librarobstaculomasmenos", distancia_librarobstaculomasmenos, 9.0);
+
+		priv_nh_.param<double>(node_name+"/pendienteTrancazo", pendienteTrancazo, 0.66);
+
 		// ROS_INFO_STREAM("Parametros obtenidos");
 
 		pub_speed = nh.advertise<std_msgs::Int16>("/manual_control/speed", rate_hz);
 		pub_steering = nh.advertise<std_msgs::Int16>("/manual_control/steering", rate_hz);
 
 	// esto va mejor en el launch file
+		ros::Subscriber sub_vel = nh.subscribe("/target_position_topic", 1000, &get_vel_vec);
 
-		ros::Subscriber sub_pathxy = nh.subscribe("/planningxy",1, &get_pathxy);
+		ros::Subscriber sub_lidar = nh.subscribe("/target_pose", 1000, &get_lidar);
+
+
+		//pub_lidar = nh.advertise<geometry_msgs::Twist>("/target_pose", rate_hz);
 
 		// ROS_INFO_STREAM("antes de while");
 		while (nh.ok())

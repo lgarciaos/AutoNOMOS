@@ -19,10 +19,10 @@
     <param name="interestDistancePoly"          type="int"    value="5"/>
     <param name="interestDistanceDefault"       type="int"    value="20"/>
     <param name="iterationsRansac"              type="int"    value="30"/>
-    <param name="proportionThreshould"          type="double" value="0.8"/>
+    <param name="proportionThreshould"          type="double" value="0.75"/>
     <param name="m_gradientThreshold"           type="int"    value="8"/>
     <param name="m_nonMaxWidth"                 type="int"    value="10"/>
-    <param name="laneMarkingSquaredThreshold"   type="int"    value="36"/>
+    <param name="laneMarkingSquaredThreshold"   type="int"    value="49"/>
     <param name="angleAdjacentLeg"              type="int"    value="18"/>
     <param name="scanlinesVerticalDistance"     type="int"    value="2"/>
     <param name="scanlinesMaxCount"             type="int"    value="100"/>
@@ -54,7 +54,7 @@
 
   <node name="lane_states_node" pkg="lane_states_original" type="lane_states_node" output="screen" >
     <param name="RPM"              type="int" value="-30"/>
-	<param name="alpha"	type="double" value="12"/>
+	<param name="alpha"	type="double" value="6"/>
     <param name="rate"             type="double" value="10.0"/>
     <param name="pixeles_cambio_estado" type="int" value="16"/>
   </node>
