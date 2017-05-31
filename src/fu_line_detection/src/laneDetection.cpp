@@ -2,7 +2,8 @@
 
 using namespace std;
 
-// #define PAINT_OUTPUT true
+// to show output on windows
+#define PAINT_OUTPUT true
 #define PUBLISH_DEBUG_OUTPUT
 
 static const uint32_t MY_ROS_QUEUE_SIZE = 1;
@@ -19,6 +20,15 @@ image_transport::CameraPublisher image_publisher_lane_markings;
 
 
 cv::Mat scanLinesMat;
+
+
+double f_u;
+double f_v;
+double c_u;
+double c_v;
+double cam_deg;
+double cam_height;
+
 
 
 //msgs head
@@ -40,6 +50,7 @@ cLaneDetectionFu::cLaneDetectionFu(ros::NodeHandle nh)
     ROS_INFO("Node name: %s",node_name.c_str());
 
     priv_nh_.param<std::string>(node_name+"/camera_name", camera_name, "/usb_cam/image_raw"); 
+
 
     priv_nh_.param<int>(node_name+"/cam_w", cam_w, 640);
     priv_nh_.param<int>(node_name+"/cam_h", cam_h, 480);
@@ -84,12 +95,6 @@ cLaneDetectionFu::cLaneDetectionFu(ros::NodeHandle nh)
     priv_nh_.param<int>(node_name+"/polyY3", polyY3, 15);
 
 
-    double f_u;
-    double f_v;
-    double c_u;
-    double c_v;
-    double cam_deg;
-    double cam_height;
     int cam_h_half = cam_h/2;
 
     priv_nh_.param<double>(node_name+"/f_u", f_u, 624.650635); 
@@ -100,8 +105,7 @@ cLaneDetectionFu::cLaneDetectionFu(ros::NodeHandle nh)
     priv_nh_.param<double>(node_name+"/cam_height", cam_height, 18);
 
     ipMapper = IPMapper(cam_w, cam_h_half, f_u, f_v, c_u, c_v, cam_deg, cam_height);
-
-
+    
 
     proj_image_w_half = proj_image_w/2;
 
@@ -228,16 +232,21 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
     cv::Mat image = cv_ptr->image.clone();
 
     Mat cut_image = image(cv::Rect(0,cam_h/2,cam_w,cam_h/2));
+    // Mat cut_image = image(cv::Rect(0,0,cam_w,cam_h));
     Mat remapped_image = ipMapper.remap(cut_image);
-    
+
     #ifdef PAINT_OUTPUT
-        cv::imshow("IPmapped image", remapped_image);
-        cv::waitKey(1);
+        //cv::imshow("IPmapped image", remapped_image);
+        //cv::waitKey(1);
     #endif
+
+	// (640/2)-40+0,415,80,40)
+	// 280,415,80,40
 
     cv::Mat transformedImage = remapped_image(cv::Rect((cam_w/2)-proj_image_w_half+proj_image_horizontal_offset,
             proj_y_start,proj_image_w,proj_image_h)).clone();
     
+    // cv::Mat transformedImage = remapped_image.clone();
     cv::flip(transformedImage, transformedImage, 0);
 
 
@@ -245,9 +254,13 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
     // DETECT HORIZONTAL LINES ADDED
     */
 
-    //cv::imshow("Cut IPmapped image", transformedImage);   
-    //cv::waitKey(1);
-    
+    /*
+    #ifdef PAINT_OUTPUT
+    	cv::imshow("Cut IPmapped image", transformedImage);   
+    	cv::waitKey(1);
+    #endif
+    */
+
     //scanLinesMat = transformedImage.clone();
     //scanlines = getScanlines();
 
@@ -272,8 +285,8 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
             }            
         }
 
-        cv::imshow("ROI, scanlines and edges", transformedImagePaintable);
-        cv::waitKey(1);
+        //cv::imshow("ROI, scanlines and edges", transformedImagePaintable);
+        //cv::waitKey(1);
 
         transformedImagePaintableHorizontal = transformedImage.clone();
         cv::cvtColor(transformedImagePaintableHorizontal,transformedImagePaintableHorizontal,CV_GRAY2BGR);
@@ -286,8 +299,8 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
             }            
         }
         
-        cv::imshow("ROI, edgesHorizontal", transformedImagePaintableHorizontal);
-        cv::waitKey(1);
+        //cv::imshow("ROI, edgesHorizontal", transformedImagePaintableHorizontal);
+        //cv::waitKey(1);
     #endif
     //---------------------- END DEBUG OUTPUT EDGES ------------------------------//
 
@@ -306,8 +319,8 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
             cv::circle(transformedImagePaintable,markingLoc,1,cv::Scalar(0,255,0),-1);         
         }
 
-        cv::imshow("Lane Markings", transformedImagePaintable);
-        cv::waitKey(1);
+        //cv::imshow("Lane Markings", transformedImagePaintable);
+        //cv::waitKey(1);
 
         transformedImagePaintableHorizontal = transformedImage.clone();
         cv::cvtColor(transformedImagePaintableHorizontal,transformedImagePaintableHorizontal,CV_GRAY2BGR);
@@ -318,8 +331,8 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
             cv::circle(transformedImagePaintableHorizontal,markingLoc,1,cv::Scalar(0,255,0),-1);         
         }
 
-        cv::imshow("L. Markings Horizontal", transformedImagePaintableHorizontal);
-        cv::waitKey(1);
+        //cv::imshow("L. Markings Horizontal", transformedImagePaintableHorizontal);
+        //cv::waitKey(1);
     #endif
     //---------------------- END DEBUG OUTPUT LANE MARKINGS ------------------------------//
 

@@ -46,6 +46,7 @@ ros::Publisher pub_steering;
 
 nav_msgs::GridCells path_planning;
 
+double theta = 0.0; 
 /*
 	@param pActual posicion origen (del vehiculo)
 	@param pEsperada posicion destino
@@ -64,8 +65,8 @@ double getThetaError (double pActual, double pEsperada){
 
 double PIDtime(double pActual, double pDestino, double dt, double max, double min, double Kp, double Kd, double Ki){
 	// ROS_INFO_STREAM("PID time");
-	double error = getThetaError(pActual, pDestino);
-	ROS_INFO_STREAM("Error theta: " << error);
+	theta= getThetaError(pActual, pDestino);
+	double error = theta;
 	double pOut = Kp * error;
 	integral += error * dt;
 	double iOut = Ki * integral;
@@ -119,7 +120,7 @@ void get_pathxy(const geometry_msgs::Point& point){
 				else if( pid_res < min )
 					pid_res = min;
 
-				//ROS_INFO_STREAM("PosActual:" << posActual <<", posEsperada: " << posEsp << " PID: errorTheta: " << p << ", ajustePID:" << pid_res );
+				ROS_INFO_STREAM("Error theta:" << theta <<", Res PID: " << p << ", Señal Servo:" << pid_res );
 
 				value_motor.data = velocity;
 				value_steering.data = pid_res;

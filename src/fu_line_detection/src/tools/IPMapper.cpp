@@ -18,7 +18,7 @@ Mat IPMapper::remap(Mat input)
         }
     }
     
-      //GaussianBlur(remappedImage, remappedImage, Size(5,5),1);
+    //GaussianBlur(remappedImage, remappedImage, Size(5,5),1);
     
     return remappedImage;
 }
@@ -45,7 +45,7 @@ IPMapper::IPMapper(int ow, int oh, double _f_u, double _f_v, double _c_u, double
     s_1 = sin(pi/180*deg);                             //sin(alpha : pitch angle),sin(beta : yaw angle)
     s_2 = 0.0;
     
-    cam_h = _cam_h;//18;
+    cam_h = _cam_h;//18; // TALVEZ LO QUE DESPEGA DEL PISO
     
     //init projection matrices
     T = (Mat_<double>(4,4) <<   -c_2/f_u, s_1*s_2/f_v, c_u*c_2/f_u-c_v*s_1*s_2/f_v-c_1*s_2, 0,

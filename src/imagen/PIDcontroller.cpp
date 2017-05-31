@@ -81,13 +81,6 @@ double PIDtime(double pActual, double pDestino, double dt, double max, double mi
 	double derivative = (error - prevError) / dt;
 	double dOut = Kd * derivative;
 	double output = pOut + iOut + dOut;
-
-	// correccion en el carro
-		// output += 45; 
-
-	// cambiar los sentidos
-	// output = 90-output;
-
 	prevError = error;
 
 	return output;
@@ -144,7 +137,7 @@ void get_vel_vec(const geometry_msgs::Twist& msg) {
 						// si rebasando
 
 						if(distanciaObstaculo < distancialibrarobstaculo){
-
+						// aplicar correccion a la derecha
 							posEsp += velocity*pendienteTrancazo; // -100px talvez
 							// activar rebasando
 							rebasando = false;
