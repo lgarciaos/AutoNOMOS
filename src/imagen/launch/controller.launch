@@ -10,7 +10,7 @@
     <param name="pE"          type="double" value="320.0"/>
     <param name="min"          type="double" value="0.0"/>
     <param name="max"          type="double" value="90.0"/>
-    <param name="velocity"          type="double" value="-300.0"/>
+    <param name="velocity"          type="double" value="-80.0"/>
     <param name="altura"          type="double" value="70.0"/>
 
     </node>

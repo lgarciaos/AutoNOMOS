@@ -120,7 +120,7 @@ void imageCb(const sensor_msgs::ImageConstPtr& msg)
 	}
  #else
 
-	printf("\nSe esta ejecutnado else")
+	printf("\nSe esta ejecutnado else");
 	vector<Vec4i> lines1;
 	vector<Vec4i> lines2;
 	double xmax = 0;
@@ -173,8 +173,8 @@ void imageCb(const sensor_msgs::ImageConstPtr& msg)
     cv::circle(cv_ptr->image, cv::Point(320, 250), 1, CV_RGB(0,0,255),2);
     cv::circle(cv_ptr->image, cv::Point(xmax, 250), 1, CV_RGB(255,0,0));
 
-	cv::rectangle(cv_ptr->image, cv::Rect(0,320,295,35), CV_RGB(0,0,255));
-	cv::rectangle(cv_ptr->image, cv::Rect(345,320,295,35), CV_RGB(0,0,255));
+	cv::rectangle(cv_ptr->image, cv::Rect(0,320,295,35), CV_RGB(0,0,255),2);
+	cv::rectangle(cv_ptr->image, cv::Rect(345,320,295,35), CV_RGB(0,0,255),2);
 	
 	/*  
 	imshow("detected lines 1", cdst1);
