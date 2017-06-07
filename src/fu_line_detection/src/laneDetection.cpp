@@ -3,8 +3,8 @@
 using namespace std;
 
 // to show output on windows
-#define PAINT_OUTPUT true
-#define PUBLISH_DEBUG_OUTPUT
+// #define PAINT_OUTPUT 
+#define PUBLISH_DEBUG_OUTPUT 
 
 static const uint32_t MY_ROS_QUEUE_SIZE = 1;
 
@@ -12,7 +12,7 @@ static const uint32_t MY_ROS_QUEUE_SIZE = 1;
 
 #define RATE_HZ 30
 
-#define NUM_STATES 9 
+#define NUM_STATES 9*3
 
 image_transport::CameraPublisher image_publisher;
 image_transport::CameraPublisher image_publisher_ransac;
@@ -41,6 +41,8 @@ geometry_msgs::Point punto_des;
 
 // try kernel width 5 for now
 const static int g_kernel1DWidth = 5;
+
+std::string nombre_estado [9] = {"DNL",   "OL",   "LL",   "LC",   "CC",   "RC",   "RR",   "OR", "DNR"};
 
 cLaneDetectionFu::cLaneDetectionFu(ros::NodeHandle nh)
     : nh_(nh), priv_nh_("~")
@@ -176,6 +178,7 @@ cLaneDetectionFu::cLaneDetectionFu(ros::NodeHandle nh)
     pub_ransac_center = nh.advertise<nav_msgs::GridCells>("/points/ransac_center", MY_ROS_QUEUE_SIZE);
     pub_ransac_left = nh.advertise<nav_msgs::GridCells>("/points/ransac_left", MY_ROS_QUEUE_SIZE);
 
+    pub_lane_model = nh.advertise<nav_msgs::GridCells>("/points/lane_model", MY_ROS_QUEUE_SIZE);
     pub_ransac_horizontal = nh.advertise<nav_msgs::GridCells>("/points/ransac_horizontal", MY_ROS_QUEUE_SIZE);
 
     image_transport::ImageTransport image_transport(nh);
@@ -463,9 +466,12 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
 
     //---------------------- DEBUG OUTPUT RANSAC POLYNOMIALS ---------------------------------//
     #ifdef PUBLISH_DEBUG_OUTPUT
-        cv::Mat transformedImagePaintableRansac = transformedImage.clone();
-        cv::cvtColor(transformedImagePaintableRansac,transformedImagePaintableRansac,CV_GRAY2BGR);
+        //cv::Mat transformedImagePaintableRansac = transformedImage.clone();
+        //cv::cvtColor(transformedImagePaintableRansac,transformedImagePaintableRansac,CV_GRAY2BGR);
         
+        cv::Mat transformedImagePaintableLaneModel = transformedImage.clone();
+    	cv::cvtColor(transformedImagePaintableLaneModel,transformedImagePaintableLaneModel,CV_GRAY2BGR);
+
         // geometry_msgs::Point pt;
         array_ransac_left.cells.clear();
         array_ransac_center.cells.clear();
@@ -484,11 +490,11 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
         for(int i = minYPolyRoi; i < maxYRoi; i++)
         {
             cv::Point pointLocLeft = cv::Point(polyLeft.at(i), i);
-            cv::circle(transformedImagePaintableRansac,pointLocLeft,0,cv::Scalar(0,0,255),-1);
+            cv::circle(transformedImagePaintableLaneModel,pointLocLeft,0,cv::Scalar(0,0,255),-1);
             cv::Point pointLocCenter = cv::Point(polyCenter.at(i), i);
-            cv::circle(transformedImagePaintableRansac,pointLocCenter,0,cv::Scalar(0,255,0),-1);
+            cv::circle(transformedImagePaintableLaneModel,pointLocCenter,0,cv::Scalar(0,255,0),-1);
             cv::Point pointLocRight = cv::Point(polyRight.at(i), i);
-            cv::circle(transformedImagePaintableRansac,pointLocRight,0,cv::Scalar(255,0,0),-1);
+            cv::circle(transformedImagePaintableLaneModel,pointLocRight,0,cv::Scalar(255,0,0),-1);
             pt.x = pointLocLeft.x;
             pt.y = pointLocLeft.y;
             pt.z = 0;
@@ -508,7 +514,7 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
             for(int i = 0; i < 160; i++) {
                 double y = polyHorizontal.at(i);
                 cv::Point pointLocHorizontal = cv::Point(i, y);
-                cv::circle(transformedImagePaintableRansac,pointLocHorizontal,0,cv::Scalar(200,0,200),-1);
+                cv::circle(transformedImagePaintableLaneModel,pointLocHorizontal,0,cv::Scalar(200,0,200),-1);
                 // ROS_INFO_STREAM("POLY HORIZONTAL x:" << i << ", y:" << y);
                 pt.x = pointLocHorizontal.x;
                 pt.y = pointLocHorizontal.y;
@@ -518,6 +524,7 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
         }
 
         // PLANEACION
+        /*
         for(int i=0; i<path_planned.cell_width;i++) {
             if(path_planned.cells[i].x < proj_image_w && path_planned.cells[i].y - 10 > 0) {
                 cv::Point pointPath = cv::Point(path_planned.cells[i].x, path_planned.cells[i].y);
@@ -531,20 +538,21 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
                 // ROS_INFO_STREAM("X: " << pointPath.x << ", Y: " << pointPath.y);
             }
         }
-
+		
         cv::Point pun_des = cv::Point(punto_des.x, punto_des.y);
         cv::circle(transformedImagePaintableRansac,pun_des,3,cv::Scalar(0,221,237),-1);
-
+		
+		*/
 
         pub_ransac_left.publish(array_ransac_left);
         pub_ransac_center.publish(array_ransac_center);
         pub_ransac_right.publish(array_ransac_right);
         pub_ransac_horizontal.publish(array_ransac_right);
 
-        pubRGBImageMsg(transformedImagePaintableRansac, image_publisher_ransac);
+        pubRGBImageMsg(transformedImagePaintableLaneModel, image_publisher_ransac);
 
     #ifdef PAINT_OUTPUT
-        cv::imshow("RANSAC results", transformedImagePaintableRansac);
+        cv::imshow("RANSAC results", transformedImagePaintableLaneModel);
         cv::waitKey(1);
     #endif
     #endif
@@ -554,8 +562,14 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
 
     pubAngle();
 
-    cv::Mat transformedImagePaintableLaneModel = transformedImage.clone();
-    cv::cvtColor(transformedImagePaintableLaneModel,transformedImagePaintableLaneModel,CV_GRAY2BGR);
+    // Esta seccion del codigo es la que dibuja el modelo del carril
+
+    array_lane_model.cells.clear();
+    array_lane_model.cell_width =  maxYRoi - minYPolyRoi;
+    array_lane_model.cell_height = 1;
+
+    //cv::Mat transformedImagePaintableLaneModel = transformedImage.clone();
+    //cv::cvtColor(transformedImagePaintableLaneModel,transformedImagePaintableLaneModel,CV_GRAY2BGR);
 
     if (lanePolynomial.hasDetected()) {
         int r = lanePolynomial.getLastUsedPosition() == LEFT ? 255 : 0;
@@ -567,6 +581,12 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
         {
             cv::Point pointLoc = cv::Point(lanePolynomial.getLanePoly().at(i)+proj_image_w_half, i);
             cv::circle(transformedImagePaintableLaneModel,pointLoc,0,cv::Scalar(b,g,r),-1);
+
+            // aqui pintar lane  
+            pt.x = pointLoc.x;
+            pt.y = pointLoc.y;
+            pt.z = 0;
+            array_lane_model.cells.push_back(pt);
         }     
 
         std::vector<FuPoint<int>> supps = lanePolynomial.getLastUsedPosition() == LEFT 
@@ -577,8 +597,30 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
         {         
             FuPoint<int> supp = supps[i];
             cv::Point suppLoc = cv::Point(supp.getX(), supp.getY());
-            cv::circle(transformedImagePaintableLaneModel,suppLoc,1,cv::Scalar(b,g,r),-1);         
+            cv::circle(transformedImagePaintableLaneModel,suppLoc,1,cv::Scalar(b,g,r),-1); 
         }    
+
+        //-------------------------
+        // PLANEACION
+        for(int i=0; i<path_planned.cell_width;i++) {
+            if(path_planned.cells[i].x < proj_image_w && path_planned.cells[i].y - 10 > 0) {
+                cv::Point pointPath = cv::Point(path_planned.cells[i].x, path_planned.cells[i].y);
+                cv::Point pointText = cv::Point(path_planned.cells[i].x, path_planned.cells[i].y - 10);
+                
+                // muestra las coordenadas de todos los estados
+                cv::circle(transformedImagePaintableLaneModel,pointPath,2,cv::Scalar(200,200,0),-1);
+                cv::putText(transformedImagePaintableLaneModel,std::to_string(i),pointText,FONT_HERSHEY_SIMPLEX,.4,cv::Scalar(0,221,237));
+                
+            }
+        }
+
+        cv::Point pun_des = cv::Point(punto_des.x, punto_des.y);
+        cv::circle(transformedImagePaintableLaneModel,pun_des,3,cv::Scalar(0,221,237),-1);
+
+        // muestra en el estado en que me encuentro
+        cv::Point pointTextEstado = cv::Point(80, 155);
+        cv::putText(transformedImagePaintableLaneModel,nombre_estado[estado],pointTextEstado,FONT_HERSHEY_SIMPLEX,.4,cv::Scalar(200,221,0));
+        //-------------------------
 
         cv::Point pointLoc = cv::Point(proj_image_w_half,proj_image_h);
         cv::circle(transformedImagePaintableLaneModel,pointLoc,2,cv::Scalar(0,0,255),-1); 
@@ -589,6 +631,8 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
         cv::Point pointLoc = cv::Point(5,5);
         cv::circle(transformedImagePaintableLaneModel,pointLoc,3,cv::Scalar(0,0,255),0);
     }
+
+    pub_lane_model.publish(array_lane_model);
 
     pubRGBImageMsg(transformedImagePaintableLaneModel, image_publisher);
 
@@ -601,8 +645,6 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
 
     //ROS_INFO_STREAM("ProcessInput Ending");
 }
-
-
 
 /* EdgeDetector methods */
 
@@ -890,22 +932,29 @@ void cLaneDetectionFu::ProcessPlanningXY(const geometry_msgs::Point& path){
 }
 
 void cLaneDetectionFu::get_localization(const std_msgs::Float32MultiArray& locArray) {
+    
     // detectar estado de mayor probabilidad para imprimirlo
-
     float max=0;
-    for(int i=0;i<NUM_STATES;i++){
-        if(locArray.data[i]>max){
-            max=locArray.data[i];
-        }
-    }
+	for(int i=0;i<NUM_STATES;i++){
+	 	if(locArray.data[i]>max){
+	 		max=locArray.data[i];
+	 	}
+	}
 
-    for(int i=NUM_STATES-1;i>=0;i--){
+	int countEstados=0;
+	for(int i=NUM_STATES-1;i>=0;i--){
         if(locArray.data[i]==max){
             // ROS_INFO_STREAM("Estas en:" << nombre_estado[i]);
             estado = i;
-            break;
+            countEstados++;
         }
     }
+
+    if (countEstados==1)
+    	estado=(int)floor(estado/3);
+    else
+    	estado=-1; // no se pudo determinar el estado, ya que hay mas de uno posible
+
 }
 
 /* LaneMarkingDetector methods */
@@ -1380,7 +1429,8 @@ void cLaneDetectionFu::createLanePoly(ePosition position) {
     }
     else if (position == CENTER) {
         usedPoly = polyCenter;
-        dRight = defaultXCenter-5;
+        //dRight = defaultXCenter-5;
+        dRight = defaultXCenter+5;
     }
     else if (position == RIGHT) {
         usedPoly = polyRight;
@@ -1682,13 +1732,16 @@ void cLaneDetectionFu::detectLane() {
 
         if (gradientsSimilar(gradCenter, gradRight)) {
             createLanePoly(RIGHT);
+            printf("Similar \n");
         }
         else {
             if (bestPolyCenter.second >= bestPolyRight.second) {
                 createLanePoly(CENTER);
+                printf("Best poly center\n");
             }
             else {
                 createLanePoly(RIGHT);
+                printf("else best poly\n");
             }
         }
     }

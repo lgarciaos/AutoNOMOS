@@ -100,6 +100,7 @@ class cLaneDetectionFu
         ros::Publisher pub_ransac_center;
         ros::Publisher pub_ransac_right;
 
+        ros::Publisher pub_lane_model;
         ros::Publisher pub_ransac_horizontal;
 
         IPMapper ipMapper;
@@ -288,6 +289,7 @@ class cLaneDetectionFu
         nav_msgs::GridCells array_ransac_center;
         nav_msgs::GridCells array_ransac_right;
 
+        nav_msgs::GridCells array_lane_model;
         nav_msgs::GridCells array_ransac_horizontal;
 
         double rate_hz = 30;

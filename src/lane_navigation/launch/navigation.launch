@@ -63,7 +63,7 @@
     <param name="RPM"              type="int" value="-30"/>
     <param name="rate"             type="double" value="10.0"/>
     <param name="proj_image_h"     type="int" value="160"/>
-    <param name="threshold_dist_y" type="int" value="10"/>
+    <param name="threshold_dist_y" type="int" value="50"/>
     <param name="pixeles_cambio_estado" type="int" value="16"/>
   </node> 
   

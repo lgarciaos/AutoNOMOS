@@ -2,13 +2,14 @@
 #include <geometry_msgs/Twist.h>
 #include <geometry_msgs/Point.h>
 #include <std_msgs/Header.h>
-#include <iostream>
+
 #include <std_msgs/Int32MultiArray.h>
 #include <std_msgs/Float32MultiArray.h>
 #include <nav_msgs/GridCells.h>
 #include <std_msgs/Int16.h>
 #include <string>
 #include <sstream>
+#include <cmath>
 
 static const uint32_t MY_ROS_QUEUE_SIZE = 1;
 #define NUM_STATES 9*3
@@ -40,12 +41,16 @@ std_msgs::Float32MultiArray p;
 std::string nombre_estado [9] = {"DNL",   "OL",   "LL",   "LC",   "CC",   "RC",   "RR",   "OR", "DNR"};
 
 
-float p_exact = .35;
-float p_undershoot = .45;
-float p_overshoot = .2;
+// movement
+float p_exact;
+float p_undershoot;
+float p_undershoot_2;
+float p_overshoot;
+//float p_overshoot_2 = .05;
 
-float p_hit = 0.80;
-float p_miss = 0.20;
+// sensor
+float p_hit = 0.99;
+float p_miss = 0.01;
 
 float alpha = 12; //TODO
 
@@ -130,7 +135,7 @@ float dist(geometry_msgs::Point p1, geometry_msgs::Point p2)
 //	ROS_INFO_STREAM("x1: " << p1.x << "\ty1: "<< p1.y << "\tx2: " << p2.x << "\ty2: " << p2.y);
 	float dif_x = p1.x - p2.x;
 //	float dif_y = p1.y - p2.y;
-	return sqrt(dif_x * dif_x);
+	return sqrt(dif_x * dif_x); // absolute value
 }
 
 //determines a hit based on the number of lines detected and the distance from the car center to the lines
@@ -338,111 +343,109 @@ std_msgs::Float32MultiArray move(std_msgs::Float32MultiArray prob)
 	}
 	
 	*/
-	
-	
-	double p_exact = .20;
-	double p_undershoot = .75;
-	double p_overshoot = .05;
-	// double p_dundershoot = .025;
-	// double p_dovershoot = .025;
+
+	p_exact = .50;
+	p_undershoot = .25;
+	p_undershoot_2 = .05;
+	p_overshoot = .20;
 
 	U = 0;
 	angulo_real = (ctrl_action+45);
-	// a que estado podria llegar basado en el steering
-	double dist_x = cos(angulo_real*M_PI/180);//*nav_velocity_pixels;
 
-	/*
-	if(ctrl_action > 40 && ctrl_action < 50){
-		U = 0;
-		//p_exact = .9;
-		//p_undershoot = .05;
-		//p_overshoot = .05;
-	}
-	else{
-		//p_exact = abs(dist_x)/pixeles_cambio_estado;
-		//p_overshoot = 0.01;
-		//p_undershoot = 1-(abs(dist_x)/pixeles_cambio_estado)-p_overshoot;
-		if(ctrl_action > 45){
-			U=1; //mov izquierda
-		}
-		else{
-			U=-1; // mov derecha
-		}	
-	}
-	*/
+	// a que estado podria llegar basado en velocidad y steering
+	// double dist_x = cos(angulo_real*M_PI/180);//*nav_velocity_pixels;
+
 	int mov_under = 0;
 	int mov_over = 0;
 
-	if(dist_x > -0.38 && dist_x < 0.38){ // 90 +- 45/2 grados
+	double diff=0;
+	if(angulo_real > 90-10 && angulo_real < 90+10) { // 90 +- 45/2 grados
 		U = 0;
 		mov_under=1;
 		mov_over=-1;
-		//p_exact = .9;
-		//p_undershoot = .05;
-		//p_overshoot = .05;
+
+		diff = (angulo_real-90)/100;
+
+		p_exact -= std::abs(diff);
+		if(diff<0){
+			p_undershoot += std::abs(diff) + p_undershoot_2 ;
+			p_undershoot_2 = 0;
+		}
+		else {
+			p_overshoot += std::abs(diff);
+		}
 	}
 	else{
-		//p_exact = abs(dist_x)/pixeles_cambio_estado;
-		//p_overshoot = 0.01;
-		//p_undershoot = 1-(abs(dist_x)/pixeles_cambio_estado)-p_overshoot;
-		if(dist_x < 0){
+		if(angulo_real > 90){
 			U=1; //mov izquierda
 			mov_under=-1;
 			mov_over=1;
+
+			diff = (angulo_real-115)/100;
+
+			p_exact -= std::abs(diff);
+			if(diff<0){
+				p_undershoot += std::abs(diff)/2;
+				p_undershoot_2 += std::abs(diff)/2;
+			}
+			else {
+				p_overshoot += std::abs(diff);
+			}
 		}
 		else{
 			U=-1; // mov derecha
 			mov_under=1;
 			mov_over=-1;
-		}
-		
-	}
 
+			diff = (angulo_real-70)/100;
 
-	/*
-	if(U==0){
-		ROS_INFO_STREAM("Movimiento: Frente");
-	} else {
-		if(U<0) {
-			ROS_INFO_STREAM("Movimiento: Derecha");
-		} else {
-			ROS_INFO_STREAM("Movimiento: Izquierda");
+			p_exact -= std::abs(diff);
+			if(diff>=0){
+				p_undershoot += std::abs(diff)/2;
+				p_undershoot_2 += std::abs(diff)/2;
+			}
+			else {
+				p_overshoot += std::abs(diff);
+			}
 		}
 	}
-	*/
 	
-	// ROS_INFO_STREAM("pExact: "<<p_exact<<", pUndershoot: "<<p_undershoot<<", pOvershoot: "<<p_overshoot);
+	ROS_INFO_STREAM("Angulo: " << angulo_real << ", pExact: "<<p_exact<<", pUndershoot: "<<p_undershoot<<", pOvershoot: "<<p_overshoot<<", diff: " << diff);
 	
-	//int U_prima = U;
 	for (int i = 0; i < NUM_STATES; i++)
 	{
-		//if(i<=1 || i>=NUM_STATES-2)
-		//	U=0;
-		//else
-		//	U=U_prima;
 
 		double s = 0.0;
 		
 		int mov = i+U;
+		//HISTOGRAMA CICLICLO
 		// int mod2 = (mov) % NUM_STATES;
 		// if(mod2<0) mod2 = NUM_STATES+mod2;
 		if(mov<0) mov=0;
 		else if(mov>NUM_STATES-1) mov=NUM_STATES-1;
 		s = p_exact * prob.data[mov];
 
-		int mov2 = i+U+mov_under;
 
-		//mod2 = (mov2) % NUM_STATES;
-		//if(mod2<0) mod2 = NUM_STATES+mod2;
+
+		//UNDERSHOOT
+		int mov2 = i+U+mov_under;
 		if(mov2<0) mov2=0;
 		else if(mov2>NUM_STATES-1) mov2=NUM_STATES-1;
-
 		if(U==0)
 			s += (1-p_exact)/2 * prob.data[mov2];
         else
         	s += p_undershoot * prob.data[mov2];
+        //2
+        mov2 = i+U+2*mov_under;
+		if(mov2<0) mov2=0;
+		else if(mov2>NUM_STATES-1) mov2=NUM_STATES-1;
+		if(U==0)
+			s += (1-p_exact)/2 * prob.data[mov2];
+        else
+        	s += p_undershoot_2 * prob.data[mov2];
 
         /*
+        //HISTOGRAMA CICLICLO
         mov2 = i+U-2;
 		//mod2 = (mov2) % NUM_STATES;
 		//if(mod2<0) mod2 = NUM_STATES+mod2;
@@ -451,18 +454,28 @@ std_msgs::Float32MultiArray move(std_msgs::Float32MultiArray prob)
         s += p_dundershoot * prob.data[mov2];
 		*/
         
-        int mov3 = i+U+mov_over;
 
-		//mod2 = (mov3) % NUM_STATES;
-		//if(mod2<0) mod2 = NUM_STATES+mod2;
+
+        // OVERSHOOT
+        int mov3 = i+U+mov_over;
         if(mov3<0) mov3=0;
 		else if(mov3>NUM_STATES-1) mov3=NUM_STATES-1;
 		if(U==0)
 			s += (1-p_exact)/2 * prob.data[mov3];
         else
         	s += p_overshoot * prob.data[mov3];
+        /*2
+        mov3 = i+U+2*mov_over;
+        if(mov3<0) mov3=0;
+		else if(mov3>NUM_STATES-1) mov3=NUM_STATES-1;
+		if(U==0)
+			s += (1-p_exact)/2 * prob.data[mov3];
+        else
+        	s += p_overshoot_2 * prob.data[mov3];
+		*/
 
         /*
+        //HISTOGRAMA CICLICLO
         mov3 = i+U+2;
 		//mod2 = (mov3) % NUM_STATES;
 		//if(mod2<0) mod2 = NUM_STATES+mod2;
@@ -557,7 +570,7 @@ int main(int argc, char** argv){
 
 	const char * format = "P(x)=[%.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f]\n";
 
-	float [NUM_STATES] bel_RC = [0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.1f,0.8f,0.1f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f];
+	float bel_RC [NUM_STATES] = {0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.1f,0.8f,0.1f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f};
 
 	for (int i = 0; i < NUM_STATES; ++i)
 	{
@@ -602,13 +615,7 @@ int main(int argc, char** argv){
 	    
 	    // printf("     [ DNL,   OL,   LL,   LC,   CC,   RC,   RR,   OR, DNR]\n");
 	    
-	    // ROS_INFO_STREAM("Sensing update");
-		p = sense(p);
-		
-		// printf (format, p.data[0],p.data[1],p.data[2],p.data[3],p.data[4],p.data[5],p.data[6],p.data[7],p.data[8],p.data[9],p.data[10],p.data[11],p.data[12],p.data[13],p.data[14],p.data[15],p.data[16],p.data[17],p.data[18],p.data[19],p.data[20],p.data[21],p.data[22],p.data[23],p.data[24],p.data[25],p.data[26]);
-		printf (format, p.data[1],p.data[4],p.data[7],p.data[10],p.data[13],p.data[16],p.data[19],p.data[22],p.data[25]);
-
-		pub_loc.publish(p);
+	    
 	    
 	    //ROS_INFO_STREAM("Motion update: ");
 	    p = move(p);
@@ -617,6 +624,16 @@ int main(int argc, char** argv){
 		//printf("Direccion: %s, steering carro: %d, U: %d\n", direccion.c_str(), angulo_real, U);
 
 		// printf("L: %d, C: %d, R: %d -- ll: %.2f, cc: %.2f, rr: %.2f, alpha: %.2f\n", L, C, R, dist_ll, dist_cc, dist_rr, alpha);
+
+
+		// ROS_INFO_STREAM("Sensing update");
+		p = sense(p);
+		
+		// printf (format, p.data[0],p.data[1],p.data[2],p.data[3],p.data[4],p.data[5],p.data[6],p.data[7],p.data[8],p.data[9],p.data[10],p.data[11],p.data[12],p.data[13],p.data[14],p.data[15],p.data[16],p.data[17],p.data[18],p.data[19],p.data[20],p.data[21],p.data[22],p.data[23],p.data[24],p.data[25],p.data[26]);
+		printf (format, p.data[1],p.data[4],p.data[7],p.data[10],p.data[13],p.data[16],p.data[19],p.data[22],p.data[25]);
+
+		pub_loc.publish(p);
+
 		int estadoEstimado = enQueEstadoEsta(p);
 		// printf("Counter, L, C, R, ll, cc, rr, alpha, estimated");
 		printf("%d, %d, %d, %d, %.2f, %.2f, %.2f, %.2f, %s\n", contador++, L, C, R, dist_ll, dist_cc, dist_rr, angulo_real, nombre_estado[estadoEstimado].c_str());

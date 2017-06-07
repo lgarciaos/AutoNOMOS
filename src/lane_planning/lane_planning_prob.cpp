@@ -20,9 +20,7 @@ int RPM = 0;
 
 std::string nombre;
 
-nav_msgs::GridCells arr_left; 
-nav_msgs::GridCells arr_center;
-nav_msgs::GridCells arr_right;
+nav_msgs::GridCells arr_lane_model;
 
 std_msgs::Float32MultiArray localizationArray;
 
@@ -33,9 +31,7 @@ geometry_msgs::Point pt_to_send;
 int estado = -1;
 int countEstados = 0;
 
-int R;
-int L;
-int C;
+int Lane_size;
 int proj_image_h=0;
 int threshold_dist_y=0;
 int pixeles_cambio_estado=0;
@@ -45,39 +41,18 @@ std::string nombre_estado [NUM_STATES] = {"Dont Know Left", "Out Left", "Left Le
 int des_state = 5;
 
 // estados: 	 NSI,   FI,   CI,   CD,   FD, NSD
-void get_pts_left(const nav_msgs::GridCells& array)
+void get_pts_lane(const nav_msgs::GridCells& array)
 {
-	arr_left.cells = array.cells;
-	arr_left.cell_width = array.cell_width;
+	arr_lane_model.cells = array.cells;
+	arr_lane_model.cell_width = array.cell_width;
 	if (array.cells[0].x > 0)
-		L = array.cell_width;
+		Lane_size = array.cell_width;
 	else
-		L=0;
+		Lane_size=0;
 	// lines_sensed = array.cell_width > 0 ?  lines_sensed | 4 : lines_sensed | 0;
 }
 
-void get_pts_center(const nav_msgs::GridCells& array)
-{
-	arr_center.cells = array.cells;
-	arr_center.cell_width = array.cell_width;
-	if (array.cells[0].x > 0)
-		C = array.cell_width;
-	else
-		C=0;
-	// lines_sensed = array.cell_width > 0 ?  lines_sensed | 2 : lines_sensed | 0;
-}
 
-void get_pts_right(const nav_msgs::GridCells& array)
-{
-	arr_right.cells = array.cells;
-	arr_right.cell_width = array.cell_width;
-	if (array.cells[0].x > 0)
-		R = array.cell_width;
-	else
-		R=0;
-	// ROS_INFO_STREAM("Array: " << array);
-	// lines_sensed = array.cell_width > 0 ?  lines_sensed | 1 : lines_sensed | 0;
-}
 
 void get_des_state(const std_msgs::Int16& val)
 {
@@ -152,37 +127,23 @@ void planning(){
 	int mov_estado_futuro = 0; // para saber si la coordenada que me ayuda a obtener el centro pertenece a otro estado
 
 	// Obtener coordenada del estado actual en el futuro
-	if(C>0) {
-		// se podria obtener con los polinomios de ransac directo
-		if(L>0){
-			for(int i=0; i<C;i++){
-				if(abs(arr_center.cells[i].y - pix_y) < threshold_dist_y){
-					pt_est_Actual.x = (arr_center.cells[i].x+arr_left.cells[i].x)/2;
-		            pt_est_Actual.y = arr_center.cells[i].y;
-		            pt_est_Actual.z = 0;
-		            encontrado = true;
-		            break;
-		        }
-			}
-		}
-		else if(R>0){
-			for(int i=0; i<C;i++){
-				if(abs(arr_center.cells[i].y - pix_y) < threshold_dist_y){
-					pt_est_Actual.x = (arr_center.cells[i].x+arr_right.cells[i].x)/2;
-		        	    	pt_est_Actual.y = arr_center.cells[i].y;
-		       	     		pt_est_Actual.z = 0;
-	        	    		encontrado = true;
-	        		    	break;
-				}
-			}
-		}
+	
+	for(int i=0; i<Lane_size;i++){
+		if(abs(arr_lane_model.cells[i].y - pix_y) < threshold_dist_y){
+			pt_est_Actual.x = arr_lane_model.cells[i].x;
+            pt_est_Actual.y = arr_lane_model.cells[i].y;
+            pt_est_Actual.z = 0;
+            encontrado = true;
+            break;
+        }
 	}
+		
 
 	//4-5=-1
 	//5-5=0
 	//6-5=1
-	int dif_estados=des_state-estado;
-	int diffEstadoPixeles=pixeles_cambio_estado*dif_estados
+	//int dif_estados=des_state-estado;
+	//int diffEstadoPixeles=pixeles_cambio_estado*dif_estados
 	
 	/*
 	else{
@@ -209,7 +170,8 @@ void planning(){
 
 	if(encontrado){
 
-		// rotar @angulo_mismo_estado
+		// calcular posibles COORDENADAS centrales de TODOS LOS ESTADOS
+
 		path_planned.cell_width = NUM_STATES;
 		path_planned.cell_height = 1;
 		path_planned.cells.clear();
@@ -219,7 +181,7 @@ void planning(){
 
 			// las coordenadas de pt_est_Actual, pertenecen a @estado
 			int dif_estados=i-estado;
-			int diffEstadoPixeles=pixeles_cambio_estado*dif_estados
+			int diffEstadoPixeles=pixeles_cambio_estado*dif_estados;
 
 			pt.x=pt_est_Actual.x + diffEstadoPixeles;
 			pt.y=pt_est_Actual.y;
@@ -250,15 +212,15 @@ int main(int argc, char** argv){
 	priv_nh_.param<int>(node_name+"/RPM", RPM, -30);
 	priv_nh_.param<double>(node_name+"/rate", rate_hz, 10.0);
 	priv_nh_.param<int>(node_name+"/proj_image_h", proj_image_h, 160);
-	priv_nh_.param<int>(node_name+"/threshold_dist_y", threshold_dist_y, 10);
+	priv_nh_.param<int>(node_name+"/threshold_dist_y", threshold_dist_y, 50);
 	priv_nh_.param<int>(node_name+"/pixeles_cambio_estado", pixeles_cambio_estado, 33);
 
 	pub_path = nh.advertise<nav_msgs::GridCells>("/planning", MY_ROS_QUEUE_SIZE);
 	pub_pathxy = nh.advertise<geometry_msgs::Point>("/planningxy", MY_ROS_QUEUE_SIZE);
 	
-	ros::Subscriber sub_pts_left = nh.subscribe("/points/ransac_left",MY_ROS_QUEUE_SIZE, &get_pts_left);
-	ros::Subscriber sub_pts_center = nh.subscribe("/points/ransac_center",MY_ROS_QUEUE_SIZE, &get_pts_center);
-	ros::Subscriber sub_pts_right = nh.subscribe("/points/ransac_right",MY_ROS_QUEUE_SIZE, &get_pts_right);
+	ros::Subscriber sub_pts_left = nh.subscribe("/points/lane_model",MY_ROS_QUEUE_SIZE, &get_pts_lane);
+	//ros::Subscriber sub_pts_center = nh.subscribe("/points/ransac_center",MY_ROS_QUEUE_SIZE, &get_pts_center);
+	//ros::Subscriber sub_pts_right = nh.subscribe("/points/ransac_right",MY_ROS_QUEUE_SIZE, &get_pts_right);
 
 	ros::Subscriber sub_localization = nh.subscribe("/localization_array",MY_ROS_QUEUE_SIZE, &get_localization);
 	ros::Subscriber sub_des_state = nh.subscribe("/planning/desire_state",MY_ROS_QUEUE_SIZE, get_des_state);
