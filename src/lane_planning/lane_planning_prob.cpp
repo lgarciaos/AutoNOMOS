@@ -112,7 +112,7 @@ void planning(){
 	double pix_y = proj_image_h - distancia_pixeles;
 
 
-	ROS_INFO_STREAM("Pixeles para sig mov: " << distancia_pixeles << ", y:" << pix_y);
+	// ROS_INFO_STREAM("Pixeles para sig mov: " << distancia_pixeles << ", y:" << pix_y);
 
 	geometry_msgs::Point pt_est_Actual;
 	path_planned.cell_height = 1;
@@ -123,7 +123,7 @@ void planning(){
 	double X_centro = 0;
 	int diferencia_x=0;
 	bool encontrado = false;
-	ROS_INFO_STREAM("Estado: " << estado);
+	// ROS_INFO_STREAM("Estado: " << estado);
 	int mov_estado_futuro = 0; // para saber si la coordenada que me ayuda a obtener el centro pertenece a otro estado
 
 	// Obtener coordenada del estado actual en el futuro
@@ -193,6 +193,7 @@ void planning(){
 		pub_path.publish(path_planned);
 		// estado fijo carril central 5, @des_state
 		pub_pathxy.publish(path_planned.cells[des_state]);
+		ROS_INFO_STREAM("Moving to: (" << path_planned.cells[des_state].x << " , " << path_planned.cells[des_state].y << " )" ) ;
 	}
 
 	// obtener el angulo del estado actual al estado deseado
@@ -223,7 +224,7 @@ int main(int argc, char** argv){
 	//ros::Subscriber sub_pts_right = nh.subscribe("/points/ransac_right",MY_ROS_QUEUE_SIZE, &get_pts_right);
 
 	ros::Subscriber sub_localization = nh.subscribe("/localization_array",MY_ROS_QUEUE_SIZE, &get_localization);
-	ros::Subscriber sub_des_state = nh.subscribe("/planning/desire_state",MY_ROS_QUEUE_SIZE, get_des_state);
+	// ros::Subscriber sub_des_state = nh.subscribe("/planning/desire_state",MY_ROS_QUEUE_SIZE, &get_des_state);
 
 	nav_velocity_pixels = navigation_velocity_pixels();
 	
