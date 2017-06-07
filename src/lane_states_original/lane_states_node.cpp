@@ -50,7 +50,7 @@ float p_overshoot;
 
 // sensor
 float p_hit = 0.99;
-float p_miss = 0.01;
+float p_miss = 0.00;
 
 float alpha = 12; //TODO
 
@@ -605,6 +605,8 @@ int main(int argc, char** argv){
 	
 	int contador = 0;
 
+	int estadoFijo = 0;
+
 	while(nh.ok())
 	{
 		// L=0;
@@ -613,35 +615,27 @@ int main(int argc, char** argv){
 
 	    ros::spinOnce();
 	    
-	    // printf("     [ DNL,   OL,   LL,   LC,   CC,   RC,   RR,   OR, DNR]\n");
-	    
-	    
-	    
-	    //ROS_INFO_STREAM("Motion update: ");
-	    p = move(p);
+	    if(!estadoFijo){
 
-	    //std::string direccion = (U==0?"Centro":(U>0?"Izquierda":"Derecha"));
-		//printf("Direccion: %s, steering carro: %d, U: %d\n", direccion.c_str(), angulo_real, U);
+		    // ROS_INFO_STREAM("Sensing update");
+			p = sense(p);
+			
+			// printf (format, p.data[0],p.data[1],p.data[2],p.data[3],p.data[4],p.data[5],p.data[6],p.data[7],p.data[8],p.data[9],p.data[10],p.data[11],p.data[12],p.data[13],p.data[14],p.data[15],p.data[16],p.data[17],p.data[18],p.data[19],p.data[20],p.data[21],p.data[22],p.data[23],p.data[24],p.data[25],p.data[26]);
+			printf (format, p.data[1],p.data[4],p.data[7],p.data[10],p.data[13],p.data[16],p.data[19],p.data[22],p.data[25]);
 
-		// printf("L: %d, C: %d, R: %d -- ll: %.2f, cc: %.2f, rr: %.2f, alpha: %.2f\n", L, C, R, dist_ll, dist_cc, dist_rr, alpha);
+			pub_loc.publish(p);
+
+			int estadoEstimado = enQueEstadoEsta(p);
+			printf("%d, %d, %d, %d, %.2f, %.2f, %.2f, %.2f, %s\n", contador++, L, C, R, dist_ll, dist_cc, dist_rr, angulo_real, nombre_estado[estadoEstimado].c_str());
 
 
-		// ROS_INFO_STREAM("Sensing update");
-		p = sense(p);
-		
-		// printf (format, p.data[0],p.data[1],p.data[2],p.data[3],p.data[4],p.data[5],p.data[6],p.data[7],p.data[8],p.data[9],p.data[10],p.data[11],p.data[12],p.data[13],p.data[14],p.data[15],p.data[16],p.data[17],p.data[18],p.data[19],p.data[20],p.data[21],p.data[22],p.data[23],p.data[24],p.data[25],p.data[26]);
-		printf (format, p.data[1],p.data[4],p.data[7],p.data[10],p.data[13],p.data[16],p.data[19],p.data[22],p.data[25]);
+		    
+		    //ROS_INFO_STREAM("Motion update: ");
+		    p = move(p);
+		    
+		    // print_state_order();
+	    }
 
-		pub_loc.publish(p);
-
-		int estadoEstimado = enQueEstadoEsta(p);
-		// printf("Counter, L, C, R, ll, cc, rr, alpha, estimated");
-		printf("%d, %d, %d, %d, %.2f, %.2f, %.2f, %.2f, %s\n", contador++, L, C, R, dist_ll, dist_cc, dist_rr, angulo_real, nombre_estado[estadoEstimado].c_str());
-
-	    
-	    
-	    // print_state_order();
-	    
 	    loop_rate.sleep();
 	}
 	return 0;
