@@ -276,7 +276,7 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
     cv::Mat transformedImagePaintableHorizontal;
 
     //---------------------- DEBUG OUTPUT EDGES ---------------------------------//
-    
+    #ifdef PUBLISH_DEBUG_OUTPUT
         transformedImagePaintable = transformedImage.clone();
         cv::cvtColor(transformedImagePaintable,transformedImagePaintable,CV_GRAY2BGR);
         for(int i = 0; i < (int)edges.size(); i++)
@@ -305,6 +305,7 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
         //cv::imshow("ROI, edgesHorizontal", transformedImagePaintableHorizontal);
         //cv::waitKey(1);
     #endif
+    #endif
     //---------------------- END DEBUG OUTPUT EDGES ------------------------------//
 
     //edges -> lane markings
@@ -312,7 +313,7 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
     vector<FuPoint<int>> laneMarkingsH = cLaneDetectionFu::extractLaneMarkingsHorizontal(edgesHorizontal);
 
     //---------------------- DEBUG OUTPUT LANE MARKINGS ---------------------------------//
-   
+    #ifdef PUBLISH_DEBUG_OUTPUT
         transformedImagePaintable = transformedImage.clone();
         cv::cvtColor(transformedImagePaintable,transformedImagePaintable,CV_GRAY2BGR);
         for(int i = 0; i < (int)laneMarkings.size(); i++)
@@ -336,6 +337,7 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
     #ifdef PAINT_OUTPUT
         //cv::imshow("L. Markings Horizontal", transformedImagePaintableHorizontal);
         //cv::waitKey(1);
+    #endif
     #endif
     //---------------------- END DEBUG OUTPUT LANE MARKINGS ------------------------------//
 
@@ -619,7 +621,10 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
 
         // muestra en el estado en que me encuentro
         cv::Point pointTextEstado = cv::Point(80, 155);
-        cv::putText(transformedImagePaintableLaneModel,nombre_estado[estado],pointTextEstado,FONT_HERSHEY_SIMPLEX,.4,cv::Scalar(200,221,0));
+        if(estado >=0)
+        	cv::putText(transformedImagePaintableLaneModel,nombre_estado[estado],pointTextEstado,FONT_HERSHEY_SIMPLEX,.4,cv::Scalar(200,221,0));
+        else
+        	cv::putText(transformedImagePaintableLaneModel,"?",pointTextEstado,FONT_HERSHEY_SIMPLEX,.4,cv::Scalar(200,221,0));
         //-------------------------
 
         cv::Point pointLoc = cv::Point(proj_image_w_half,proj_image_h);

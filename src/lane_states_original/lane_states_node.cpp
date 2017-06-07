@@ -626,7 +626,12 @@ int main(int argc, char** argv){
 			pub_loc.publish(p);
 
 			int estadoEstimado = enQueEstadoEsta(p);
-			printf("%d, %d, %d, %d, %.2f, %.2f, %.2f, %.2f, %s\n", contador++, L, C, R, dist_ll, dist_cc, dist_rr, angulo_real, nombre_estado[estadoEstimado].c_str());
+			if(estadoEstimado>=0){
+				printf("%d, %d, %d, %d, %.2f, %.2f, %.2f, %.2f, %s\n", contador++, L, C, R, dist_ll, dist_cc, dist_rr, angulo_real, nombre_estado[estadoEstimado].c_str());
+			}
+			else {
+				printf("%d, %d, %d, %d, %.2f, %.2f, %.2f, %.2f, %s\n", contador++, L, C, R, dist_ll, dist_cc, dist_rr, angulo_real, "?");
+			}
 
 
 		    
