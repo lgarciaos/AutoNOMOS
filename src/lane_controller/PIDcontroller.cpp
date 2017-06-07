@@ -73,7 +73,7 @@ double PIDtime(double pActual, double pDestino, double dt, double max, double mi
 	double derivative = (error - prevError) / dt;
 	double dOut = Kd * derivative;
 	double output = pOut + iOut + dOut;
-	ROS_INFO_STREAM("PIDres: " << output);
+	// ROS_INFO_STREAM("PIDres: " << output);
 	
 
 	// correccion en el carro
@@ -120,7 +120,7 @@ void get_pathxy(const geometry_msgs::Point& point){
 				else if( pid_res < min )
 					pid_res = min;
 
-				ROS_INFO_STREAM("Error theta:" << theta <<", Res PID: " << p << ", Señal Servo:" << pid_res );
+				ROS_INFO_STREAM("Error theta:" << theta <<", Res PID: " << p << ", Señal Servo:" << pid_res << ", Pos esp: " << posEsp );
 
 				value_motor.data = velocity;
 				value_steering.data = pid_res;

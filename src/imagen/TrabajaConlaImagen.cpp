@@ -93,19 +93,20 @@ void imageCb(const sensor_msgs::ImageConstPtr& msg)
 	//Cambiando todos los src por cv_ptr - ahora no
 	//PROBLEMA CON SRC, NO SE PUEDE SUSTITUIR CON cv_ptr, ENTONCES CON QUÉ?
 
-
-
 	Mat dst1, cdst1, dst2, cdst2;
+	try{
+	//Mat dst1, cdst1, dst2, cdst2;
 	Canny(imgrec1, dst1, 50, 200, 3); //a escala de grises     C
 	cvtColor(dst1, cdst1, CV_GRAY2BGR); //contornos
 
 	Canny(imgrec2, dst2, 50, 200, 3); //a escala de grises     C
 	cvtColor(dst2, cdst2, CV_GRAY2BGR); //contornos
-
- #if 0
-	vector<Vec2f> lines;
-	HoughLines(dst, lines, 1, CV_PI/180, 100, 0, 0 );
-
+	}
+	catch(...){printf("\nExcepcion");}
+// #if 0
+	//vector<Vec2f> lines;
+	//HoughLines(dst, lines, 1, CV_PI/180, 100, 0, 0 );
+	/*
 	for( size_t i = 0; i < lines.size(); i++ )
 	{
 		float rho = lines[i][0], theta = lines[i][1];
@@ -118,7 +119,8 @@ void imageCb(const sensor_msgs::ImageConstPtr& msg)
 		pt2.y = cvRound(y0 - 1000*(a));
 		line( cdst, pt1, pt2, Scalar(0,0,255), 3, CV_AA);
 	}
- #else
+	*/
+// #else
 
 	printf("\nSe esta ejecutnado else");
 	vector<Vec4i> lines1;
@@ -152,7 +154,7 @@ void imageCb(const sensor_msgs::ImageConstPtr& msg)
 	}
 	catch (...) { printf("\nOcurrió una excepción"); }
 
-#endif
+//#endif
 
 
 	//imshow("source", imgrec);

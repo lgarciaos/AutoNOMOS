@@ -284,16 +284,16 @@ std_msgs::Float32MultiArray conv(std_msgs::Float32MultiArray p)
 	}
 
 	// adjust ones to distribution
-	for (int i=0;i<NUM_STATES;i++){
-		if(q.data[i]==p_hit){
-			double temp=q.data[i];
-			double valc=temp*2/3;
-			double vals=temp*1/6;
-			q.data[i-1]+=vals;
-			q.data[i]=valc;
-			q.data[i+1]+=vals;
-		}
-	}
+	//for (int i=0;i<NUM_STATES;i++){
+	//	if(q.data[i]==p_hit){
+	//		double temp=q.data[i];
+	//		double valc=temp*2/3;
+	//		double vals=temp*1/6;
+	//		q.data[i-1]+=vals;
+	//		q.data[i]=valc;
+	//		q.data[i+1]+=vals;
+	//	}
+	//}
 
 	const char * format = "z_k =[%.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f]\n";
   	printf (format, hits[1],hits[4],hits[7],hits[10],hits[13],hits[16],hits[19],hits[22],hits[25]);
