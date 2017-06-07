@@ -37,7 +37,7 @@ int threshold_dist_y=0;
 int pixeles_cambio_estado=0;
 double nav_velocity_pixels = 0.0;
 
-std::string nombre_estado [NUM_STATES] = {"Dont Know Left", "Out Left", "Left Left", "Left Center", "Center Center", "Right Center", "Out Right", "Dont Know Right"};
+//std::string nombre_estado [NUM_STATES] = {"Dont Know Left", "Out Left", "Left Left", "Left Center", "Center Center", "Right Center", "Out Right", "Dont Know Right"};
 int des_state = 5;
 
 // estados: 	 NSI,   FI,   CI,   CD,   FD, NSD
@@ -53,21 +53,20 @@ void get_pts_lane(const nav_msgs::GridCells& array)
 }
 
 
-
-void get_des_state(const std_msgs::Int16& val)
-{
-	des_state = val.data;
-}
+// NOT YET
+//void get_des_state(const std_msgs::Int16& val)
+//{
+//	des_state = val.data;
+//}
 
 void get_localization(const std_msgs::Float32MultiArray& locArray) {
-	
 	float max=0;
 	for(int i=0;i<NUM_STATES;i++){
 	 	if(locArray.data[i]>max){
 	 		max=locArray.data[i];
 	 	}
 	}
-
+	estado = -1; // no se pudo determinar el estado, ya que hay mas de uno posible
 	countEstados=0;
 	for(int i=NUM_STATES-1;i>=0;i--){
         if(locArray.data[i]==max){
@@ -79,8 +78,8 @@ void get_localization(const std_msgs::Float32MultiArray& locArray) {
 
     if (countEstados==1)
     	estado=(int)floor(estado/3);
-    else
-    	estado=-1; // no se pudo determinar el estado, ya que hay mas de uno posible
+    //else
+    //	estado=-1; // no se pudo determinar el estado, ya que hay mas de uno posible
 }
 
 double navigation_velocity_pixels() {
@@ -137,38 +136,8 @@ void planning(){
             break;
         }
 	}
-		
 
-	//4-5=-1
-	//5-5=0
-	//6-5=1
-	//int dif_estados=des_state-estado;
-	//int diffEstadoPixeles=pixeles_cambio_estado*dif_estados
-	
-	/*
-	else{
-		if(lanes_detected == 3 || lanes_detected == 7) {
-			for(int i=0; i<C;i++){
-				if(abs(arr_center.cells[i].y - pix_y) < threshold_dist_y){
-					X_centro = (arr_center.cells[i].x+arr_right.cells[i].x)/2;
-	            	pt_est_Actual.y = arr_center.cells[i].y;
-	            	pt_est_Actual.z = 0;
-	            	encontrado = true;
-	            	break;
-				}
-			}
-		} else {
-			diferencia_x = 0;
-			X_centro = 80;
-			// mov_estado_futuro=0;
-	    	pt_est_Actual.y = proj_image_h;
-	    	pt_est_Actual.z = 0;
-	    	encontrado = true;
-		}
-	}
-	*/
-
-	if(encontrado){
+	if(encontrado && estado >= 0){
 
 		// calcular posibles COORDENADAS centrales de TODOS LOS ESTADOS
 
@@ -231,30 +200,8 @@ int main(int argc, char** argv){
 	ros::Rate loop_rate(rate_hz);
 	while(nh.ok())
 	{
-		
-	    path_planned.cells.clear();
-		// ROS_INFO_STREAM("at 1");
 	    ros::spinOnce();
-	    // ROS_INFO_STREAM("at 2");
-	    // planning();
-	    // ROS_INFO_STREAM("at 3");
-	    // estimate_next_state();
-	    // ROS_INFO_STREAM("at 4");
 	    planning();
-	    // ROS_INFO_STREAM("at 5");
-	    // ROS_INFO_STREAM("locArr" << localizationArray);
-
-	    
-	    //ROS_INFO_STREAM("next p" << p[0]);
-	    //ROS_INFO_STREAM("next p" << p[1]);
-	    //ROS_INFO_STREAM("next p" << p[2]);
-	    // ROS_INFO_STREAM("at 6");
-	    
-	    // pt_to_send.x = det_next_move();
-	    // pt_to_send.y = 100;
-	    // ROS_INFO_STREAM("Moving to: (" << pt_to_send.x << " , " << pt_to_send.y << " )" ) ; 
-	    // pt_to_send.z = 0;
-	    
 	    loop_rate.sleep();
 	}
 	return 0;
