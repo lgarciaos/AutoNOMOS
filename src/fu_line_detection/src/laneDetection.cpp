@@ -276,7 +276,7 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
     cv::Mat transformedImagePaintableHorizontal;
 
     //---------------------- DEBUG OUTPUT EDGES ---------------------------------//
-    #ifdef PAINT_OUTPUT
+    
         transformedImagePaintable = transformedImage.clone();
         cv::cvtColor(transformedImagePaintable,transformedImagePaintable,CV_GRAY2BGR);
         for(int i = 0; i < (int)edges.size(); i++)
@@ -301,7 +301,7 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
                 cv::circle(transformedImagePaintableHorizontal,edgeLoc,1,cv::Scalar(0,0,edgesHorizontal[i][j].getValue()),-1);    
             }            
         }
-        
+    #ifdef PAINT_OUTPUT    
         //cv::imshow("ROI, edgesHorizontal", transformedImagePaintableHorizontal);
         //cv::waitKey(1);
     #endif
@@ -312,7 +312,7 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
     vector<FuPoint<int>> laneMarkingsH = cLaneDetectionFu::extractLaneMarkingsHorizontal(edgesHorizontal);
 
     //---------------------- DEBUG OUTPUT LANE MARKINGS ---------------------------------//
-    #ifdef PAINT_OUTPUT
+   
         transformedImagePaintable = transformedImage.clone();
         cv::cvtColor(transformedImagePaintable,transformedImagePaintable,CV_GRAY2BGR);
         for(int i = 0; i < (int)laneMarkings.size(); i++)
@@ -333,7 +333,7 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
             cv::Point markingLoc = cv::Point(marking.getX(), marking.getY());
             cv::circle(transformedImagePaintableHorizontal,markingLoc,1,cv::Scalar(0,255,0),-1);         
         }
-
+    #ifdef PAINT_OUTPUT
         //cv::imshow("L. Markings Horizontal", transformedImagePaintableHorizontal);
         //cv::waitKey(1);
     #endif

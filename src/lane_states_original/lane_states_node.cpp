@@ -635,6 +635,9 @@ int main(int argc, char** argv){
 		    
 		    // print_state_order();
 	    }
+            else {
+		pub_loc.publish(p);
+	    }
 
 	    loop_rate.sleep();
 	}
