@@ -23,6 +23,7 @@
 #include <std_msgs/Float32MultiArray.h>
 #include <nav_msgs/GridCells.h>
 #include <std_msgs/Int16.h>
+#include <std_msgs/Float32.h>
 
 #define PI 3.14159265
 
@@ -115,7 +116,7 @@ void get_Angle(std_msgs::Float32 angle) {
 	std_msgs::Int16 value_motor;
 	std_msgs::Int16 value_steering;
 
-	double posEsp = angle;
+	double posEsp = angle.data;
 	double posActual = 0; 
 	// ROS_INFO_STREAM("PID: posPixel Esperada: " << pE << ", posPixel Actual:" << p );
 	// 'p' en terminos de theta en grados de -45 a 45
@@ -165,7 +166,7 @@ void get_pathxy(const geometry_msgs::Point& point){
 				// p = getThetaError(posActual, posEsp);
 
 				// El servomotor del coche siempre tiene que estar en 45 grados
-				p = PIDtime(posActual, posEsp, dt, max, min, Kp, Kd, Ki);
+				p = PIDtimePixeles(posActual, posEsp, dt, max, min, Kp, Kd, Ki);
 
 				pid_res = 45 + p; // por detalle con el carro de los angulos
 				ROS_INFO_STREAM("Servo: " << pid_res);
