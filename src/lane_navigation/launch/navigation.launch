@@ -63,19 +63,19 @@
     <param name="RPM"              type="int" value="-30"/>
     <param name="rate"             type="double" value="10.0"/>
     <param name="proj_image_h"     type="int" value="160"/>
-    <param name="threshold_dist_y" type="int" value="20"/>
+    <param name="threshold_dist_y" type="int" value="15"/>
     <param name="pixeles_cambio_estado" type="int" value="16"/>
   </node> 
   
   <node name="lane_controller_node" pkg="lane_controller" type="lane_controller_node" output="screen"  > 
-    <param name="Kp"          type="double" value="2.0"/>
-    <param name="Ki"          type="double" value="0.1"/>
+    <param name="Kp"          type="double" value="4.0"/>
+    <param name="Ki"          type="double" value="0.08"/>
     <param name="Kd"          type="double" value="0.0"/>
     <param name="dt"          type="double" value="1.0"/>
     <param name="pE"          type="double" value="80.0"/>
     <param name="min"         type="double" value="0.0"/>
     <param name="max"         type="double" value="90.0"/>
-    <param name="velocity"    type="double" value="-30.0"/>
+    <param name="velocity"    type="double" value="-50.0"/>
   </node>
  
 </launch>

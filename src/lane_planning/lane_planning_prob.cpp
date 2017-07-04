@@ -38,14 +38,15 @@ int pixeles_cambio_estado=0;
 double nav_velocity_pixels = 0.0;
 
 //std::string nombre_estado [NUM_STATES] = {"Dont Know Left", "Out Left", "Left Left", "Left Center", "Center Center", "Right Center", "Out Right", "Dont Know Right"};
-int des_state = 5;
+int des_state = 16; //o 5
 
 // estados: 	 NSI,   FI,   CI,   CD,   FD, NSD
 void get_pts_lane(const nav_msgs::GridCells& array)
 {
 	arr_lane_model.cells = array.cells;
 	arr_lane_model.cell_width = array.cell_width;
-	if (array.cells[0].x > 0)
+	// printf("width %d height %d", array.cell_width, array.cell_height);
+	if (array.cell_width > 0 && array.cells[0].x > 0)
 		Lane_size = array.cell_width;
 	else
 		Lane_size=0;
@@ -77,9 +78,9 @@ void get_localization(const std_msgs::Float32MultiArray& locArray) {
     }
 
     if (countEstados==1)
-    	estado=(int)floor(estado/3);
-    //else
-    //	estado=-1; // no se pudo determinar el estado, ya que hay mas de uno posible
+    	estado=estado;
+    else
+    	estado=-1; // no se pudo determinar el estado, ya que hay mas de uno posible
 }
 
 double navigation_velocity_pixels() {
@@ -102,14 +103,13 @@ void planning(){
 	// la linea central es la mas confiable, pero deberia poder obtener la coordenada aunque no vea lineas
 
 	// 1/8 mm sub-pixel resolution = 0.125 SR300 Intel
-	double distancia_pixeles =  nav_velocity_pixels; //pixel_res * conversion a cm * dist_cm, un pixel equivale a 66mm
+	//double distancia_pixeles =  nav_velocity_pixels; //pixel_res * conversion a cm * dist_cm, un pixel equivale a 66mm
 
-	if(distancia_pixeles < 10){
-		distancia_pixeles=10;
-	}	
+	//if(distancia_pixeles < 10){
+	//	distancia_pixeles=10;
+	//}	
 
-	double pix_y = proj_image_h - distancia_pixeles;
-
+	//double pix_y = height_y - distancia_pixeles;
 
 	// ROS_INFO_STREAM("Pixeles para sig mov: " << distancia_pixeles << ", y:" << pix_y);
 
@@ -119,22 +119,22 @@ void planning(){
 	path_planned.cells.clear();
 
 	// obtener coordenada del estado actual en el futuro, de acuerdo a la velocidad a la que voy
-	double X_centro = 0;
+	double X_centro=0;
 	int diferencia_x=0;
 	bool encontrado = false;
 	// ROS_INFO_STREAM("Estado: " << estado);
 	int mov_estado_futuro = 0; // para saber si la coordenada que me ayuda a obtener el centro pertenece a otro estado
 
 	// Obtener coordenada del estado actual en el futuro
-	
+	if(Lane_size >0){
 	for(int i=0; i<Lane_size;i++){
-		if(abs(arr_lane_model.cells[i].y - pix_y) < threshold_dist_y){
+		if(abs(arr_lane_model.cells[i].y - proj_image_h) < threshold_dist_y){
 			pt_est_Actual.x = arr_lane_model.cells[i].x;
-            pt_est_Actual.y = arr_lane_model.cells[i].y;
-            pt_est_Actual.z = 0;
-            encontrado = true;
-            break;
-        }
+       		    	pt_est_Actual.y = arr_lane_model.cells[i].y;
+            		pt_est_Actual.z = 0;
+            		encontrado = true;
+            		break;
+        	}
 	}
 
 	if(encontrado && estado >= 0){
@@ -146,7 +146,6 @@ void planning(){
 		path_planned.cells.clear();
 		geometry_msgs::Point pt;
 		for(int i=0;i<NUM_STATES;i++){
-			
 
 			// las coordenadas de pt_est_Actual, pertenecen a @estado
 			int dif_estados=i-estado;
@@ -164,7 +163,7 @@ void planning(){
 		pub_pathxy.publish(path_planned.cells[des_state]);
 		ROS_INFO_STREAM("Moving to: (" << path_planned.cells[des_state].x << " , " << path_planned.cells[des_state].y << " )" ) ;
 	}
-
+	}
 	// obtener el angulo del estado actual al estado deseado
 }
 
@@ -195,7 +194,7 @@ int main(int argc, char** argv){
 	ros::Subscriber sub_localization = nh.subscribe("/localization_array",MY_ROS_QUEUE_SIZE, &get_localization);
 	// ros::Subscriber sub_des_state = nh.subscribe("/planning/desire_state",MY_ROS_QUEUE_SIZE, &get_des_state);
 
-	nav_velocity_pixels = navigation_velocity_pixels();
+	//nav_velocity_pixels = navigation_velocity_pixels();
 	
 	ros::Rate loop_rate(rate_hz);
 	while(nh.ok())
