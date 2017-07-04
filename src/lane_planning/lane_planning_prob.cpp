@@ -161,7 +161,7 @@ void planning(){
 		pub_path.publish(path_planned);
 		// estado fijo carril central 5, @des_state
 		pub_pathxy.publish(path_planned.cells[des_state]);
-		ROS_INFO_STREAM("Moving to: (" << path_planned.cells[des_state].x << " , " << path_planned.cells[des_state].y << " )" ) ;
+		// ROS_INFO_STREAM("Moving to: (" << path_planned.cells[des_state].x << " , " << path_planned.cells[des_state].y << " )" ) ;
 	}
 	}
 	// obtener el angulo del estado actual al estado deseado
