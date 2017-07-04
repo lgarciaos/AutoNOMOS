@@ -605,7 +605,7 @@ int main(int argc, char** argv){
 	
 	int contador = 0;
 
-	int estadoFijo = 0;
+	int estadoFijo = 1;
 
 	while(nh.ok())
 	{

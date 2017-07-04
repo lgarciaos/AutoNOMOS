@@ -288,8 +288,6 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
             }            
         }
 
-        cv::imshow("ROI, scanlines and edges", transformedImagePaintable);
-        cv::waitKey(1);
 
         transformedImagePaintableHorizontal = transformedImage.clone();
         cv::cvtColor(transformedImagePaintableHorizontal,transformedImagePaintableHorizontal,CV_GRAY2BGR);
@@ -302,7 +300,10 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
             }            
         }
     #ifdef PAINT_OUTPUT    
-        //cv::imshow("ROI, edgesHorizontal", transformedImagePaintableHorizontal);
+	        
+        //cv::imshow("ROI, scanlines and edges", transformedImagePaintable);
+
+	//cv::imshow("ROI, edgesHorizontal", transformedImagePaintableHorizontal);
         //cv::waitKey(1);
     #endif
     #endif
@@ -346,11 +347,12 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
     buildLaneMarkingsListsHorizontal(laneMarkingsH);
 
     //---------------------- DEBUG OUTPUT GROUPED LANE MARKINGS ---------------------------------//
+    geometry_msgs::Point pt;
     #ifdef PUBLISH_DEBUG_OUTPUT
         transformedImagePaintable = transformedImage.clone();
         cv::cvtColor(transformedImagePaintable,transformedImagePaintable,CV_GRAY2BGR);
 
-        geometry_msgs::Point pt;
+        //geometry_msgs::Point pt;
 
         for (int i = 0; i < 200; i = i + 10)
         {
@@ -467,12 +469,16 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
     ransac();
 
     //---------------------- DEBUG OUTPUT RANSAC POLYNOMIALS ---------------------------------//
+    
+    cv::Mat transformedImagePaintableLaneModel = transformedImage.clone();
+    cv::cvtColor(transformedImagePaintableLaneModel,transformedImagePaintableLaneModel,CV_GRAY2BGR);
+    
     #ifdef PUBLISH_DEBUG_OUTPUT
         //cv::Mat transformedImagePaintableRansac = transformedImage.clone();
         //cv::cvtColor(transformedImagePaintableRansac,transformedImagePaintableRansac,CV_GRAY2BGR);
         
-        cv::Mat transformedImagePaintableLaneModel = transformedImage.clone();
-    	cv::cvtColor(transformedImagePaintableLaneModel,transformedImagePaintableLaneModel,CV_GRAY2BGR);
+        //cv::Mat transformedImagePaintableLaneModel = transformedImage.clone();
+    	//cv::cvtColor(transformedImagePaintableLaneModel,transformedImagePaintableLaneModel,CV_GRAY2BGR);
 
         // geometry_msgs::Point pt;
         array_ransac_left.cells.clear();
@@ -511,7 +517,7 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
             array_ransac_right.cells.push_back(pt);
         }
 
-        // mostrar puntos HORIZONTALES
+        /* mostrar puntos HORIZONTALES
         if(polyDetectedHorizontal){
             for(int i = 0; i < 160; i++) {
                 double y = polyHorizontal.at(i);
@@ -524,6 +530,7 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
                 array_ransac_horizontal.cells.push_back(pt);
             }
         }
+	*/
 
         // PLANEACION
         /*
@@ -565,15 +572,17 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
     pubAngle();
 
     // Esta seccion del codigo es la que dibuja el modelo del carril
-
-    array_lane_model.cells.clear();
-    array_lane_model.cell_width =  maxYRoi - minYPolyRoi;
-    array_lane_model.cell_height = 1;
+//#ifdef PUBLISH_DEBUG_OUTPUT
 
     //cv::Mat transformedImagePaintableLaneModel = transformedImage.clone();
     //cv::cvtColor(transformedImagePaintableLaneModel,transformedImagePaintableLaneModel,CV_GRAY2BGR);
 
     if (lanePolynomial.hasDetected()) {
+
+	array_lane_model.cells.clear();
+	array_lane_model.cell_width=maxYRoi-minYPolyRoi;
+	array_lane_model.cell_height=1;
+
         int r = lanePolynomial.getLastUsedPosition() == LEFT ? 255 : 0;
         int g = lanePolynomial.getLastUsedPosition() == CENTER ? 255 : 0;
         int b = lanePolynomial.getLastUsedPosition() == RIGHT ? 255 : 0;
@@ -632,13 +641,14 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
 
         cv:Point anglePointLoc = cv::Point(sin(lastAngle*PI/180)*angleAdjacentLeg+proj_image_w_half,proj_image_h-angleAdjacentLeg);
         cv::line(transformedImagePaintableLaneModel,pointLoc,anglePointLoc,cv::Scalar(255,255,255));
+    
+	//pub_lane_model.publish(array_lane_model);
     } else {
         cv::Point pointLoc = cv::Point(5,5);
         cv::circle(transformedImagePaintableLaneModel,pointLoc,3,cv::Scalar(0,0,255),0);
     }
 
     pub_lane_model.publish(array_lane_model);
-
     pubRGBImageMsg(transformedImagePaintableLaneModel, image_publisher);
 
     //---------------------- DEBUG OUTPUT LANE POLYNOMIAL ---------------------------------//
@@ -646,6 +656,7 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
         cv::imshow("Lane polynomial", transformedImagePaintableLaneModel);
         cv::waitKey(1);
     #endif
+//#endif
     //---------------------- END DEBUG OUTPUT LANE POLYNOMIAL ------------------------------//
 
     //ROS_INFO_STREAM("ProcessInput Ending");
@@ -945,7 +956,7 @@ void cLaneDetectionFu::get_localization(const std_msgs::Float32MultiArray& locAr
 	 		max=locArray.data[i];
 	 	}
 	}
-
+	estado=-1;
 	int countEstados=0;
 	for(int i=NUM_STATES-1;i>=0;i--){
         if(locArray.data[i]==max){
@@ -953,12 +964,12 @@ void cLaneDetectionFu::get_localization(const std_msgs::Float32MultiArray& locAr
             estado = i;
             countEstados++;
         }
-    }
+    	}
 
     if (countEstados==1)
     	estado=(int)floor(estado/3);
-    else
-    	estado=-1; // no se pudo determinar el estado, ya que hay mas de uno posible
+    //else
+    //	estado=-1; // no se pudo determinar el estado, ya que hay mas de uno posible
 
 }
 
