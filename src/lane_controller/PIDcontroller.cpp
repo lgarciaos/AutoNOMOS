@@ -133,7 +133,7 @@ void get_Angle(std_msgs::Float32 angle) {
 	else if( pid_res < min )
 		pid_res = min;
 
-	ROS_INFO_STREAM("Error theta:" << theta <<", Res PID: " << p << ", Señal Servo:" << pid_res << ", Angulo esp: " << posEsp );
+	ROS_INFO_STREAM("Error theta:" << prevError <<", Res PID: " << p << ", Señal Servo:" << pid_res << ", Angulo esp: " << posEsp );
 
 	value_motor.data = velocity;
 	value_steering.data = pid_res;

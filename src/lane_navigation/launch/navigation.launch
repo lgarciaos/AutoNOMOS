@@ -68,14 +68,14 @@
   </node> 
   
   <node name="lane_controller_node" pkg="lane_controller" type="lane_controller_node" output="screen"  > 
-    <param name="Kp"          type="double" value="8.0"/>
+    <param name="Kp"          type="double" value="2.0"/>
     <param name="Ki"          type="double" value="0.1"/>
     <param name="Kd"          type="double" value="0.0"/>
     <param name="dt"          type="double" value="1.0"/>
     <param name="pE"          type="double" value="80.0"/>
     <param name="min"         type="double" value="0.0"/>
     <param name="max"         type="double" value="90.0"/>
-    <param name="velocity"    type="double" value="-50.0"/>
+    <param name="velocity"    type="double" value="-40.0"/>
   </node>
  
 </launch>

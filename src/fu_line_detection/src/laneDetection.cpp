@@ -1089,7 +1089,7 @@ void cLaneDetectionFu::buildLaneMarkingsLists(
     	//for (FuPoint<int> laneMarking : laneMarkings) {
     	// label first lane marks
     	for (int i=laneMarkings.size()-1; i>0 ; i--) {
-    		if(laneMarkings[i].getY()>150){
+    		if(laneMarkings[i].getY()>110){
 	    		laneMarking = laneMarkings[i];
 		        //j=i;
 		        if (isInDefaultRoi(LEFT, laneMarking)) {
@@ -1115,7 +1115,7 @@ void cLaneDetectionFu::buildLaneMarkingsLists(
 	    // using the minimum distance of the next point to the first points, arrange the next point
 	    FuPoint<int> p1;
 	    for (int i=laneMarkings.size()-1; i>0; i--) {
-	    	if(laneMarkings[i].getY()<=150){
+	    	if(laneMarkings[i].getY()<=110){
 		    	laneMarking = laneMarkings[i];
 		    	//LEFT
 		    	double distanceL = 1000;
