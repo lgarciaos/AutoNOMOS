@@ -58,6 +58,8 @@ THIS SOFTWARE IS PROVIDED BY AUDI AG AND CONTRIBUTORS “AS IS” AND ANY EXPRESS OR
 #include "tools/enums.h"
 #include "tools/IPMapper.h"
 
+#include "tools/MergeSort.h"
+
 #include <dynamic_reconfigure/server.h>
 #include <line_detection_fu_mod/LaneDetectionConfig.h>
 
@@ -347,6 +349,8 @@ class cLaneDetectionFu
         bool polyValid(ePosition, NewtonPolynomial, NewtonPolynomial);
 
         int horizDistance(FuPoint<int> &p1, FuPoint<int> &p2);
+
+        double distanceBetweenPoints(FuPoint<int> &p1, FuPoint<int> &p2);
 
         void createLanePoly(ePosition position);
 

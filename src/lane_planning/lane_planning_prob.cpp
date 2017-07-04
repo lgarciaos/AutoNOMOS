@@ -29,7 +29,7 @@ nav_msgs::GridCells path_planned;
 geometry_msgs::Point pt_to_send;
 
 int estado = -1;
-int countEstados = 0;
+int countEstados = -1;
 
 int Lane_size;
 int proj_image_h=0;

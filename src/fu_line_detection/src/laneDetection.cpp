@@ -288,8 +288,8 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
             }            
         }
 
-        //cv::imshow("ROI, scanlines and edges", transformedImagePaintable);
-        //cv::waitKey(1);
+        cv::imshow("ROI, scanlines and edges", transformedImagePaintable);
+        cv::waitKey(1);
 
         transformedImagePaintableHorizontal = transformedImage.clone();
         cv::cvtColor(transformedImagePaintableHorizontal,transformedImagePaintableHorizontal,CV_GRAY2BGR);
@@ -1045,45 +1045,117 @@ void cLaneDetectionFu::buildLaneMarkingsLists(
     laneMarkingsCenter.clear();
     laneMarkingsRight.clear();
 
-    for (FuPoint<int> laneMarking : laneMarkings) {
-        if (polyDetectedLeft) {
-            if (isInPolyRoi(polyLeft, laneMarking)) {
-                laneMarkingsLeft.push_back(laneMarking);
-                continue;
-            }
-        }
+    // si hay poligonos detectados (esto funciona bien)
+    if (polyDetectedLeft || polyDetectedCenter || polyDetectedRight){
+    	for (FuPoint<int> laneMarking : laneMarkings) {
+	        if (polyDetectedLeft) {
+	            if (isInPolyRoi(polyLeft, laneMarking)) {
+	                laneMarkingsLeft.push_back(laneMarking);
+	                continue;
+	            }
+	        }
 
-        if (polyDetectedCenter) {
-            if (isInPolyRoi(polyCenter, laneMarking)) {
-                laneMarkingsCenter.push_back(laneMarking);
-                continue;
-            }
-        }
+	        if (polyDetectedCenter) {
+	            if (isInPolyRoi(polyCenter, laneMarking)) {
+	                laneMarkingsCenter.push_back(laneMarking);
+	                continue;
+	            }
+	        }
 
-        if (polyDetectedRight) {
-            if (isInPolyRoi(polyRight, laneMarking)) {
-                laneMarkingsRight.push_back(laneMarking);
-                continue;
-            }
-        }
+	        if (polyDetectedRight) {
+	            if (isInPolyRoi(polyRight, laneMarking)) {
+	                laneMarkingsRight.push_back(laneMarking);
+	                continue;
+	            }
+	        }
+	    }
+    } else {
+    	//Order from bottom to top on Y axis
+    	//std::vector<FuPoint<int>> laneMarkingsOrdered = 
+    	MergeSort::mergeSort(laneMarkings,0,laneMarkings.size()-1);  // MINE: check complexity
+    	printf("Lane Markings size: %d\n", laneMarkings.size());
 
 
-        if (isInDefaultRoi(LEFT, laneMarking)) {
-            laneMarkingsLeft.push_back(laneMarking);
-            continue;
-        }
+    	FuPoint<int> laneMarking;
+    	//int j=0;
+    	//for (int i=0; i<laneMarkings.size(); i++) {
+    	//	laneMarking = laneMarkings[i];
+		//	printf("i: %d, (%d, %d)\n",i,laneMarking.getX(),laneMarking.getY());
+    	//}
 
-        if (isInDefaultRoi(CENTER, laneMarking)) {
-            laneMarkingsCenter.push_back(laneMarking);
-            continue;
-        }
+    	//assign bottom points according to position
+    	
+    	//for (FuPoint<int> laneMarking : laneMarkings) {
+    	// label first lane marks
+    	for (int i=laneMarkings.size()-1; i>0 ; i--) {
+    		if(laneMarkings[i].getY()>150){
+	    		laneMarking = laneMarkings[i];
+		        //j=i;
+		        if (isInDefaultRoi(LEFT, laneMarking)) {
+		            laneMarkingsLeft.push_back(laneMarking);
+		            continue;
+		        }
+		        if (isInDefaultRoi(CENTER, laneMarking)) {
+		            laneMarkingsCenter.push_back(laneMarking);
+		            continue;
+		        }
+		        if (isInDefaultRoi(RIGHT, laneMarking)) {
+		            laneMarkingsRight.push_back(laneMarking);
+		            continue;
+		        }
+		    }
+	        // printf("i: %d, (%d, %d)\n",i,laneMarking.getX(),laneMarking.getY());
+	        
+	    }
+	    
+	    //printf("%d\n", j);
+	    printf("Sizes: L: %d, C: %d, R: %d\n",laneMarkingsLeft.size(),laneMarkingsCenter.size(),laneMarkingsRight.size());
 
-        if (isInDefaultRoi(RIGHT, laneMarking)) {
-            laneMarkingsRight.push_back(laneMarking);
-            continue;
-        }
+	    // using the minimum distance of the next point to the first points, arrange the next point
+	    FuPoint<int> p1;
+	    for (int i=laneMarkings.size()-1; i>0; i--) {
+	    	if(laneMarkings[i].getY()<=150){
+		    	laneMarking = laneMarkings[i];
+		    	//LEFT
+		    	double distanceL = 1000;
+		    	if(laneMarkingsLeft.size()>0) {
+		    		p1=laneMarkingsLeft[laneMarkingsLeft.size()-1];
+		    		distanceL = distanceBetweenPoints(p1, laneMarking);
+		    	}
+		    	//CENTER
+		    	double distanceC = 1000;
+		    	if(laneMarkingsCenter.size()>0) {
+		    		p1=laneMarkingsCenter[laneMarkingsCenter.size()-1];
+		    		distanceC = distanceBetweenPoints(p1, laneMarking);
+		    	}
+		    	//RIGHT
+		    	double distanceR = 1000;
+		    	if(laneMarkingsRight.size()>0) {
+		    		p1=laneMarkingsRight[laneMarkingsRight.size()-1];
+		    		distanceR = distanceBetweenPoints(p1, laneMarking);
+		    	}
 
+		    	//printf("L: %d C: %d R: %d\n", distanceL, distanceC, distanceR);
+
+		    	if(distanceL <= distanceC && distanceL <= distanceR){
+					laneMarkingsLeft.push_back(laneMarking);
+		    		continue;
+		    	}
+
+		    	if(distanceC <= distanceL && distanceC <= distanceR){
+		    		laneMarkingsCenter.push_back(laneMarking);
+		    		continue;
+		    	}
+
+		    	if(distanceR <= distanceC && distanceR <= distanceL){
+		    		laneMarkingsRight.push_back(laneMarking);
+		    		continue;
+		    	}
+		    }
+	    }
+	    printf("Added: L: %d, C: %d, R: %d\n",laneMarkingsLeft.size(),laneMarkingsCenter.size(),laneMarkingsRight.size());
     }
+    
 
     //ROS_INFO_STREAM("buildLaneMarkingsLists ending");
 }
@@ -1267,6 +1339,23 @@ int cLaneDetectionFu::horizDistance(FuPoint<int> &p1, FuPoint<int> &p2) {
     double x2 = p2.getX();
     //ROS_INFO_STREAM("horizDistance ending");
     return std::abs(x1 - x2);
+}
+
+/**
+ * Calculates the distance between two points.
+ *
+ * @param p1    The first point
+ * @param p2    The second point
+ * @return      The distance between the two points
+ */
+double cLaneDetectionFu::distanceBetweenPoints(FuPoint<int> &p1, FuPoint<int> &p2) {
+    //ROS_INFO_STREAM("horizDistance beginning");
+    double x1 = p1.getX();
+    double x2 = p2.getX();
+    double y1 = p1.getY();
+    double y2 = p2.getY();
+    //ROS_INFO_STREAM("horizDistance ending");
+    return std::sqrt((x2 - x1)*(x2 - x1)+(y2 - y1)*(y2 - y1));
 }
 
 /**
