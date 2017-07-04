@@ -1143,7 +1143,7 @@ void cLaneDetectionFu::buildLaneMarkingsLists(
 		    	}
 		    }
 	    }
-	    printf("Added: L: %d, C: %d, R: %d\n",laneMarkingsLeft.size(),laneMarkingsCenter.size(),laneMarkingsRight.size());
+	    // printf("Added: L: %d, C: %d, R: %d\n",laneMarkingsLeft.size(),laneMarkingsCenter.size(),laneMarkingsRight.size());
     }
     
 
