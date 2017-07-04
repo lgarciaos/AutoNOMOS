@@ -288,8 +288,6 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
             }            
         }
 
-        cv::imshow("ROI, scanlines and edges", transformedImagePaintable);
-        cv::waitKey(1);
 
         transformedImagePaintableHorizontal = transformedImage.clone();
         cv::cvtColor(transformedImagePaintableHorizontal,transformedImagePaintableHorizontal,CV_GRAY2BGR);
@@ -302,7 +300,10 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
             }            
         }
     #ifdef PAINT_OUTPUT    
-        //cv::imshow("ROI, edgesHorizontal", transformedImagePaintableHorizontal);
+	        
+        //cv::imshow("ROI, scanlines and edges", transformedImagePaintable);
+
+	//cv::imshow("ROI, edgesHorizontal", transformedImagePaintableHorizontal);
         //cv::waitKey(1);
     #endif
     #endif
