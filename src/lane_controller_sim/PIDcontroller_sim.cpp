@@ -21,9 +21,11 @@
 #include <geometry_msgs/Point.h>
 #include <std_msgs/Int32MultiArray.h>
 #include <std_msgs/Float32MultiArray.h>
-#include <nav_msgs/GridCells.h>
+//#include <nav_msgs/GridCells.h>
 #include <std_msgs/Int16.h>
 #include <std_msgs/Float32.h>
+#include <std_msgs/Float64.h>
+#include <geometry_msgs/Twist.h>
 
 #define PI 3.14159265
 
@@ -43,22 +45,25 @@ double pE;
 double velocity;
 std::string topicVel;
 std::string topicSte;
+geometry_msgs::Twist vel;
 
 ros::Publisher pub_speed;
 ros::Publisher pub_steering;
 
-nav_msgs::GridCells path_planning;
+//nav_msgs::GridCells path_planning;
 
 double theta = 0.0; 
-/*
+/***
 	@param pActual posicion origen (del vehiculo)
 	@param pEsperada posicion destino
-*/
+***/
 double getThetaError (double pActual, double pEsperada){
 	// Asumiendo 'y' = 100 fijo, que pE y p estan en unidades: pixeles
 	double x = (pActual - pEsperada);
 	double theta = atan2(x,100);
-	theta = (theta * 180 / PI)/2; // quite el /2
+	// para convertir a grados	
+	//theta = (theta * 180 / PI)/2; // quite el /2
+	
 	// theta = -theta; // por correccion con el carro 90 es izquierda
 	// Regresa valores entre -45 y 45 grados
 
@@ -90,59 +95,6 @@ double PIDtimePixeles(double pActual, double pDestino, double dt, double max, do
 	return output;
 }
 
-double PIDtimeAngulo(double pActual, double pDestino, double dt, double max, double min, double Kp, double Kd, double Ki){
-	// ROS_INFO_STREAM("PID time");
-	double error = pActual-pDestino;
-	double pOut = Kp * error;
-	integral += error * dt;
-	double iOut = Ki * integral;
-	double derivative = (error - prevError) / dt;
-	double dOut = Kd * derivative;
-	double output = pOut + iOut + dOut;
-	// ROS_INFO_STREAM("PIDres: " << output);
-	
-	// correccion en el carro
-		// output += 45; 
-
-	// cambiar los sentidos
-	// output = 90-output;
-	prevError = error;
-	return output;
-}
-
-
-void get_Angle(std_msgs::Float32 angle) {
-
-	double p = 0.0;
-	double pid_res = 0.0;
-	std_msgs::Int16 value_motor;
-	std_msgs::Int16 value_steering;
-
-	double posEsp = angle.data;
-	double posActual = 0; 
-	// ROS_INFO_STREAM("PID: posPixel Esperada: " << pE << ", posPixel Actual:" << p );
-	// 'p' en terminos de theta en grados de -45 a 45
-	// p = getThetaError(posActual, posEsp);
-
-	// El servomotor del coche siempre tiene que estar en 45 grados
-	p = PIDtimeAngulo(posActual, posEsp, dt, max, min, Kp, Kd, Ki);
-
-	pid_res = 45 + p; // por detalle con el carro de los angulos
-	
-	// Restriction
-	if( pid_res > max )
-		pid_res = max;
-	else if( pid_res < min )
-		pid_res = min;
-
-	ROS_INFO_STREAM("Error theta:" << prevError <<", Res PID: " << p << ", Señal Servo:" << pid_res << ", Angulo esp: " << posEsp );
-
-	value_motor.data = velocity;
-	value_steering.data = pid_res;
-
-	pub_speed.publish(value_motor); 
-	pub_steering.publish(value_steering);
-}
 
 
 void get_pathxy(const geometry_msgs::Point& point){
@@ -155,9 +107,10 @@ void get_pathxy(const geometry_msgs::Point& point){
 			double p = 0.0;
 			double pid_res = 0.0;
 			std_msgs::Int16 value_motor;
-			std_msgs::Int16 value_steering;
+			std_msgs::Float64 value_steering;
 
-
+			vel.linear.x=velocity;
+			
 			if(point.x >= 0) {
 				// p = point.x;
 
@@ -170,7 +123,8 @@ void get_pathxy(const geometry_msgs::Point& point){
 				// El servomotor del coche siempre tiene que estar en 45 grados
 				p = PIDtimePixeles(posActual, posEsp, dt, max, min, Kp, Kd, Ki);
 
-				pid_res = 45 + p; // por detalle con el carro de los angulos
+				//pid_res = 45 + p; // por detalle con el carro de los angulos
+				pid_res=p;
 				ROS_INFO_STREAM("Servo: " << pid_res);
 				// Restriction
 				if( pid_res > max )
@@ -180,10 +134,10 @@ void get_pathxy(const geometry_msgs::Point& point){
 
 				ROS_INFO_STREAM("Error theta:" << theta <<", Res PID: " << p << ", Señal Servo:" << pid_res << ", Pos esp: " << posEsp );
 
-				value_motor.data = velocity;
+				//value_motor.data = velocity;
 				value_steering.data = pid_res;
 
-				pub_speed.publish(value_motor); 
+				pub_speed.publish(vel); 
 				pub_steering.publish(value_steering); 
 
 				// ROS_INFO_STREAM("velocity: " << value_motor.data << ", steering: " << value_steering.data << " )");
@@ -213,23 +167,20 @@ int main(int argc, char** argv){
 		priv_nh_.param<double>(node_name+"/dt", dt, 10.0);
 
 		priv_nh_.param<double>(node_name+"/pE", pE, 80.0);
-		priv_nh_.param<double>(node_name+"/min", min, 0.0);
-		priv_nh_.param<double>(node_name+"/max", max, 90.0);
-		priv_nh_.param<double>(node_name+"/velocity", velocity, 30.0);
-
-		priv_nh_.param<std::string>(node_name+"/topic_velocity", topicVel, "/manual_control/speed");
-		priv_nh_.param<std::string>(node_name+"/topic_steering", topicSte, "/manual_control/steering");
+		priv_nh_.param<double>(node_name+"/min", min, -0.5);
+		priv_nh_.param<double>(node_name+"/max", max, 0.5);
+		priv_nh_.param<double>(node_name+"/velocity", velocity, 0.1);
 
 		// ROS_INFO_STREAM("Parametros obtenidos");
 
-		pub_speed = nh.advertise<std_msgs::Int16>(topicVel, rate_hz);
-		pub_steering = nh.advertise<std_msgs::Int16>(topicSte, rate_hz);
+		pub_speed = nh.advertise<geometry_msgs::Twist>("/autonomos/cmd_vel", rate_hz);
+		pub_steering = nh.advertise<std_msgs::Float64>("/autonomos/steer/steer_position_controller/command", rate_hz);
 
 	// esto va mejor en el launch file
 
 		// ros::Subscriber sub_pathxy = nh.subscribe("/planningxy",1, &get_pathxy);
 
-		ros::Subscriber sub_angle = nh.subscribe("/lane_model/angle",1,&get_Angle);
+		// ros::Subscriber sub_angle = nh.subscribe("/lane_model/angle",1,&get_Angle);
 
 		// ROS_INFO_STREAM("antes de while");
 		while (nh.ok())

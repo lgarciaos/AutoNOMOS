@@ -122,30 +122,31 @@ void imageCb(const sensor_msgs::ImageConstPtr& msg)
 	*/
 // #else
 
-	printf("\nSe esta ejecutnado else");
+	printf("\nHoughLinesP");
 	vector<Vec4i> lines1;
 	vector<Vec4i> lines2;
 	double xmax = 0;
 	double xmin = 640;
 
 	try{
+		// izquierdo
 		HoughLinesP(dst1, lines1, 1, CV_PI/180, 16, 10, 10 );//calcula las lineas  (x,x,x,x, min de puntos para linea, ni idea, longitud min lineas?)
 		for( size_t i = 0; i < lines1.size(); i++ ) //llena el vector lines con lineas
 		{
 			Vec4i l1 = lines1[i];
-			line( cdst1, Point(l1[0], l1[1]), Point(l1[2], l1[3]), Scalar(233,241,0), 2, CV_AA);
+			line(cdst1, Point(l1[0], l1[1]), Point(l1[2], l1[3]), Scalar(233,241,0), 2, CV_AA);
 			//Points de line son el primer y el ultimo punto de cada linea. l viene en formato [xinicio, yinicio, xfin,yfin]
 			//std::cout << l; // Hay que publicar el promedio de los primeros dos puntos
 			if(l1[0]>xmax)
 				xmax = l1[0];
 		}//line( cdst, Point(l[0], l[1]), Point(l[2], l[3]), COLOR DE LA LINEA Scalar(azul,verde,rojo), grosor de linea, CV_AA);
 
-		
+		// derecho
 		HoughLinesP(dst2, lines2, 1, CV_PI/180, 16, 10, 10 );//calcula las lineas  (x,x,x,x, min de puntos para linea, ni idea, longitud min lineas?)
 		for( size_t i = 0; i < lines2.size(); i++ ) //llena el vector lines con lineas
 		{
 			Vec4i l2 = lines2[i];
-			line( cdst2, Point(l2[0], l2[1]), Point(l2[2], l2[3]), Scalar(233,241,0), 2, CV_AA);
+			line(cdst2, Point(l2[0], l2[1]), Point(l2[2], l2[3]), Scalar(233,241,0), 2, CV_AA);
 			//Points de line son el primer y el ultimo punto de cada linea. l viene en formato [xinicio, yinicio, xfin,yfin]
 			//std::cout << l; // Hay que publicar el promedio de los primeros dos puntos
 			if((l2[0]+345)<xmin)
@@ -163,21 +164,25 @@ void imageCb(const sensor_msgs::ImageConstPtr& msg)
 	goal.linear.x = target;
 	goal.linear.y = 100;
 	goal.linear.z = 0;
-
-	ROS_INFO_STREAM(goal);
+	ROS_INFO_STREAM("\nX target: " << target << ", min: " << xmin <<", max: " << xmax);
 	//waitKey();
 
 	//Hasta aqui lo copiado de Houges
 
   
-  	cv::circle(cv_ptr->image, cv::Point(target, 250), 1, CV_RGB(255,0,0),5);
-    cv::circle(cv_ptr->image, cv::Point(xmin, 250), 1, CV_RGB(255,0,0));
-    cv::circle(cv_ptr->image, cv::Point(320, 250), 1, CV_RGB(0,0,255),2);
-    cv::circle(cv_ptr->image, cv::Point(xmax, 250), 1, CV_RGB(255,0,0));
-
-	cv::rectangle(cv_ptr->image, cv::Rect(0,320,295,35), CV_RGB(0,0,255),2);
+  	cv::circle(cv_ptr->image, cv::Point(target, 250), 1, CV_RGB(255,0,255),5);
+    	cv::circle(cv_ptr->image, cv::Point(xmin, 250), 1, CV_RGB(255,0,0));
+    	cv::circle(cv_ptr->image, cv::Point(320, 250), 1, CV_RGB(0,0,255),2);
+    	cv::circle(cv_ptr->image, cv::Point(xmax, 250), 1, CV_RGB(255,0,0));
+	
+	//dst1 - izquierdo
+	cv::rectangle(cv_ptr->image, cv::Rect(0,320,295,35), CV_RGB(0,255,0),2);
+	//dst2 - derecho
 	cv::rectangle(cv_ptr->image, cv::Rect(345,320,295,35), CV_RGB(0,0,255),2);
 	
+	cv::Point markingLoc = cv::Point(target, 255);
+        cv::putText(cv_ptr->image,"target",markingLoc,6,.15,cv::Scalar(0,221,237));
+
 	/*  
 	imshow("detected lines 1", cdst1);
 	imshow("detected lines 2", cdst2);

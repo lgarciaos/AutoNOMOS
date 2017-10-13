@@ -1,19 +1,31 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(imagen)
+project(firulais)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-
-find_package(catkin REQUIRED COMPONENTS roscpp std_msgs geometry_msgs cv_bridge sensor_msgs)
-find_package(cmake_modules REQUIRED)
-find_package(Eigen REQUIRED)
-find_package(OpenCV REQUIRED)
+# find_package(catkin REQUIRED)
+find_package(OpenCV REQUIRED )
+find_package(PCL REQUIRED)
+find_package(catkin REQUIRED COMPONENTS 
+	roscpp
+	std_msgs
+	image_transport
+	pcl_conversions
+	pcl_msgs
+	geometry_msgs
+#	cmake_modules REQUIRED
+	tf2_ros
+	tf
+	pcl_ros
+	# Eigen REQUIRED
+	tf2
+	cv_bridge)
+	#gazebo_msgs)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
-set(ROS_LINK_FLAGS "-lopencv_core -lopencv_highgui -lopencv_legacy -lopencv_imgproc -lopencv_features2d")
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -81,8 +93,28 @@ set(ROS_LINK_FLAGS "-lopencv_core -lopencv_highgui -lopencv_legacy -lopencv_imgp
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
+	# INCLUDE_DIRS include
+	LIBRARIES
+    	pcl_ros_filters
+    	pcl_ros_io
+		pcl_ros_tf
+	CATKIN_DEPENDS
+    	dynamic_reconfigure
+    	# message_filters
+    	nodelet
+    	pcl_conversions
+    	pcl_msgs
+    	rosbag
+    	roscpp
+    	sensor_msgs
+    	std_msgs
+		tf
+	DEPENDS
+	    Boost
+	    Eigen
+		PCL
 #  INCLUDE_DIRS include
-#  LIBRARIES ekbot_ctrl
+#  LIBRARIES AutoNOMOS_simulation
 #  CATKIN_DEPENDS other_catkin_pkg
 #  DEPENDS system_lib
 )
@@ -94,27 +126,44 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 # include_directories(include)
-include_directories(include ${catkin_INCLUDE_DIRS} ${Eigen_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
-
+include_directories(include
+			${OpenCV_INCLUDE_DIRS}
+			${catkin_INCLUDE_DIRS} 
+			${Eigen_INCLUDE_DIRS} 
+			${PCL_INCLUDE_DIRS} )
 ## Declare a cpp library
-# add_library(ekbot_ctrl
-#   src/${PROJECT_NAME}/ekbot_ctrl.cpp
+# add_library(AutoNOMOS_simulation
+#   src/${PROJECT_NAME}/AutoNOMOS_simulation.cpp
 # )
-
+link_directories(
+	${Boost_LIBRARY_DIRS}
+	${PCL_LIBRARY_DIRS})
+add_definitions(${PCL_DEFINITIONS})
 ## Declare a cpp executable
-# add_executable(ekbot_ctrl_node src/ekbot_ctrl_node.cpp)
-add_executable(imagenDisplay DisplayImage.cpp)
+# add_executable(AutoNOMOS_simulation_node src/AutoNOMOS_simulation_node.cpp)
+#add_executable(tf2_broadcaster_node tf2_broadcaster_node.cpp)
+#add_executable(perception_node perception_node.cpp)
+#add_executable(vision_node vision_node.cpp)
+add_executable(velocity_node velocity_node.cpp)
 add_executable(lane_controller_sim_node PIDcontroller_sim.cpp)
+add_executable(TrabajaConlaImagen TrabajaConlaImagen.cpp )
+add_executable(perception_node perception_node.cpp )
 
-target_link_libraries(imagenDisplay ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
+target_link_libraries(TrabajaConlaImagen       ${catkin_LIBRARIES}  ${OpenCV_LIBS} )
+target_link_libraries(velocity_node ${catkin_LIBRARIES})
 target_link_libraries(lane_controller_sim_node ${catkin_LIBRARIES})
-
+target_link_libraries(perception_node ${catkin_LIBRARIES})
+#target_link_libraries(trajectory_node ${catkin_LIBRARIES})
+#target_link_libraries(tf2_broadcaster_node ${catkin_LIBRARIES})
+#target_link_libraries(perception_node ${catkin_LIBRARIES} ${PCL_LIBRARIES})
+#target_link_libraries(vision_node ${catkin_LIBRARIES} ${PCL_LIBRARIES})
+# target_link_libraries(robot_trajectory_node ${catkin_LIBRARIES})
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
-# add_dependencies(ekbot_ctrl_node ekbot_ctrl_generate_messages_cpp)
+# add_dependencies(AutoNOMOS_simulation_node AutoNOMOS_simulation_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
-# target_link_libraries(ekbot_ctrl_node
+# target_link_libraries(AutoNOMOS_simulation_node
 #   ${catkin_LIBRARIES}
 # )
 
@@ -133,7 +182,7 @@ target_link_libraries(lane_controller_sim_node ${catkin_LIBRARIES})
 # )
 
 ## Mark executables and/or libraries for installation
-# install(TARGETS ekbot_ctrl ekbot_ctrl_node
+# install(TARGETS AutoNOMOS_simulation AutoNOMOS_simulation_node
 #   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -158,7 +207,7 @@ target_link_libraries(lane_controller_sim_node ${catkin_LIBRARIES})
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_ekbot_ctrl.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_AutoNOMOS_simulation.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()

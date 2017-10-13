@@ -76,6 +76,8 @@
     <param name="min"         type="double" value="0.0"/>
     <param name="max"         type="double" value="90.0"/>
     <param name="velocity"    type="double" value="-40.0"/>
+    <param name="/topic_velocity" type="string" value="/manual_control/speed"/>
+    <param name="/topic_steering" type="string" value="/manual_control/steering"/> 
   </node>
  
 </launch>

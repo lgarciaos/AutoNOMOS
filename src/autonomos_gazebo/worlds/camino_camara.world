@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sdf version="1.4">
+  <!--version 1.5 is the latest-->
+  <world name="ctw">
+    <include>
+      <uri>model://ground_plane</uri>
+    </include>
+
+    <!--the name will be used to reference this world in plugins-->
+    <light name="sol" type="directional">
+      <cast_shadows>1</cast_shadows>
+      <pose>0 0 100 0 -0 0</pose>
+      <diffuse>0.8 0.8 0.8 1</diffuse>
+      <specular>0.2 0.2 0.2 1</specular>
+      <attenuation>
+        <range>1000</range>
+        <constant>0.9</constant>
+        <linear>0.01</linear>
+        <quadratic>0.001</quadratic>
+      </attenuation>
+      <direction>-0.5 0.1 -0.9</direction>
+    </light>
+    <scene>
+      <sky>
+        <clouds>
+          <speed>1</speed>
+        </clouds>
+      </sky>
+    </scene>
+
+    <include>
+        <uri>model://circuit2way_escalado</uri>
+        <pose>-10.2 -9.8 0.014 0 0 0</pose>
+    </include>
+
+    <include>
+        <uri>model://AutoNOMOS_mini_camara</uri>
+        <pose>-0.997 0 .069 0 0 0</pose>
+    </include>	  
+    
+    <gui fullscreen='0'>
+      <camera name='user_camera'>
+        <pose>0.331993 -14.4647 1.75972 0 0.331643 1.1722</pose>
+        <view_controller>orbit</view_controller>
+      </camera>
+    </gui>
+  </world>
+</sdf>

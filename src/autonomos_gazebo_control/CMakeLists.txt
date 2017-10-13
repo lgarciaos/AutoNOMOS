@@ -1,19 +1,14 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(imagen)
+project(autonomos_gazebo_control)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-
-find_package(catkin REQUIRED COMPONENTS roscpp std_msgs geometry_msgs cv_bridge sensor_msgs)
-find_package(cmake_modules REQUIRED)
-find_package(Eigen REQUIRED)
-find_package(OpenCV REQUIRED)
+find_package(catkin REQUIRED)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
-set(ROS_LINK_FLAGS "-lopencv_core -lopencv_highgui -lopencv_legacy -lopencv_imgproc -lopencv_features2d")
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -29,10 +24,10 @@ set(ROS_LINK_FLAGS "-lopencv_core -lopencv_highgui -lopencv_legacy -lopencv_imgp
 ## * Let MSG_DEP_SET be the set of packages whose message types you use in
 ##   your messages/services/actions (e.g. std_msgs, actionlib_msgs, ...).
 ## * In the file package.xml:
+##   * add a build_depend tag for "message_generation"
 ##   * add a build_depend and a run_depend tag for each package in MSG_DEP_SET
-##   * If MSG_DEP_SET isn't empty the following dependencies might have been
-##     pulled in transitively but can be declared for certainty nonetheless:
-##     * add a build_depend tag for "message_generation"
+##   * If MSG_DEP_SET isn't empty the following dependency has been pulled in
+##     but can be declared for certainty nonetheless:
 ##     * add a run_depend tag for "message_runtime"
 ## * In this file (CMakeLists.txt):
 ##   * add "message_generation" and every package in MSG_DEP_SET to
@@ -71,6 +66,26 @@ set(ROS_LINK_FLAGS "-lopencv_core -lopencv_highgui -lopencv_legacy -lopencv_imgp
 #   std_msgs  # Or other packages containing msgs
 # )
 
+################################################
+## Declare ROS dynamic reconfigure parameters ##
+################################################
+
+## To declare and build dynamic reconfigure parameters within this
+## package, follow these steps:
+## * In the file package.xml:
+##   * add a build_depend and a run_depend tag for "dynamic_reconfigure"
+## * In this file (CMakeLists.txt):
+##   * add "dynamic_reconfigure" to
+##     find_package(catkin REQUIRED COMPONENTS ...)
+##   * uncomment the "generate_dynamic_reconfigure_options" section below
+##     and list every .cfg file to be processed
+
+## Generate dynamic reconfigure parameters in the 'cfg' folder
+# generate_dynamic_reconfigure_options(
+#   cfg/DynReconf1.cfg
+#   cfg/DynReconf2.cfg
+# )
+
 ###################################
 ## catkin specific configuration ##
 ###################################
@@ -82,7 +97,7 @@ set(ROS_LINK_FLAGS "-lopencv_core -lopencv_highgui -lopencv_legacy -lopencv_imgp
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES ekbot_ctrl
+#  LIBRARIES carbot_gazebo_control
 #  CATKIN_DEPENDS other_catkin_pkg
 #  DEPENDS system_lib
 )
@@ -94,27 +109,26 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 # include_directories(include)
-include_directories(include ${catkin_INCLUDE_DIRS} ${Eigen_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
 
-## Declare a cpp library
-# add_library(ekbot_ctrl
-#   src/${PROJECT_NAME}/ekbot_ctrl.cpp
+## Declare a C++ library
+# add_library(carbot_gazebo_control
+#   src/${PROJECT_NAME}/carbot_gazebo_control.cpp
 # )
 
-## Declare a cpp executable
-# add_executable(ekbot_ctrl_node src/ekbot_ctrl_node.cpp)
-add_executable(imagenDisplay DisplayImage.cpp)
-add_executable(lane_controller_sim_node PIDcontroller_sim.cpp)
+## Add cmake target dependencies of the library
+## as an example, code may need to be generated before libraries
+## either from message generation or dynamic reconfigure
+# add_dependencies(carbot_gazebo_control ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-target_link_libraries(imagenDisplay ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
-target_link_libraries(lane_controller_sim_node ${catkin_LIBRARIES})
+## Declare a C++ executable
+# add_executable(carbot_gazebo_control_node src/carbot_gazebo_control_node.cpp)
 
-## Add cmake target dependencies of the executable/library
-## as an example, message headers may need to be generated before nodes
-# add_dependencies(ekbot_ctrl_node ekbot_ctrl_generate_messages_cpp)
+## Add cmake target dependencies of the executable
+## same as for the library above
+# add_dependencies(carbot_gazebo_control_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-# target_link_libraries(ekbot_ctrl_node
+# target_link_libraries(carbot_gazebo_control_node
 #   ${catkin_LIBRARIES}
 # )
 
@@ -133,7 +147,7 @@ target_link_libraries(lane_controller_sim_node ${catkin_LIBRARIES})
 # )
 
 ## Mark executables and/or libraries for installation
-# install(TARGETS ekbot_ctrl ekbot_ctrl_node
+# install(TARGETS carbot_gazebo_control carbot_gazebo_control_node
 #   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -158,7 +172,7 @@ target_link_libraries(lane_controller_sim_node ${catkin_LIBRARIES})
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_ekbot_ctrl.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_carbot_gazebo_control.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()
