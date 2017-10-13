@@ -61,7 +61,7 @@ roslaunch autonomos_gazebo_control autonomos_gazebo_control.launch
 The Gazebo GUI should appear, now with the car in the center.
 ![autonomos_gazebo_empty](images/autonomos_gazebo_empty.png)
 
-Now, we should see within the lists topics something like:
+Now, if we execute `rostopic list`, we should see within the lists topics something like:
 ```
 ...
 /app/camera/rgb/image_raw
