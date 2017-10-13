@@ -3,7 +3,18 @@
 This project is looking to create a **simulation for** [AutoNOMOS mini](https://github.com/AutoModelCar/AutoModelCarWiki/wiki). With which one can be involved without requiring the actual car, and in case of requiring it with a *few steps* we can test our code on the real hardware.
 
 ## Setup Gazebo and ROS
-
+Make sure you have ROS installed with Gazebo 2 (which is the default version). Full instalation instructions can be seen [here](http://wiki.ros.org/indigo/Installation/Ubuntu).
+```
+sudo apt-get install ros-indigo-desktop-full
+```
+This project has been tested with:
+```
+...
+* /rosdistro: indigo
+* /rosversion: 1.11.21
+...
+Gazebo multi-robot simulator, version 2.2.3
+```
 Before we can test the packages contained in this project, we should install the following packages to work with Gazebo and ROS (**Indigo** version, in case of requiring other version, [see here](https://github.com/ros-simulation/gazebo_ros_pkgs)):
 ```
 sudo apt-get install ros-indigo-gazebo-ros-pkgs ros-indigo-gazebo-msgs ros-indigo-gazebo-plugins ros-indigo-gazebo-ros-control
