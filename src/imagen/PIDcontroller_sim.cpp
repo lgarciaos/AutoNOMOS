@@ -190,6 +190,8 @@ int main(int argc, char** argv){
 
 		std::string node_name = ros::this_node::getName();
 		// ROS_INFO_STREAM("Obteniendo p");
+		std::string topico_steering;
+		std::string topico_velocidad;
 
 		priv_nh_.param<double>(node_name+"/Kp", Kp, 0.6);
 		priv_nh_.param<double>(node_name+"/Ki", Ki, 0.3);
@@ -206,11 +208,13 @@ int main(int argc, char** argv){
 		priv_nh_.param<double>(node_name+"/distancia_librarobstaculomasmenos", distancia_librarobstaculomasmenos, 9.0);
 
 		priv_nh_.param<double>(node_name+"/pendienteTrancazo", pendienteTrancazo, 0.66);
+		priv_nh_.param<std::string>(node_name+"/topico_steering", topico_steering, "/steering");
+		priv_nh_.param<std::string>(node_name+"/topico_velocidad", topico_velocidad, "/velocidad");
 
 		// ROS_INFO_STREAM("Parametros obtenidos");
 
-		pub_speed = nh.advertise<geometry_msgs::Twist>("/autonomos/cmd_vel", rate_hz);
-		pub_steering = nh.advertise<std_msgs::Float64>("/autonomos/steer/steer_position_controller/command", rate_hz);
+		pub_speed = nh.advertise<geometry_msgs::Twist>(topico_velocidad, rate_hz);
+		pub_steering = nh.advertise<std_msgs::Float64>(topico_steering, rate_hz);
 
 		// esto va mejor en el launch file
 		// ros::Subscriber sub_vel = nh.subscribe("/target_position_topic", 1000, &get_vel_vec);

@@ -209,7 +209,7 @@ int main(int argc, char** argv){
 
 		// ROS_INFO_STREAM("Parametros obtenidos");
 
-		pub_speed = nh.advertise<geometry_msgs::Twist>("/autonomos/cmd_vel", rate_hz);
+		pub_speed = nh.advertise<geometry_msgs::Twist>("/cmd_vel", rate_hz);
 		pub_steering = nh.advertise<std_msgs::Float64>("/autonomos/steer/steer_position_controller/command", rate_hz);
 
 		// esto va mejor en el launch file
