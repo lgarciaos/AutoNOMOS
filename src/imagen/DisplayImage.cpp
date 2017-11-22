@@ -20,6 +20,11 @@ double rate_hz = 5;
 sensor_msgs::ImagePtr imgmsg;
 ros::Publisher pub_image;
 
+namespace cv
+{
+	using std::vector;
+}
+
 struct datos{
 	double p;
 	int e;
