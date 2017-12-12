@@ -59,6 +59,7 @@
     <param name="pixeles_cambio_estado" type="int" value="16"/>
   </node>
 
+<!--
   <node name="lane_planning_prob_node" pkg="lane_planning" type="lane_planning_prob_node" output="screen"  >
     <param name="RPM"              type="int" value="-30"/>
     <param name="rate"             type="double" value="10.0"/>
@@ -66,7 +67,10 @@
     <param name="threshold_dist_y" type="int" value="15"/>
     <param name="pixeles_cambio_estado" type="int" value="16"/>
   </node> 
-  
+-->
+
+  <node name="imagenDisplay" pkg="imagen" type="imagenDisplay" output="screen" />
+
   <node name="lane_controller_sim_node" pkg="lane_controller_sim" type="lane_controller_sim_node" output="screen"  > 
     <param name="Kp"          type="double" value="2.0"/>
     <param name="Ki"          type="double" value="0.1"/>
@@ -76,6 +80,10 @@
     <param name="min"         type="double" value="-0.5"/>
     <param name="max"         type="double" value="0.5"/>
     <param name="velocity"    type="double" value="0.15"/>
+
+    <param name="topico_steering"          type="string" value="/autonomos/steer/steer_position_controller/command"/>
+    <param name="topico_velocidad"          type="string" value="/cmd_vel"/>
+
   </node>
  
 </launch>

@@ -155,6 +155,8 @@ int main(int argc, char** argv){
 		ros::NodeHandle priv_nh_("~");
 	//head_time_stamp = ros::Time::now();
 		ros::NodeHandle nh;
+		std::string topico_steering;
+		std::string topico_velocidad;
 
 		ros::Rate loop_rate(rate_hz);
 
@@ -171,10 +173,16 @@ int main(int argc, char** argv){
 		priv_nh_.param<double>(node_name+"/max", max, 0.5);
 		priv_nh_.param<double>(node_name+"/velocity", velocity, 0.1);
 
+		priv_nh_.param<std::string>(node_name+"/topico_steering", topico_steering, "/steering");
+		priv_nh_.param<std::string>(node_name+"/topico_velocidad", topico_velocidad, "/velocidad");
+
 		// ROS_INFO_STREAM("Parametros obtenidos");
 
-		pub_speed = nh.advertise<geometry_msgs::Twist>("/autonomos/cmd_vel", rate_hz);
-		pub_steering = nh.advertise<std_msgs::Float64>("/autonomos/steer/steer_position_controller/command", rate_hz);
+		//pub_speed = nh.advertise<geometry_msgs::Twist>("/autonomos/cmd_vel", rate_hz);
+		//pub_steering = nh.advertise<std_msgs::Float64>("/autonomos/steer/steer_position_controller/command", rate_hz);
+		pub_speed = nh.advertise<geometry_msgs::Twist>(topico_velocidad, rate_hz);
+		pub_steering = nh.advertise<std_msgs::Float64>(topico_steering, rate_hz);
+
 
 	// esto va mejor en el launch file
 

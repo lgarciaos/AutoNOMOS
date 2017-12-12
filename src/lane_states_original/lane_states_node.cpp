@@ -13,7 +13,7 @@
 #include <cmath>
 
 static const uint32_t MY_ROS_QUEUE_SIZE = 1;
-#define NUM_STATES 9*3
+#define NUM_STATES 9
 #define RADIO 300
 
 geometry_msgs::Twist destiny_position;
@@ -179,57 +179,39 @@ int det_hit (int state)
 		// 5 |  1  |  0  |  1
 		// 6 |  1  |  1  |  0
 		// 7 |  1  |  1  |  1
-		case 0:
-		case 1:	//NSI	
-		case 2:	
+		case 0: //NSI
 			hit = !(rr || cc || ll) && lanes_detected == 0;
 			// if(hit) ROS_INFO_STREAM("Hit at state: " << state);
 			break;
-		case 3:
-		case 4:	//FI	
-		case 5: 
+		case 1: //FI
 			hit = !(ll || cc || rr ) && (lanes_detected == 1);
 			// if(hit) ROS_INFO_STREAM("Hit at state: " << state);
 			break;
-		case 6:
-		case 7: // LL
-		case 8: 
+		case 2: // LL
 			hit = (cc || rr ) && (lanes_detected >= 1 && lanes_detected <= 3);
 			// if(hit) ROS_INFO_STREAM("Hit at state: " << state);
 			break;
-		case 9:
-		case 10: //LC		
-		case 11: 
+		case 3: //LC
 			hit = !(rr || cc || ll) && (lanes_detected == 3); 
 			// if(hit) ROS_INFO_STREAM("Hit at state: " << state);
 			break;
-		case 12:
-		case 13: //CC, no puede estar en el centro viendo solo una linea
-		case 14: 
+		case 4: //CC, no puede estar en el centro viendo solo una linea
 			hit = (cc || rr ) && ((lanes_detected == 3) || (lanes_detected >= 5 && lanes_detected <= 7));
 			// if(hit) ROS_INFO_STREAM("Hit at state: " << state);
 			break;
-		case 15:
-		case 16: //RC		
-		case 17: 
+		case 5: //RC
 			hit = !(cc || rr || ll) && ((lanes_detected == 3) ||  (lanes_detected >= 5 && lanes_detected <= 7)) ;
 			// if(hit) ROS_INFO_STREAM("Hit at state: " << state);
 			break;
-		case 18:
-		case 19: //RR		
-		case 20: 
+		case 6: //RR
 			hit = (cc || rr ) && ((lanes_detected >= 1 && lanes_detected <= 3) || (lanes_detected >= 5 && lanes_detected <= 7));
 			// if(hit) ROS_INFO_STREAM("Hit at state: " << state);
 			break;
-		case 21:
-		case 22: //FD
-		case 23:
+		case 7: //FD
 			hit = !(rr || ll || cc) && (lanes_detected == 2 || lanes_detected == 4 || lanes_detected == 6);
 			// if(hit) ROS_INFO_STREAM("Hit at state: " << state);
 			break;
-		case 24:		
-		case 25: //NSD		
-		case 26:
+		case 8:	//NSD
 			hit = !(rr || cc || ll) && lanes_detected == 0;
 			// if(hit) ROS_INFO_STREAM("Hit at state: " << state);
 			break;
@@ -278,8 +260,7 @@ std_msgs::Float32MultiArray conv(std_msgs::Float32MultiArray p)
 
 	std_msgs::Float32MultiArray q;
 	float hits[NUM_STATES];
-	for (int i = 0; i < NUM_STATES; ++i)
-	{	
+	for (int i = 0; i < NUM_STATES; ++i) {	
 		// ROS_INFO_STREAM("-------------------------" << i << "------------------------"); 
 		/*
 		if (p.data[i] < 0.001)
@@ -311,11 +292,11 @@ std_msgs::Float32MultiArray conv(std_msgs::Float32MultiArray p)
 	//	}
 	//}
 
-	//const char * format = "z_k =[%.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f]\n";
-  	//printf (format, hits[1],hits[4],hits[7],hits[10],hits[13],hits[16],hits[19],hits[22],hits[25]);
+	const char * format = "z_k =[%.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f]\n";
+  	printf (format, hits[0],hits[1],hits[2],hits[3],hits[4],hits[5],hits[6],hits[7],hits[8]);
 	
-	const char * format = "z(k)=[%.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f]\n";
-	printf (format, hits[0],hits[1],hits[2],hits[3],hits[4],hits[5],hits[6],hits[7],hits[8],hits[9],hits[10],hits[11],hits[12],hits[13],hits[14],hits[15],hits[16],hits[17],hits[18],hits[19],hits[20],hits[21],hits[22],hits[23],hits[24],hits[25],hits[26]);
+	// const char * format = "z(k)=[%.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f]\n";
+	// printf (format, hits[0],hits[1],hits[2],hits[3],hits[4],hits[5],hits[6],hits[7],hits[8],hits[9],hits[10],hits[11],hits[12],hits[13],hits[14],hits[15],hits[16],hits[17],hits[18],hits[19],hits[20],hits[21],hits[22],hits[23],hits[24],hits[25],hits[26]);
 
 	// normalizacion
 	float sum = 0;
@@ -464,10 +445,10 @@ int main(int argc, char** argv){
         ROS_INFO_STREAM("Getting parameters");
         priv_nh_.param<float>(node_name+"/alpha", alpha,8);
 	
-	//const char * format = "P(x)=[%.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f]\n";
+	const char * format = "P(x)=[%.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f]\n";
 
-	float bel_RC [NUM_STATES] = {0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.33f,0.33f,0.33f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f};
-
+	//float bel_RC [NUM_STATES] = {0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.33f,0.33f,0.33f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f};
+    float bel_RC [NUM_STATES] = {0.0f,0.0f,0.0f,0.0f,0.0f,1.0f,0.0f,0.0f,0.0f};
 	for (int i = 0; i < NUM_STATES; ++i)
 	{
 		// Iniciar con distribucion uniforme
@@ -476,7 +457,7 @@ int main(int argc, char** argv){
 		p.data.push_back(bel_RC[i]);
 	}
 
-	const char * format = "P(x)=[%.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f]\n";
+	//const char * format = "P(x)=[%.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f]\n";
 	// ROS_INFO_STREAM("Array initialization: ");
   	// printf (format, p.data[1],p.data[4],p.data[7],p.data[10],p.data[13],p.data[16],p.data[19],p.data[22],p.data[25]);
 		
@@ -504,7 +485,7 @@ int main(int argc, char** argv){
 	    ros::spinOnce();
 	    ROS_INFO_STREAM("Sensing update");
 	    p = sense(p);
-	    printf (format, p.data[0],p.data[1],p.data[2],p.data[3],p.data[4],p.data[5],p.data[6],p.data[7],p.data[8],p.data[9],p.data[10],p.data[11],p.data[12],p.data[13],p.data[14],p.data[15],p.data[16],p.data[17],p.data[18],p.data[19],p.data[20],p.data[21],p.data[22],p.data[23],p.data[24],p.data[25],p.data[26]);
+	    printf (format, p.data[0],p.data[1],p.data[2],p.data[3],p.data[4],p.data[5],p.data[6],p.data[7],p.data[8]);
 	    // printf (format, p.data[1],p.data[4],p.data[7],p.data[10],p.data[13],p.data[16],p.data[19],p.data[22],p.data[25]);
 	    pub_loc.publish(p);
 	    int estadoEstimado = enQueEstadoEsta(p);
@@ -515,7 +496,7 @@ int main(int argc, char** argv){
 	    }
 	    ROS_INFO_STREAM("Motion update: ");
 	    p = move(p);
-	    printf (format, p.data[0],p.data[1],p.data[2],p.data[3],p.data[4],p.data[5],p.data[6],p.data[7],p.data[8],p.data[9],p.data[10],p.data[11],p.data[12],p.data[13],p.data[14],p.data[15],p.data[16],p.data[17],p.data[18],p.data[19],p.data[20],p.data[21],p.data[22],p.data[23],p.data[24],p.data[25],p.data[26]);	    
+	    printf (format, p.data[0],p.data[1],p.data[2],p.data[3],p.data[4],p.data[5],p.data[6],p.data[7],p.data[8]);	    
             // printf (format, p.data[1],p.data[4],p.data[7],p.data[10],p.data[13],p.data[16],p.data[19],p.data[22],p.data[25]);
 	    // print_state_order();
 	    loop_rate.sleep();

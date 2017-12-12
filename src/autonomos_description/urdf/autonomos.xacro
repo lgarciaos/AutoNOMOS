@@ -23,8 +23,9 @@
   </material>
   
   <!-- properties -->
-  <xacro:property name="ancho" value="0.005" />
+  <xacro:property name="ancho" value="0.01" />
   <xacro:property name="radio" value="0.020" />
+  <xacro:property name="mu" value="1" />
   
 
   <xacro:macro name="inertial_matrix" params="mass">
@@ -50,6 +51,18 @@
 	</geometry>
         <material name="Green"/>
     </visual>
+  </xacro:macro>
+
+  <xacro:macro name="friccion_rueda" params="mu">
+      <surface>
+        <bounce restitution_coefficient=".2" />
+        <friction>
+          <ode mu="${mu}" mu2="${mu}" fdir1="1 0 0" slip1="0" slip2="0" />
+        </friction>
+        <contact>
+          <ode/>
+        </contact>
+      </surface>
   </xacro:macro>
 
   <xacro:macro name="transmission_block" params="joint_name">
@@ -161,7 +174,8 @@
   <link name="back_left_wheel_link">
     <xacro:visual_rueda length="${ancho}" radius="${radio}"/>
     <xacro:collision_rueda length="${ancho}" radius="${radio}"/>
-    <xacro:inertial_matrix mass="0.001"/>
+    <xacro:inertial_matrix mass="0.01"/>
+    <xacro:friccion_rueda mu="${mu}" />
   </link>
 
   <joint name="back_left_wheel_joint" type="revolute">
@@ -178,7 +192,8 @@
   <link name="back_right_wheel_link">
      <xacro:visual_rueda length="${ancho}" radius="${radio}"/>
      <xacro:collision_rueda length="${ancho}" radius="${radio}"/>
-     <xacro:inertial_matrix mass="0.001"/>
+     <xacro:inertial_matrix mass="0.01"/>
+     <xacro:friccion_rueda mu="${mu}" />
   </link>
 
   <joint name="back_right_wheel_joint" type="revolute">
@@ -243,7 +258,8 @@
   <link name="front_left_wheel_link">
     <xacro:visual_rueda length="${ancho}" radius="${radio}"/>
     <xacro:collision_rueda length="${ancho}" radius="${radio}"/>
-    <xacro:inertial_matrix mass="0.001"/>
+    <xacro:inertial_matrix mass="0.01"/>
+    <xacro:friccion_rueda mu="${mu}" />
   </link>
 
   <joint name="front_left_wheel_joint" type="revolute">
@@ -284,7 +300,8 @@
   <link name="front_right_wheel_link">
     <xacro:visual_rueda length="${ancho}" radius="${radio}"/>
     <xacro:collision_rueda length="${ancho}" radius="${radio}"/>
-    <xacro:inertial_matrix mass="0.001"/>
+    <xacro:inertial_matrix mass="0.01"/>
+    <xacro:friccion_rueda mu="${mu}" />
   </link>
 
   <joint name="front_right_wheel_joint" type="revolute">
@@ -347,8 +364,6 @@
     <limit effort="300" lower="-0.5" upper="0.5" velocity="1"/>
     <!-- <dynamics damping="50" friction="1"/> -->
   </joint>
-
-  
   
   <!-- laser link -->
   <link name="laser_link">

@@ -493,7 +493,7 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
 
         array_ransac_left.cell_width =  maxYRoi - minYPolyRoi;
         array_ransac_left.cell_height = 1;
-        array_ransac_center.cell_width = maxYRoi - minYPolyRoi ;
+        array_ransac_center.cell_width = maxYRoi - minYPolyRoi;
         array_ransac_center.cell_height = 1;
         array_ransac_right.cell_width = maxYRoi - minYPolyRoi;
         array_ransac_right.cell_height = 1;
@@ -1042,6 +1042,7 @@ std::vector<FuPoint<int>> cLaneDetectionFu::extractLaneMarkingsHorizontal(const 
  *
  * @param laneMarkings  a vector containing all detected lane markings
  */
+/**
 void cLaneDetectionFu::buildLaneMarkingsLists(
         const std::vector<FuPoint<int>> &laneMarkings) {
     //ROS_INFO_STREAM("buildLaneMarkingsLists beginning");
@@ -1051,7 +1052,6 @@ void cLaneDetectionFu::buildLaneMarkingsLists(
 
     
     //Order from bottom to top on Y axis
-    
     if (!(polyDetectedLeft && polyDetectedCenter && polyDetectedRight))
     	MergeSort::mergeSort(laneMarkings,0,laneMarkings.size()-1); 
 
@@ -1171,10 +1171,68 @@ void cLaneDetectionFu::buildLaneMarkingsLists(
 	    }
 	    // printf("Added: L: %d, C: %d, R: %d\n",laneMarkingsLeft.size(),laneMarkingsCenter.size(),laneMarkingsRight.size());
     }
-
-
-
     //ROS_INFO_STREAM("buildLaneMarkingsLists ending");
+}
+*/
+
+
+/**
+ * Creates three vectors of lane marking points out of the given lane marking
+ * point vector.
+ *
+ * A point has to lie within the ROI of the previously detected lane polynomial
+ * or within the default ROI, if no polynomial was detected.
+ * The lists are the input data for the RANSAC algorithm.
+ *
+ * @param laneMarkings  a vector containing all detected lane markings
+ */
+void cLaneDetectionFu::buildLaneMarkingsLists(
+        const std::vector<FuPoint<int>> &laneMarkings) {
+    //ROS_INFO_STREAM("buildLaneMarkingsLists beginning");
+    laneMarkingsLeft.clear();
+    laneMarkingsCenter.clear();
+    laneMarkingsRight.clear();
+
+    for (FuPoint<int> laneMarking : laneMarkings) {
+        if (polyDetectedLeft) {
+            if (isInPolyRoi(polyLeft, laneMarking)) {
+                laneMarkingsLeft.push_back(laneMarking);
+                continue;
+            }
+        }
+
+        if (polyDetectedCenter) {
+            if (isInPolyRoi(polyCenter, laneMarking)) {
+                laneMarkingsCenter.push_back(laneMarking);
+                continue;
+            }
+        }
+
+        if (polyDetectedRight) {
+            if (isInPolyRoi(polyRight, laneMarking)) {
+                laneMarkingsRight.push_back(laneMarking);
+                continue;
+            }
+        }
+
+        if (isInDefaultRoi(LEFT, laneMarking)) {
+            laneMarkingsLeft.push_back(laneMarking);
+            continue;
+        }
+
+        if (isInDefaultRoi(CENTER, laneMarking)) {
+            laneMarkingsCenter.push_back(laneMarking);
+            continue;
+        }
+
+        if (isInDefaultRoi(RIGHT, laneMarking)) {
+            laneMarkingsRight.push_back(laneMarking);
+            continue;
+        }
+        printf("NOT marked (%d, %d)\n", laneMarking.getX(), laneMarking.getY());
+    }
+    //ROS_INFO_STREAM("buildLaneMarkingsLists ending");
+    printf("\n----------------------------------\n");
 }
 
 
@@ -1305,18 +1363,25 @@ int cLaneDetectionFu::vertDistanceToPolynomial(NewtonPolynomial& poly, FuPoint<i
  */
 bool cLaneDetectionFu::isInDefaultRoi(ePosition position, FuPoint<int> &p) {
     //ROS_INFO_STREAM("isInDefaultRoi beginning");
+    double dist = horizDistanceToDefaultLine(position, p);
+    printf("distancia a Linea %d: (%d,%d) %.2f \n", position, p.getX(),p.getY(), dist);
+
     if (p.getY() < minYDefaultRoi || p.getY() > maxYRoi) {
+        printf("FALSE 1\n");
         return false;
     }
     else if (position == HORIZONTAL && vertDistanceToDefaultLine(position, p)
             <= interestDistanceDefault){
+        printf("HORIZONTAL\n");
         return true;
     }
-    else if (horizDistanceToDefaultLine(position, p)
+    else if (dist
             <= interestDistanceDefault) {
+        printf("TRUE\n");
         return true;
     }
     else {
+        printf("FALSE 2\n");
         return false;
     }
     //ROS_INFO_STREAM("isInDefaultRoi ending");
