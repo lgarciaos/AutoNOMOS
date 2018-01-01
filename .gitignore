@@ -5,3 +5,4 @@ install/
 logs/
 .catkin_tools/
 devel/
+test_files/

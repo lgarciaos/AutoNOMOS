@@ -5,9 +5,19 @@ project(imagen)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 
-find_package(catkin REQUIRED COMPONENTS roscpp std_msgs geometry_msgs cv_bridge sensor_msgs)
+find_package(
+	# cmake_modules REQUIRED
+	# Eigen REQUIRED
+	# OpenCV REQUIRED
+	catkin REQUIRED COMPONENTS 
+	roscpp 
+	std_msgs 
+	geometry_msgs 
+	cv_bridge 
+	sensor_msgs
+)
 find_package(cmake_modules REQUIRED)
-find_package(Eigen REQUIRED)
+# find_package(Eigen REQUIRED)
 find_package(OpenCV REQUIRED)
 
 ## System dependencies are found with CMake's conventions
@@ -83,7 +93,10 @@ set(ROS_LINK_FLAGS "-lopencv_core -lopencv_highgui -lopencv_legacy -lopencv_imgp
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES ekbot_ctrl
-#  CATKIN_DEPENDS other_catkin_pkg
+	CATKIN_DEPENDS 
+		roscpp
+    	sensor_msgs
+    	std_msgs
 #  DEPENDS system_lib
 )
 
@@ -94,7 +107,12 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 # include_directories(include)
-include_directories(include ${catkin_INCLUDE_DIRS} ${Eigen_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
+include_directories(
+	include 
+	${catkin_INCLUDE_DIRS} 
+	# ${Eigen_INCLUDE_DIRS} 
+	${OpenCV_INCLUDE_DIRS}
+)
 
 ## Declare a cpp library
 # add_library(ekbot_ctrl

@@ -7,20 +7,25 @@ project(firulais)
 # find_package(catkin REQUIRED)
 find_package(OpenCV REQUIRED )
 find_package(PCL REQUIRED)
-find_package(catkin REQUIRED COMPONENTS 
+find_package(
+	# OpenCV REQUIRED 
+	# PCL REQUIRED
+	catkin REQUIRED COMPONENTS 
 	roscpp
 	std_msgs
 	image_transport
 	pcl_conversions
 	pcl_msgs
 	geometry_msgs
-#	cmake_modules REQUIRED
+	cmake_modules REQUIRED
 	tf2_ros
 	tf
 	pcl_ros
 	# Eigen REQUIRED
 	tf2
-	cv_bridge)
+	cv_bridge
+	# Eigen REQUIRED
+)
 	#gazebo_msgs)
 
 ## System dependencies are found with CMake's conventions
@@ -111,7 +116,7 @@ catkin_package(
 		tf
 	DEPENDS
 	    Boost
-	    Eigen
+	    # Eigen
 		PCL
 #  INCLUDE_DIRS include
 #  LIBRARIES AutoNOMOS_simulation
@@ -129,7 +134,7 @@ catkin_package(
 include_directories(include
 			${OpenCV_INCLUDE_DIRS}
 			${catkin_INCLUDE_DIRS} 
-			${Eigen_INCLUDE_DIRS} 
+			# ${Eigen_INCLUDE_DIRS} 
 			${PCL_INCLUDE_DIRS} )
 ## Declare a cpp library
 # add_library(AutoNOMOS_simulation

@@ -7,8 +7,15 @@ project(lane_controller_sim)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(gazebo REQUIRED )
-find_package(catkin REQUIRED roscpp std_msgs gazebo_msgs )
+# find_package(gazebo REQUIRED )
+cmake_policy(SET CMP0054 NEW)
+find_package(
+	catkin REQUIRED 
+	roscpp 
+	std_msgs 
+	gazebo REQUIRED
+	gazebo_msgs 
+)
 
 
 
@@ -104,7 +111,10 @@ find_package(catkin REQUIRED roscpp std_msgs gazebo_msgs )
 catkin_package(
 #  INCLUDE_DIRS ${GAZEBO_INCLUDE_DIRS}
 #  LIBRARIES lane_states
-#  CATKIN_DEPENDS other_catkin_pkg
+	CATKIN_DEPENDS
+		roscpp
+		sensor_msgs
+		std_msgs
 #  DEPENDS system_lib
 )
 
@@ -117,7 +127,9 @@ catkin_package(
 ## Your package locations should be listed before other locations
 # include_directories(include)
 include_directories(include 
-		${GAZEBO_INCLUDE_DIRS})
+	${catkin_INCLUDE_DIRS}
+	${GAZEBO_INCLUDE_DIRS}
+)
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}

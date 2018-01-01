@@ -7,7 +7,11 @@ project(lane_controller)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED roscpp std_msgs )
+find_package(
+	catkin REQUIRED 
+	roscpp
+	std_msgs
+)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -98,11 +102,28 @@ find_package(catkin REQUIRED roscpp std_msgs )
 ## LIBRARIES: libraries you create in this project that dependent projects also need
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
+
 catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES lane_states
-#  CATKIN_DEPENDS other_catkin_pkg
-#  DEPENDS system_lib
+        # INCLUDE_DIRS include
+        # LIBRARIES
+        # pcl_ros_filters
+        # pcl_ros_io
+        # pcl_ros_tf
+        CATKIN_DEPENDS
+        dynamic_reconfigure
+        # message_filters
+        # nodelet
+        # pcl_conversions
+        # pcl_msgs
+        rosbag
+        roscpp
+        sensor_msgs
+        std_msgs
+        # tf
+        # DEPENDS
+            # Boost
+            # Eigen
+                # PCL
 )
 
 ###########
@@ -111,8 +132,11 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-# include_directories(include)
-
+include_directories(include
+  ${catkin_INCLUDE_DIRS}
+  # ${OpenCV_INCLUDE_DIRS}
+  # ${PCL_INCLUDE_DIRS}
+)
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
 #   src/${PROJECT_NAME}/lane_states.cpp
