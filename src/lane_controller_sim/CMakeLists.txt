@@ -13,8 +13,8 @@ find_package(
 	catkin REQUIRED 
 	roscpp 
 	std_msgs 
-	gazebo REQUIRED
-	gazebo_msgs 
+	# gazebo REQUIRED
+	# gazebo_msgs 
 )
 
 
@@ -128,14 +128,14 @@ catkin_package(
 # include_directories(include)
 include_directories(include 
 	${catkin_INCLUDE_DIRS}
-	${GAZEBO_INCLUDE_DIRS}
+	# ${GAZEBO_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
 #   src/${PROJECT_NAME}/lane_states.cpp
 # )
-link_directories(${GAZEBO_LIBRARY_DIRS})
+# link_directories(${GAZEBO_LIBRARY_DIRS})
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
@@ -158,9 +158,10 @@ add_executable(lane_controller_sim_node PIDcontroller_sim.cpp)
 
 ## Specify libraries to link a library or executable target against
 # target_link_libraries(${PROJECT_NAME}_node
-target_link_libraries(lane_controller_sim_node ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
-#   ${catkin_LIBRARIES}
-# )
+target_link_libraries(lane_controller_sim_node ${catkin_LIBRARIES} 
+	# ${GAZEBO_LIBRARIES})
+	#   ${catkin_LIBRARIES}
+)
 
 
 

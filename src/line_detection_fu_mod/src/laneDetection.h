@@ -89,8 +89,8 @@ class cLaneDetectionFu
         ros::Subscriber sub_localization;
 
         // publishers
-        //ros::Publisher publish_images;
-        //ros::Publisher publish_curvature;
+        ros::Publisher publish_images;
+        ros::Publisher publish_curvature;
         ros::Publisher publish_angle;
 
         ros::Publisher pub_left;

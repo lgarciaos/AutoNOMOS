@@ -1,9 +1,9 @@
 #include "laneDetection.h"
-
+// #include <ros/ros.h>
 using namespace std;
 
 // to show output on windows
-// #define PAINT_OUTPUT 
+#define PAINT_OUTPUT 
 #define PUBLISH_DEBUG_OUTPUT 
 
 static const uint32_t MY_ROS_QUEUE_SIZE = 1;
@@ -2374,23 +2374,24 @@ void cLaneDetectionFu::config_callback(line_detection_fu::LaneDetectionConfig &c
 
 int main(int argc, char **argv)
 {
+    ROS_INFO_STREAM("0");
     ros::init(argc, argv, "cLaneDetectionFu");
     ros::NodeHandle nh;
     ros::Rate loop_rate(RATE_HZ);
 
+    ROS_INFO_STREAM("1");
     cLaneDetectionFu node = cLaneDetectionFu(nh);
-
+    ROS_INFO_STREAM("2");
     dynamic_reconfigure::Server<line_detection_fu::LaneDetectionConfig> server;
     dynamic_reconfigure::Server<line_detection_fu::LaneDetectionConfig>::CallbackType f;
     f = boost::bind(&cLaneDetectionFu::config_callback, &node, _1, _2);
     server.setCallback(f);
-
-    // //ROS_INFO_STREAM("Before while");
+    ROS_INFO_STREAM("3");
+    
     while(ros::ok())
     {
         ros::spinOnce();
         loop_rate.sleep();
-        // //ROS_INFO_STREAM("At while");
     }
     return 0;
 }

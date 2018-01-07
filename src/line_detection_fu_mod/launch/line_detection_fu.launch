@@ -2,7 +2,7 @@
 
   <node name="line_detection_fu_node" pkg="line_detection_fu_mod" type="line_detection_fu_node" output="screen" > 
     <param name="cam_w"                         type="int"    value="640"/>  
-    <param name="cam_h"                         type="int"    value="480"/> <!--we will use only bottom half of this...-->  
+    <param name="cam_h"                         type="int"    value="480"/> <!--we will use only bottom half of this... original value = 480-->  
     <param name="proj_y_start"                  type="int"    value="50"/>
     <param name="proj_image_h"                  type="int"    value="160"/>
     <param name="proj_image_w"                  type="int"    value="160"/>
@@ -39,17 +39,19 @@
 
 
     <!-- jack 13 720p calibration: -->
-    <!--param name="f_u"                type="double"   value="927.054138"/>
-    <param name="f_v"                   type="double"   value="935.428772"/>
-    <param name="c_u"                   type="double"   value="654.456376"/>
-    <param name="c_v"                   type="double"   value="346.241851"/-->
+    <!-- <param name="f_u"                type="double"   value="927.054138"/> -->
+    <!-- <param name="f_v"                   type="double"   value="935.428772"/> -->
+    <!-- <param name="c_u"                   type="double"   value="654.456376"/> -->
+    <!-- <param name="c_v"                   type="double"   value="346.241851"/> -->
     
 
     <!-- jack 13 640*480 - cut to only bottom half (640*240) calibration: -->
     <param name="f_u"                   type="double"   value="655.554626"/>
     <param name="f_v"                   type="double"   value="652.052734"/>
+    <!-- <param name="f_v"                   type="double"   value="700"/> -->
     <param name="c_u"                   type="double"   value="312.773367"/>
     <param name="c_v"                   type="double"   value="7.779505"/>
+
     
   </node>
  
