@@ -1,8 +1,12 @@
 <launch>
   <node name="lane_states_node" pkg="lane_states_original" type="lane_states_node" output="screen" >
-    <param name="RPM"              type="int" value="-30"/>
-	<param name="alpha"	           type="double" value="6"/>
+    <param name="width_center"     type="int" value="90"/>
+    <!-- esta debe ser la distancia en pixeles para lineas estados sobre linea -->
+    <param name="alpha"	           type="double" value="12"/>
+    
+    <!-- 
     <param name="rate"             type="double" value="10.0"/>
     <param name="pixeles_cambio_estado" type="int" value="16"/>
+    -->
   </node>
 </launch>

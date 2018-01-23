@@ -7,8 +7,9 @@
 #include <nav_msgs/GridCells.h>
 #include <std_msgs/Int16.h>
 
-#define NUM_STATES 9*3
-#define RADIO 300
+#define NUM_STATES 7
+#define STATE_WIDTH 22
+#define RADIO 7
 
 static const uint32_t MY_ROS_QUEUE_SIZE = 1;
 
@@ -16,14 +17,10 @@ double rate_hz = 1;
 ros::Publisher pub_path;
 ros::Publisher pub_pathxy;
 // ros::Publisher pub_lidar;
-int RPM = 0;
 
 std::string nombre;
-
 nav_msgs::GridCells arr_lane_model;
-
 std_msgs::Float32MultiArray localizationArray;
-
 nav_msgs::GridCells path_planned;
 
 geometry_msgs::Point pt_to_send;
@@ -41,8 +38,7 @@ double nav_velocity_pixels = 0.0;
 int des_state = 16; //o 5
 
 // estados: 	 NSI,   FI,   CI,   CD,   FD, NSD
-void get_pts_lane(const nav_msgs::GridCells& array)
-{
+void get_pts_lane(const nav_msgs::GridCells& array) {
 	arr_lane_model.cells = array.cells;
 	arr_lane_model.cell_width = array.cell_width;
 	// printf("width %d height %d", array.cell_width, array.cell_height);
@@ -93,7 +89,7 @@ double navigation_velocity_pixels() {
 }
 
 
-void planning(){
+void planning() {
 
 	// tengo que enviar el control, (theta, velocidad), basado en el centro del estado en el que estoy @estado y en el que quiero estar @des_state
 	// el estado en el que estoy me lo da localization_array
@@ -169,7 +165,7 @@ void planning(){
 
 
 
-int main(int argc, char** argv){
+int main(int argc, char** argv) {
 	ros::init(argc, argv, "lane planning node");
 	ROS_INFO_STREAM("lane_planning_node initialized");
 	ros::NodeHandle nh;
@@ -204,5 +200,5 @@ int main(int argc, char** argv){
 	    loop_rate.sleep();
 	}
 	return 0;
-};
+}
 

@@ -3,38 +3,38 @@
   <node name="line_detection_fu_node" pkg="line_detection_fu_mod" type="line_detection_fu_node" output="screen" > 
     <param name="cam_w"                         type="int"    value="640"/>  
     <param name="cam_h"                         type="int"    value="480"/> <!--we will use only bottom half of this...-->  
-    <param name="proj_y_start"                  type="int"    value="30"/> <!-- 50 -->
-    <param name="proj_image_h"                  type="int"    value="160"/> <!-- 160 -->
-    <param name="proj_image_w"                  type="int"    value="160"/>
+    <param name="proj_y_start"                  type="int"    value="40"/> <!-- 50 def. Offset vertical imagen. -->
+    <param name="proj_image_h"                  type="int"    value="180"/> <!-- 160 -->
+    <param name="proj_image_w"                  type="int"    value="180"/>
     <param name="proj_image_horizontal_offset"  type="int"    value="0"/>
-    <param name="roi_top_w"                     type="int"    value="180"/> <!-- 132 -->
-    <param name="roi_bottom_w"                  type="int"    value="40"/>  <!-- 54 -->
-    <param name="maxYRoi"                       type="int"    value="150"/> <!-- 159, ajuste abajo de la region de interes -->
-    <param name="minYDefaultRoi"                type="int"    value="20"/> <!-- 110 -->
-    <param name="minYPolyRoi"                   type="int"    value="20"/> <!-- 68, ajuste parte superior ROI -->
+    <param name="roi_top_w"                     type="int"    value="160"/> <!-- 132 def. Igual que image width. Max 160. -->
+    <param name="roi_bottom_w"                  type="int"    value="60"/>  <!-- 54 def.  -->
+    <param name="maxYRoi"                       type="int"    value="160"/> <!-- 159, ajuste abajo de la region de interes -->
+    <param name="minYDefaultRoi"                type="int"    value="10"/> <!-- 110 -->
+    <param name="minYPolyRoi"                   type="int"    value="10"/> <!-- 20, ajuste parte superior ROI -->
     <param name="defaultXLeft"                  type="int"    value="30"/>
     <param name="defaultXCenter"                type="int"    value="70"/>
-    <param name="defaultXRight"                 type="int"    value="105"/>
+    <param name="defaultXRight"                 type="int"    value="110"/>
     <param name="defaultYHorizontal"                 type="int"    value="100"/>
     
-    <param name="interestDistancePoly"          type="int"    value="15"/>
-    <param name="interestDistanceDefault"       type="int"    value="15"/>
-    <param name="iterationsRansac"              type="int"    value="40"/>
-    <param name="proportionThreshould"          type="double" value="0.85"/>
+    <param name="interestDistancePoly"          type="int"    value="22"/>
+    <param name="interestDistanceDefault"       type="int"    value="22"/>
+    <param name="iterationsRansac"              type="int"    value="30"/> <!-- 40 defa. -->
+    <param name="proportionThreshould"          type="double" value="0.85"/> <!-- 0.85 def -->
     <param name="m_gradientThreshold"           type="int"    value="8"/>
-    <param name="m_nonMaxWidth"                 type="int"    value="10"/>
+    <param name="m_nonMaxWidth"                 type="int"    value="8"/> <!-- 10 default -->
     <param name="laneMarkingSquaredThreshold"   type="int"    value="49"/> <!-- 49 default. Al perecer se utiliza para filtrar posibles marcas -->
     <param name="angleAdjacentLeg"              type="int"    value="18"/>
     <param name="scanlinesVerticalDistance"     type="int"    value="2"/>
-    <param name="scanlinesMaxCount"             type="int"    value="200"/>
+    <param name="scanlinesMaxCount"             type="int"    value="300"/>
     <param name="polyY1"                        type="int"    value="155"/> <!-- 155 -->
     <param name="polyY2"                        type="int"    value="145"/> <!-- 145 -->
     <param name="polyY3"                        type="int"    value="130"/> <!-- 130 -->
-    <param name="detectLaneStartX"              type="int"    value="130"/> <!--this was originally 0.7m, which is about 90 in our case... used for gradient computation, might help us to get rid of too crazy polynomials. 155. Cambiado a 130 -->
+    <param name="detectLaneStartX"              type="int"    value="140"/> <!--this was originally 0.7m, which is about 90 in our case... used for gradient computation, might help us to get rid of too crazy polynomials. 155. Cambiado a 130 -->
     <param name="maxAngleDiff"                  type="int"    value="999"/>
 
     <param name="camera_name"           type="string"   value="app/camera/rgb/image_raw"/>      
-    <param name="cam_deg"               type="double"   value="5"/> <!-- 8 default. Modificado a .09 rad = 5 grados -->
+    <param name="cam_deg"               type="double"   value="4"/> <!-- 8 default. Modificado a .09 rad = 5 grados -->
     <param name="cam_height"            type="double"   value="18"/>
 
 

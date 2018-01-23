@@ -11,16 +11,16 @@ static const uint32_t MY_ROS_QUEUE_SIZE = 1;
 #define PI 3.14159265
 
 #define RATE_HZ 30
-
-#define NUM_STATES 9*3
+#define NUM_STATES 7
+#define STATE_WIDTH 22
 
 image_transport::CameraPublisher image_publisher;
 image_transport::CameraPublisher image_publisher_ransac;
 image_transport::CameraPublisher image_publisher_lane_markings;
 
 
-cv::Mat scanLinesMat;
-
+// cv::Mat scanLinesMat;
+// cv::Mat transformedImagePaintable;
 
 double f_u;
 double f_v;
@@ -29,7 +29,8 @@ double c_v;
 double cam_deg;
 double cam_height;
 
-
+double speed=0;
+float ctrl_action = 0;
 
 //msgs head
 unsigned int head_sequence_id = 0;
@@ -42,7 +43,10 @@ geometry_msgs::Point punto_des;
 // try kernel width 5 for now
 const static int g_kernel1DWidth = 5;
 
-std::string nombre_estado [9] = {"DNL",   "OL",   "LL",   "LC",   "CC",   "RC",   "RR",   "OR", "DNR"};
+std::string nombre_estado [NUM_STATES] = { "OL",   "LL",   "LC",   "CC",   "RC",   "RR",   "OR"};
+int estadoActual = -1;
+int estadoPrevio = -1;
+int ctrl_estado = 0;
 
 cLaneDetectionFu::cLaneDetectionFu(ros::NodeHandle nh)
     : nh_(nh), priv_nh_("~")
@@ -95,7 +99,6 @@ cLaneDetectionFu::cLaneDetectionFu(ros::NodeHandle nh)
     priv_nh_.param<int>(node_name+"/polyY1", polyY1, 35);
     priv_nh_.param<int>(node_name+"/polyY2", polyY2, 30);
     priv_nh_.param<int>(node_name+"/polyY3", polyY3, 15);
-
 
     int cam_h_half = cam_h/2;
 
@@ -162,7 +165,9 @@ cLaneDetectionFu::cLaneDetectionFu(ros::NodeHandle nh)
 
     sub_planning = nh.subscribe("/planning", MY_ROS_QUEUE_SIZE, &cLaneDetectionFu::ProcessPlanning,this);
     sub_localization = nh.subscribe("/localization_array", MY_ROS_QUEUE_SIZE, &cLaneDetectionFu::get_localization, this);
-
+    sub_vel = nh.subscribe("/cmd_vel", MY_ROS_QUEUE_SIZE, &cLaneDetectionFu::get_velocity, this);
+    sub_mov = nh.subscribe("/autonomos/steer/steer_position_controller/command", MY_ROS_QUEUE_SIZE, &cLaneDetectionFu::get_ctrl_action, this);
+    sub_des_state = nh.subscribe("/desired_state", MY_ROS_QUEUE_SIZE, &cLaneDetectionFu::get_ctrl_desired_state, this);
     planningxy = nh.subscribe("/planningxy", MY_ROS_QUEUE_SIZE, &cLaneDetectionFu::ProcessPlanningXY,this);
 
     //publish_curvature = nh.advertise<std_msgs::Float32>("/lane_model/curvature", MY_ROS_QUEUE_SIZE);
@@ -180,6 +185,8 @@ cLaneDetectionFu::cLaneDetectionFu(ros::NodeHandle nh)
 
     pub_lane_model = nh.advertise<nav_msgs::GridCells>("/points/lane_model", MY_ROS_QUEUE_SIZE);
     pub_ransac_horizontal = nh.advertise<nav_msgs::GridCells>("/points/ransac_horizontal", MY_ROS_QUEUE_SIZE);
+    
+    pub_speed = nh.advertise<geometry_msgs::Twist>("/target_pose", MY_ROS_QUEUE_SIZE);
 
     image_transport::ImageTransport image_transport(nh);
     
@@ -190,13 +197,11 @@ cLaneDetectionFu::cLaneDetectionFu(ros::NodeHandle nh)
         image_publisher_lane_markings = image_transport.advertiseCamera("/lane_model/lane_markings", MY_ROS_QUEUE_SIZE);
     #endif
 
-
-
     if (!rgb_camera_info)
     {
         rgb_camera_info.reset(new sensor_msgs::CameraInfo());
         rgb_camera_info->width = proj_image_w;
-        rgb_camera_info->height = proj_image_h+50;
+        rgb_camera_info->height = proj_image_h + 50;
     }
     // //ROS_INFO_STREAM("Finishing cLaneDetectionFu");
     //from camera properties and ROI etc we get scanlines (=line segments, úsečky)
@@ -332,9 +337,9 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
             cv::Point markingLoc = cv::Point(marking.getX(), marking.getY());
             cv::circle(transformedImagePaintableHorizontal,markingLoc,1,cv::Scalar(0,255,0),-1);         
         }
+
     #ifdef PAINT_OUTPUT
         //cv::imshow("Lane Markings", transformedImagePaintable);
-
         //cv::imshow("L. Markings Horizontal", transformedImagePaintableHorizontal);
         //cv::waitKey(1);
     #endif
@@ -522,6 +527,18 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
             array_ransac_right.cells.push_back(pt);
         }
 
+        ackerman_control(transformedImagePaintable, polyLeft, polyCenter, polyRight);
+
+        // cv::Point pRight = cv::Point(polyRight.at(140), 140);
+        // printf("\n dist between lines %d ", pRight.x - pLeft.x);
+
+        // muestra en el estado en que me encuentro
+        cv::Point pointTextEstado = cv::Point(90, 170);
+        if(estadoActual >=0)
+            cv::putText(transformedImagePaintable,nombre_estado[estadoActual],pointTextEstado,FONT_HERSHEY_SIMPLEX,.4,cv::Scalar(200,221,0));
+        else
+            cv::putText(transformedImagePaintable,"?",pointTextEstado,FONT_HERSHEY_SIMPLEX,.4,cv::Scalar(200,221,0));
+
         /* mostrar puntos HORIZONTALES
         if(polyDetectedHorizontal){
             for(int i = 0; i < 160; i++) {
@@ -544,7 +561,7 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
                 cv::Point pointPath = cv::Point(path_planned.cells[i].x, path_planned.cells[i].y);
                 cv::Point pointText = cv::Point(path_planned.cells[i].x, path_planned.cells[i].y - 10);
                 cv::Point pointTextEstado = cv::Point(80, 155);
-
+                
                 // center, radius, color, thickness
                 cv::circle(transformedImagePaintableRansac,pointPath,2,cv::Scalar(200,200,0),-1);
                 cv::putText(transformedImagePaintableRansac,std::to_string(i),pointText,FONT_HERSHEY_SIMPLEX,.4,cv::Scalar(0,221,237));
@@ -631,12 +648,7 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
         }
         cv::Point pun_des = cv::Point(punto_des.x, punto_des.y);
         cv::circle(transformedImagePaintable,pun_des,3,cv::Scalar(0,221,237),-1);
-        // muestra en el estado en que me encuentro
-        cv::Point pointTextEstado = cv::Point(80, 155);
-        if(estado >=0)
-        	cv::putText(transformedImagePaintable,nombre_estado[estado],pointTextEstado,FONT_HERSHEY_SIMPLEX,.4,cv::Scalar(200,221,0));
-        else
-        	cv::putText(transformedImagePaintable,"?",pointTextEstado,FONT_HERSHEY_SIMPLEX,.4,cv::Scalar(200,221,0));
+        
      	*/
         //-------------------------
 
@@ -664,6 +676,131 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
     //---------------------- END DEBUG OUTPUT LANE POLYNOMIAL ------------------------------//
 
     //ROS_INFO_STREAM("ProcessInput Ending");
+}
+
+
+/* compute based on distance y_next_dist the points in pixels that the car needs to head to */
+void cLaneDetectionFu::ackerman_control_next_points(double y_next_dist, cv::Point& pt_car, cv::Point& y_next_pt, cv::Point& y_next_pt2) {
+    int next_move_y = maxYRoi-y_next_dist;
+    int next_move2_y = maxYRoi-2*y_next_dist-10;
+    cv::Point nextPoint, nextPoint2;
+
+    // 2.- Si RC o LC (computed with average of lines)
+    if (estadoActual == 2 || estadoActual == 4) {
+        // target point (angle alpha)
+        nextPoint = cv::Point((polyCenter.at(next_move_y) + polyRight.at(next_move_y))/2, next_move_y);
+        
+        // point to compute angle for ackermann control
+        // angle beta
+        nextPoint2 = cv::Point((polyCenter.at(next_move2_y) + polyRight.at(next_move2_y))/2, next_move2_y);
+    }
+    // 3.- Si LL, CC o RR (computed with closest poly to car)
+    else if (estadoActual == 1 || estadoActual == 3 || estadoActual == 5) {
+        // target point (angle alpha)
+        double x_center = polyCenter.at(next_move_y);
+        double x_right = polyRight.at(next_move_y);
+        bool center_closer = abs(pt_car.x - x_center) <= abs(pt_car.x - x_right);
+        nextPoint = cv::Point(center_closer ? x_center : x_right, next_move_y);
+
+        // point to compute angle for ackermann control
+        // angle beta
+        nextPoint2 = cv::Point(center_closer ? polyCenter.at(next_move2_y) : polyRight.at(next_move2_y), next_move2_y);
+    }
+    // 4.- Si OL, OR (computed with increment to closest poly to car)
+    else {
+        // target point (angle alpha)
+        double x_center = polyCenter.at(next_move_y);
+        double x_right = polyRight.at(next_move_y);
+        bool center_closer = abs(pt_car.x - x_center) <= abs(pt_car.x - x_right);
+        bool left_of_car = (center_closer ? x_center : x_right) - pt_car.x <= 0;
+        // 22px is half state
+        nextPoint = cv::Point((center_closer ? x_center : x_right) + (left_of_car ? 22 : -22), next_move_y);
+
+        // point to compute angle for ackermann control
+        // angle beta
+        nextPoint2 = cv::Point((center_closer ? polyCenter.at(next_move2_y) : polyRight.at(next_move2_y)) + (left_of_car ? 22 : -22), next_move2_y);
+    }
+    y_next_pt.x = nextPoint.x;
+    y_next_pt.y = nextPoint.y;
+    y_next_pt2.x = nextPoint2.x;
+    y_next_pt2.y = nextPoint2.y;
+}
+
+void cLaneDetectionFu::ackerman_control(cv::Mat& imagePaint, NewtonPolynomial& polyLeft, NewtonPolynomial& polyCenter,
+    NewtonPolynomial& polyRight) {
+
+    //
+    // SI estado actual es DIFERENTE a estado requerido
+    // 1.- Steering requerido para cambiar de estado 
+    //      (positivo o negativo dependiendo del estado actual)
+    // 2.- Ciertos pixeles en eje y (marco carro) por ejemplo 10 para hacer un cambio suave
+    //      con base a esta y, calcular steering de acuerdo a velocidad
+    // 3.- El 10 es positivo o negativo de acuerdo a si nuevo estado es mayor o menor
+    // 4.- Enviar este steering como accion de control
+    //
+
+    // car location (negative to compute angle)
+    cv::Point ptCar = cv::Point(90,170);
+    cv::circle(imagePaint,ptCar,0,cv::Scalar(0,255,255),-1);
+
+    double steering;    
+    // calcular siguiente punto del carro de acuerdo a velocidad y steering actual
+    double dist_y = speed * 100 * sin(PI/2 - ctrl_action); //*; 
+    cv::Point nextPoint, nextPoint2;
+    ackerman_control_next_points(dist_y, ptCar, nextPoint, nextPoint2);
+
+    if (ctrl_estado != 0) {
+    // } else if (estadoActual > siguienteEstado) {
+        nextPoint.x = nextPoint.x + (22 * ctrl_estado);
+        nextPoint2.x = nextPoint2.x + (22 * ctrl_estado);
+    } 
+
+    // SI estado actual es IGUAL a estado requerido
+    // 1.- Utilizar polinomios para coordenada siguiente
+    // 2.- Si RC o LC
+    // 3.- Si LL, CC o RR
+    // 4.- Si OL, OR
+    // { "OL",   "LL",   "LC",   "CC",   "RC",   "RR",   "OR"}
+    
+    
+    
+    // -- visualize points ---------
+    cv::circle(imagePaint,nextPoint,0,cv::Scalar(255,255,0),-1);
+    cv::circle(imagePaint,nextPoint2,0,cv::Scalar(245,245,0),-1);
+
+    // ------------- ACKERMAN CONTROL -------------------
+    // ---angles
+    // intercambio de coordenadas por frame rotado
+    double G_x_cord = -nextPoint.y - -ptCar.y;
+    double G_y_cord = ptCar.x - nextPoint.x;
+    // alpha, angel between car and GOAL in radians
+    double alpha = atan2(G_y_cord, G_x_cord);
+
+    double G_sup_x = -nextPoint2.y - -ptCar.y;
+    double G_sup_y = ptCar.x - nextPoint2.x;
+
+    // law of cosines to compute beta, the angle of the goal with respect to alpha
+    double a = sqrt(pow(G_x_cord, 2) + pow(G_y_cord, 2));
+    double b = sqrt(pow(G_x_cord-G_sup_x, 2) + pow(G_y_cord-G_sup_y, 2));
+    double c = sqrt(pow(-G_sup_x, 2) + pow(-G_sup_y,2));
+    double beta = acos((pow(a, 2) + pow(b, 2) - pow(c, 2)) / (2 * a * b));
+    beta = PI - beta;
+    printf("\n alpha: %.2f, beta: %.2f", alpha, beta);
+
+    //-----PUBLISH ------
+    double kalpha = 1;
+    double kbeta = 0.5;
+    steering = kalpha * alpha + kbeta * beta;
+    // -------------- FINISH ACKERMAN CONTROL -----------
+    
+    if (!std::isnan(steering)) {
+        printf("\n steering: %.2f", steering);
+        
+        geometry_msgs::Twist vel;
+        vel.angular.z=steering;
+
+        pub_speed.publish(vel);    
+    }
 }
 
 /* EdgeDetector methods */
@@ -941,39 +1078,58 @@ vector<vector<EdgePoint>> cLaneDetectionFu::scanImage(cv::Mat image, ePosition p
 /* Planning */
 
 // get planned path to show it on the image
-void cLaneDetectionFu::ProcessPlanning(const nav_msgs::GridCells& path){
+void cLaneDetectionFu::ProcessPlanning(const nav_msgs::GridCells& path) {
     path_planned.cell_width = path.cell_width;
     path_planned.cells = path.cells;
 }
 
-void cLaneDetectionFu::ProcessPlanningXY(const geometry_msgs::Point& path){
+void cLaneDetectionFu::ProcessPlanningXY(const geometry_msgs::Point& path) {
     punto_des = path;
 }
 
 void cLaneDetectionFu::get_localization(const std_msgs::Float32MultiArray& locArray) {
-    
-    // detectar estado de mayor probabilidad para imprimirlo
+    estadoPrevio = estadoActual;
+
     float max=0;
-	for(int i=0;i<NUM_STATES;i++){
-	 	if(locArray.data[i]>max){
-	 		max=locArray.data[i];
-	 	}
-	}
-	estado=-1;
-	int countEstados=0;
-	for(int i=NUM_STATES-1;i>=0;i--){
-        if(locArray.data[i]==max){
-            // ROS_INFO_STREAM("Estas en:" << nombre_estado[i]);
-            estado = i;
-            countEstados++;
+    for(int i=0;i<NUM_STATES*STATE_WIDTH;i++){
+        if(locArray.data[i]>max){
+            max=locArray.data[i];
         }
-    	}
+    }
 
-    if (countEstados==1)
-    	estado=(int)floor(estado/3);
-    //else
-    //	estado=-1; // no se pudo determinar el estado, ya que hay mas de uno posible
+    int countStates=0;
+    int state = -1;
+    for(int i=NUM_STATES*STATE_WIDTH-1;i>=0;i--){
+        if(locArray.data[i]==max){
+            int temp_state = (int)floor(i/STATE_WIDTH);
+            if (temp_state != state){
+                state = temp_state;
+                countStates++;
+            }
+        }
+    }
 
+    if (countStates==1)
+        estadoActual = state;
+    else
+        estadoActual = -1; // no se pudo determinar el estado, ya que hay mas de uno posible
+
+    if (estadoActual != estadoPrevio)
+        ctrl_estado = 0;
+}
+
+void cLaneDetectionFu::get_velocity(const geometry_msgs::Twist& val) {
+    // negative is forward
+    speed = sqrt(val.linear.x * val.linear.x);
+    // printf("\n vel: %.2f ", speed);
+}
+
+void cLaneDetectionFu::get_ctrl_action(const std_msgs::Float64& val) {
+    ctrl_action = val.data;
+}
+
+void cLaneDetectionFu::get_ctrl_desired_state(const std_msgs::Float64& val) {
+    ctrl_estado = val.data;
 }
 
 /* LaneMarkingDetector methods */
@@ -1229,10 +1385,10 @@ void cLaneDetectionFu::buildLaneMarkingsLists(
             laneMarkingsRight.push_back(laneMarking);
             continue;
         }
-        printf("NOT marked (%d, %d)\n", laneMarking.getX(), laneMarking.getY());
+        // printf("NOT marked (%d, %d)\n", laneMarking.getX(), laneMarking.getY());
     }
     //ROS_INFO_STREAM("buildLaneMarkingsLists ending");
-    printf("\n----------------------------------\n");
+    // printf("\n----------------------------------\n");
 }
 
 
@@ -1364,24 +1520,24 @@ int cLaneDetectionFu::vertDistanceToPolynomial(NewtonPolynomial& poly, FuPoint<i
 bool cLaneDetectionFu::isInDefaultRoi(ePosition position, FuPoint<int> &p) {
     //ROS_INFO_STREAM("isInDefaultRoi beginning");
     double dist = horizDistanceToDefaultLine(position, p);
-    printf("distancia a Linea %d: (%d,%d) %.2f \n", position, p.getX(),p.getY(), dist);
+    // printf("distancia a Linea %d: (%d,%d) %.2f \n", position, p.getX(),p.getY(), dist);
 
     if (p.getY() < minYDefaultRoi || p.getY() > maxYRoi) {
-        printf("FALSE 1\n");
+        // printf("FALSE 1\n");
         return false;
     }
     else if (position == HORIZONTAL && vertDistanceToDefaultLine(position, p)
             <= interestDistanceDefault){
-        printf("HORIZONTAL\n");
+        // printf("HORIZONTAL\n");
         return true;
     }
     else if (dist
             <= interestDistanceDefault) {
-        printf("TRUE\n");
+        // printf("TRUE\n");
         return true;
     }
     else {
-        printf("FALSE 2\n");
+        // printf("FALSE 2\n");
         return false;
     }
     //ROS_INFO_STREAM("isInDefaultRoi ending");
@@ -2098,12 +2254,24 @@ bool cLaneDetectionFu::ransacInternal(ePosition position,
             else if (i >= (double(sortedMarkings.size()) / 7) * 6) {
                 markings3.push_back(sortedMarkings[i]);
             }
-
             if (sortedMarkings[i].getY() > 5) {
                 highEnoughY = true;
             }
         }
     }
+
+
+
+    // left
+    //cv::Point markingLoc = cv::Point(marking.getX(), marking.getY());
+    //cv::circle(transformedImagePaintable,markingLoc,1,cv::Scalar(0,0,139),-1);
+    // center
+    //cv::Point markingLoc = cv::Point(marking.getX(), marking.getY());
+    //cv::circle(transformedImagePaintable,markingLoc,1,cv::Scalar(0,100,0),-1);
+    // right
+    //cv::Point markingLoc = cv::Point(marking.getX(), marking.getY());
+    //cv::circle(transformedImagePaintable,markingLoc,1,cv::Scalar(139,0,0),-1);  
+
 
     //what is this for?
     if (position == CENTER) {
@@ -2153,7 +2321,8 @@ bool cLaneDetectionFu::ransacInternal(ePosition position,
             poly.addData(p3X, p3Y);
         }
 
-        // check if this polynomial is not useful
+        // check if this polynomial is not useful 
+        // BASED ON DISTANCE TO DEFAULT LINES AND PREVIOUS POLY
         if (!polyValid(position, poly, prevPoly)) {
             poly.clear();
             continue;
@@ -2286,21 +2455,21 @@ bool cLaneDetectionFu::polyValid(ePosition position, NewtonPolynomial poly,
     //ROS_INFO_STREAM("polyValid");
     FuPoint<int> p1 = FuPoint<int>(poly.at(polyY1), polyY1);    //y = 75
 
-    if (horizDistanceToDefaultLine(position, p1) > 10) {
+    if (horizDistanceToDefaultLine(position, p1) > interestDistancePoly) { // 10) {
         //ROS_INFO("Poly was to far away from default line at y = 25");
         return false;
     }
 
     FuPoint<int> p2 = FuPoint<int>(poly.at(polyY2), polyY2);    //y = 60
 
-    if (horizDistanceToDefaultLine(position, p2) > 20) {
+    if (horizDistanceToDefaultLine(position, p2) > interestDistancePoly) { // 20) {
         //ROS_INFO("Poly was to far away from default line at y = 25");
         return false;
     }
 
     FuPoint<int> p3 = FuPoint<int>(poly.at(polyY3), polyY3);    //y = 40
 
-    if (horizDistanceToDefaultLine(position, p3) > 40) {
+    if (horizDistanceToDefaultLine(position, p3) > interestDistancePoly) { // 40) {
         //ROS_INFO("Poly was to far away from default line at y = 30");
         return false;
     }
@@ -2309,7 +2478,7 @@ bool cLaneDetectionFu::polyValid(ePosition position, NewtonPolynomial poly,
         FuPoint<int> p4 = FuPoint<int>(poly.at(polyY1), polyY1);
         FuPoint<int> p5 = FuPoint<int>(prevPoly.at(polyY1), polyY1);
 
-        if (horizDistance(p4, p5) > 5) {//0.05 * meters) {
+        if (horizDistance(p4, p5) > 5) { //0.05 * meters) {
             //ROS_INFO("Poly was to far away from previous poly at y = 25");
             return false;
         }
@@ -2317,7 +2486,7 @@ bool cLaneDetectionFu::polyValid(ePosition position, NewtonPolynomial poly,
         FuPoint<int> p6 = FuPoint<int>(poly.at(polyY2), polyY2);
         FuPoint<int> p7 = FuPoint<int>(prevPoly.at(polyY2), polyY2);
 
-        if (horizDistance(p6, p7) > 5) {//0.05 * meters) {
+        if (horizDistance(p6, p7) > 5) { //0.05 * meters) {
             //ROS_INFO("Poly was to far away from previous poly at y = 30");
             return false;
         }

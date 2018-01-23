@@ -79,7 +79,7 @@ double getThetaError (double pActual, double pEsperada){
 
 double PIDtime(double pActual, double pDestino, double dt, double Kp, double Kd, double Ki){
 	// ROS_INFO_STREAM("PID time");
-	theta = getThetaError(pActual, pDestino); // getThetaError
+	theta = pDestino; // getThetaError
 	double error = theta;
 	double pOut = Kp * error;
 	integral += error * dt;
@@ -101,9 +101,9 @@ double PIDtime(double pActual, double pDestino, double dt, double Kp, double Kd,
 
 void get_vel_vec(const geometry_msgs::Twist& msg) {
 
-	velocity_msg.linear.x = msg.linear.x;
-	velocity_msg.linear.y = msg.linear.y;
-	velocity_msg.angular.z = msg.angular.z; 
+	//velocity_msg.linear.x = msg.linear.x;
+	//velocity_msg.linear.y = msg.linear.y;
+	//velocity_msg.angular.z = msg.angular.z; 
 
 	vel.linear.x=velocity;
 
@@ -122,9 +122,9 @@ void get_vel_vec(const geometry_msgs::Twist& msg) {
 		
 		// p = point.x;
 
-		double posEsp =  velocity_msg.linear.x;
-		double posActual =  pE; 
-		ROS_INFO_STREAM("PID: posPixel Esperada: " << posEsp << ", posPixel Actual:" << posActual );
+		double posEsp = msg.angular.z; // pixeles: velocity_msg.linear.x;
+		double posActual = 0; // pixeles: pE; 
+		ROS_INFO_STREAM("PID2: posPixel Esperada: " << posEsp << ", posPixel Actual:" << posActual );
 		
 		// 'p' en terminos de theta en grados de -45 a 45
 		// p = getThetaError(posActual, posEsp);
@@ -234,3 +234,4 @@ int main(int argc, char** argv){
 		}
 		return 0;
 	}
+

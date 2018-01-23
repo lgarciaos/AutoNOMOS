@@ -13,8 +13,10 @@
 #include <cmath>
 
 static const uint32_t MY_ROS_QUEUE_SIZE = 1;
-#define NUM_STATES 9
-#define RADIO 300
+#define NUM_STATES 7
+#define STATE_WIDTH 22
+#define RADIO 7
+#define PI 3.14159265
 
 geometry_msgs::Twist destiny_position;
 double rate_hz = 5;
@@ -26,7 +28,6 @@ nav_msgs::GridCells arr_left;
 nav_msgs::GridCells arr_center;
 nav_msgs::GridCells arr_right;
 
-std_msgs::Float32MultiArray p;
 
 // estados: 	 NSI,   FI,   CI,   CD,   FD, NSD
 
@@ -39,34 +40,33 @@ std_msgs::Float32MultiArray p;
 // float c6 [6] = {1/40, 1/40, 1/40, 0.30, 0.60, 1/40};
 // float c7 [6] = {0.02, 0.02, 0.02, 0.90, 0.02, 0.02};
 
-std::string nombre_estado [9] = {"DNL",   "OL",   "LL",   "LC",   "CC",   "RC",   "RR",   "OR", "DNR"};
+// std::string nombre_estado [9] = {"DNL",   "OL",   "LL",   "LC",   "CC",   "RC",   "RR",   "OR", "DNR"};
+std::string nombre_estado [NUM_STATES] = { "OL",   "LL",   "LC",   "CC",   "RC",   "RR",   "OR"};
 
 
 // movement
-float p_exact;
-float p_undershoot;
-float p_undershoot_2;
-float p_overshoot;
+float p_exact = 0.8;
+float p_undershoot = 0.1;
+float p_overshoot = 0.1;
 //float p_overshoot_2 = .05;
 
 // sensor
-float p_hit = 0.9;
-float p_miss = 0.1;
+float p_hit = 0.95;
+float p_miss = 0.05;
 
 float alpha = 12; //TODO
+int width_center = 80; //TODO
+float speed = 0;
 
-int movement = 45;
+//int movement = 45;
 // PERCEPCION DE LIDAR
 
 int L = 0;
 int C = 0;
 int R = 0;
 int des_state = 5;
-
 float ctrl_action = 0;
-
-double nav_velocity_pixels = 0.0;
-int RPM = 0;
+float ctrl_estado = 0;
 int pixeles_cambio_estado=0;
 
 int lanes_detected = 0;
@@ -80,8 +80,8 @@ bool rr;
 bool cc;
 bool ll;
 
-int U = 0;
-double angulo_real;
+// int U = 0;
+// double angulo_real;
 
 //gets the left points
 void get_pts_left(const nav_msgs::GridCells& array)
@@ -94,6 +94,7 @@ void get_pts_left(const nav_msgs::GridCells& array)
 		L=0;
 	}
 }
+
 //gets the center points
 void get_pts_center(const nav_msgs::GridCells& array)
 {
@@ -105,6 +106,7 @@ void get_pts_center(const nav_msgs::GridCells& array)
 		C=0;
 	}
 }
+
 //gets the right points
 void get_pts_right(const nav_msgs::GridCells& array)
 {
@@ -116,24 +118,29 @@ void get_pts_right(const nav_msgs::GridCells& array)
 		R=0;
 	}
 }
+
 //transforms the motion into values for shift >> used before but maybe not useful anymore (290317)
 void get_ctrl_action(const std_msgs::Float64& val)
 {
 	ctrl_action = val.data;
-	// ROS_INFO_STREAM("recibido steering: " << val.data);
 }
-//gets and stores the desired state
-void get_des_state(const std_msgs::Int16& val)
+
+void get_velocity(const geometry_msgs::Twist& val)
 {
-	des_state = val.data;
+	// negative is forward
+	speed = sqrt(val.linear.x * val.linear.x);
+	// printf("\n vel: %.2f ", speed);
 }
-//calculates the distance. NOTE: only using th x component because Y is asumed constant, maybe isnt the best way to have it.
+
+void get_ctrl_desired_state(const std_msgs::Float64& val) {
+    ctrl_estado = val.data;
+}
+
+//calculates the distance in pixels. NOTE: only using th x component because Y is asumed constant, maybe isnt the best way to have it.
 //If y is asumed constant ==> using abs() instead of sqrt might be more efficient
-float dist(geometry_msgs::Point p1, geometry_msgs::Point p2)
+float horizontal_dist(geometry_msgs::Point p1, geometry_msgs::Point p2)
 {
-	// ROS_INFO_STREAM("x1: " << p1.x << "\ty1: "<< p1.y << "\tx2: " << p2.x << "\ty2: " << p2.y);
 	float dif_x = p1.x - p2.x;
-	// float dif_y = p1.y - p2.y;
 	return sqrt(dif_x * dif_x); // absolute value
 }
 
@@ -162,8 +169,9 @@ float dist(geometry_msgs::Point p1, geometry_msgs::Point p2)
 //   0	| 1   |2 | 3  |4  |5  |6  | 7  | 8		ND -> No se Derecha
 //	
 //
-int det_hit (int state)
+int det_hit (int position)
 {
+	int state = (int)floor(position/STATE_WIDTH);
 	//Determine the number of lanes seen
 	int hit;
 	//switch depending on the state to eval
@@ -179,49 +187,68 @@ int det_hit (int state)
 		// 5 |  1  |  0  |  1
 		// 6 |  1  |  1  |  0
 		// 7 |  1  |  1  |  1
-		case 0: //NSI
-			hit = !(rr || cc || ll) && lanes_detected == 0;
-			// if(hit) ROS_INFO_STREAM("Hit at state: " << state);
-			break;
-		case 1: //FI
+		case 0: //OL
 			hit = !(ll || cc || rr ) && (lanes_detected == 1);
 			// if(hit) ROS_INFO_STREAM("Hit at state: " << state);
 			break;
-		case 2: // LL
+		case 1: // LL
 			hit = (cc || rr ) && (lanes_detected >= 1 && lanes_detected <= 3);
 			// if(hit) ROS_INFO_STREAM("Hit at state: " << state);
 			break;
-		case 3: //LC
+		case 2: //LC
 			hit = !(rr || cc || ll) && (lanes_detected == 3); 
+
+			if(hit) {
+				double min_coord = state*STATE_WIDTH;
+				double max_coord = (state+1)*STATE_WIDTH;
+				// pt_c debe estar a la izquierda, en este caso se cumple
+				if (dist_cc > 0 && dist_cc < 1000) 
+					min_coord = state*STATE_WIDTH + dist_cc - alpha - RADIO;
+				// pt_r debe estar a la derecha, en este caso se cumple
+				if (dist_rr > 0 && dist_rr < 1000) 
+					max_coord = (state+1)*STATE_WIDTH - dist_rr + alpha + RADIO;
+				if (position < min_coord || position > max_coord)
+					hit = !hit;
+			}
+
 			// if(hit) ROS_INFO_STREAM("Hit at state: " << state);
 			break;
-		case 4: //CC, no puede estar en el centro viendo solo una linea
+		case 3: //CC, no puede estar en el centro viendo solo una linea
 			hit = (cc || rr ) && ((lanes_detected == 3) || (lanes_detected >= 5 && lanes_detected <= 7));
 			// if(hit) ROS_INFO_STREAM("Hit at state: " << state);
 			break;
-		case 5: //RC
+		case 4: //RC
 			hit = !(cc || rr || ll) && ((lanes_detected == 3) ||  (lanes_detected >= 5 && lanes_detected <= 7)) ;
 			// if(hit) ROS_INFO_STREAM("Hit at state: " << state);
+
+			if(hit) {
+				double min_coord = state*STATE_WIDTH;
+				double max_coord = (state+1)*STATE_WIDTH;
+				// pt_c debe estar a la izquierda, en este caso se cumple
+				if (dist_cc > 0 && dist_cc < 1000) 
+					min_coord = state*STATE_WIDTH + dist_cc - alpha - RADIO;
+				// pt_r debe estar a la derecha, en este caso se cumple
+				if (dist_rr > 0 && dist_rr < 1000) 
+					max_coord = (state+1)*STATE_WIDTH - dist_rr + alpha + RADIO;
+				if (position < min_coord || position > max_coord)
+					hit = !hit;
+			}
+
 			break;
-		case 6: //RR
+		case 5: //RR
 			hit = (cc || rr ) && ((lanes_detected >= 1 && lanes_detected <= 3) || (lanes_detected >= 5 && lanes_detected <= 7));
 			// if(hit) ROS_INFO_STREAM("Hit at state: " << state);
 			break;
-		case 7: //FD
+		case 6: //OR
 			hit = !(rr || ll || cc) && (lanes_detected == 2 || lanes_detected == 4 || lanes_detected == 6);
 			// if(hit) ROS_INFO_STREAM("Hit at state: " << state);
 			break;
-		case 8:	//NSD
-			hit = !(rr || cc || ll) && lanes_detected == 0;
-			// if(hit) ROS_INFO_STREAM("Hit at state: " << state);
-			break;
-		default:
-			hit=0;
 	}
+
 	return hit;
 }
 
-std_msgs::Float32MultiArray conv(std_msgs::Float32MultiArray p)
+float* det_hits()
 {
 	lanes_detected = (L > 0);
 	lanes_detected = lanes_detected << 1;
@@ -235,204 +262,167 @@ std_msgs::Float32MultiArray conv(std_msgs::Float32MultiArray p)
 	geometry_msgs::Point pt_car;
 	
 	//define the static point (center) of the car
-	pt_car.x = 80;
-	pt_car.y = 160;
+	pt_car.x = width_center;
+	pt_car.y = 0;
 	pt_car.z = 0;
+
 	// if there are points in the line ==> get the last point (the last point is the closer to the car)
 	if ( R > 0 ) pt_r = arr_right.cells[R - 1];
 	if ( C > 0 ) pt_c = arr_center.cells[C - 1];
 	if ( L > 0 ) pt_l = arr_left.cells[L - 1];
 	
 	// if there are points in the lines, get the distance between the car and the closest point if not, assign a BIG number
-	dist_rr = R > 0 ?  dist(pt_r, pt_car) : 1000;
-	dist_cc = C > 0 ?  dist(pt_c, pt_car) : 1000;
-	dist_ll = L > 0 ?  dist(pt_l, pt_car) : 1000;
+	dist_rr = R > 0 ?  horizontal_dist(pt_r, pt_car) : 1000;
+	dist_cc = C > 0 ?  horizontal_dist(pt_c, pt_car) : 1000;
+	dist_ll = L > 0 ?  horizontal_dist(pt_l, pt_car) : 1000;
 	
 	// define if each distance is smaller than alpha
 	rr = dist_rr <= alpha;
 	cc = dist_cc <= alpha;
 	ll = dist_ll <= alpha;
 	
-	//printing for debugging
-	//ROS_INFO_STREAM("rr: " << rr << "\tcc: " << cc << "\tll: " << ll << "\tlanes: " << lanes_detected);
 	
-	//ROS_INFO_STREAM("Detected R: " << R << ", C: " << C << ", L: "<< L << " -- dist_rr: " << dist_rr << ", dist_cc: " << dist_cc << ", dist_ll: " << dist_ll << ", alpha: " << alpha);
+	// based on sensing update probabilities
+	
+	float* hits = new float[NUM_STATES*STATE_WIDTH];
 
-	std_msgs::Float32MultiArray q;
-	float hits[NUM_STATES];
-	for (int i = 0; i < NUM_STATES; ++i) {	
-		// ROS_INFO_STREAM("-------------------------" << i << "------------------------"); 
-		/*
-		if (p.data[i] < 0.001)
-		{
-			bool hit = det_hit(i);
-		//	ROS_INFO_STREAM("PROB @SENSE_1: " << p.data[i]  * (hit * p_hit + (1-hit) * 0.001) );
-			q.data.push_back(p.data[i]  * (hit * p_hit + (1-hit) * 0.001) );
-		} else {
-			
-		}
-		*/
+	for (int i = 0; i < NUM_STATES*STATE_WIDTH; ++i) {
+		
 		int hit = det_hit(i);
 		hits[i]=(hit * p_hit + (1-hit) * p_miss);
-		
-		double prob = p.data[i] * hits[i];
-		// ROS_INFO_STREAM(p.data[i] << " ==> " << prob);
-		q.data.push_back(prob);
 	}
 
-	// adjust ones to distribution
-	//for (int i=0;i<NUM_STATES;i++){
-	//	if(q.data[i]==p_hit){
-	//		double temp=q.data[i];
-	//		double valc=temp*2/3;
-	//		double vals=temp*1/6;
-	//		q.data[i-1]+=vals;
-	//		q.data[i]=valc;
-	//		q.data[i+1]+=vals;
-	//	}
-	//}
+	return hits;
+}
 
-	const char * format = "z_k =[%.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f]\n";
-  	printf (format, hits[0],hits[1],hits[2],hits[3],hits[4],hits[5],hits[6],hits[7],hits[8]);
-	
-	// const char * format = "z(k)=[%.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f]\n";
-	// printf (format, hits[0],hits[1],hits[2],hits[3],hits[4],hits[5],hits[6],hits[7],hits[8],hits[9],hits[10],hits[11],hits[12],hits[13],hits[14],hits[15],hits[16],hits[17],hits[18],hits[19],hits[20],hits[21],hits[22],hits[23],hits[24],hits[25],hits[26]);
+std_msgs::Float32MultiArray sense(std_msgs::Float32MultiArray p, float* hits)
+{
+	std_msgs::Float32MultiArray q;
+	for (int i = 0; i < NUM_STATES*STATE_WIDTH; ++i) {	
+		q.data.push_back(p.data[i] * hits[i]);
+	}
+
+	const char * format = "z_k =[%.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f]\n";
+  	printf (format, hits[0*STATE_WIDTH],hits[1*STATE_WIDTH],hits[2*STATE_WIDTH],hits[3*STATE_WIDTH],hits[4*STATE_WIDTH],hits[5*STATE_WIDTH],hits[6*STATE_WIDTH]);
 
 	// normalizacion
 	float sum = 0;
-	for (int i = 0; i < NUM_STATES; ++i)
+	for (int i = 0; i < NUM_STATES*STATE_WIDTH; ++i)
 	{
 		sum += q.data[i];
 	}
-	for (int i = 0; i < NUM_STATES; ++i)
+	for (int i = 0; i < NUM_STATES*STATE_WIDTH; ++i)
 	{
 		q.data[i] /= sum;
 	}
 	return q;
 }
 
-std_msgs::Float32MultiArray sense(std_msgs::Float32MultiArray prob)
-{
-	std_msgs::Float32MultiArray q;
-	q = conv(prob);
-	return q;
-}
-
 std_msgs::Float32MultiArray move(std_msgs::Float32MultiArray prob)
 {
-	std_msgs::Float32MultiArray q;
-	p_exact = .6;
-	p_undershoot = .2;
-	p_overshoot = .2;
+	//ctrl_action: radians in simulation
+	// positive is left
+
 	// a que estado podria llegar basado en velocidad y steering
-	// double dist_x = cos(angulo_real*M_PI/180);//*nav_velocity_pixels;
+	// double speed = 0.15; // m/s
+	// plus 100 to convert meters to cm  
+	// adjusted to 40 for better reflection of real motion
+	double dist_x = speed * 40 * cos(PI/2 - ctrl_action); //*; 
+	
 	int U=0;
-	int mov_under = 0;
-	int mov_over = 0;
-	if(ctrl_action > -0.05 && ctrl_action < 0.05) { // 90 +- 45/2 grados
-		U = 0;
-		//mov_under=1;
-		//mov_over=-1;
-	} else {
-		if(ctrl_action > 0){
-			U=1; //mov izquierda
-			//mov_under=-1;
-			//mov_over=1;
-		} else {
-			U=-1; // mov derecha
-			//mov_under=1;
-			//mov_over=-1;
-		}
-	}	
-	ROS_INFO_STREAM("Control: " << ctrl_action << ", pExact: "<< p_exact <<", pUndershoot: " << p_undershoot << ", pOvershoot: " << p_overshoot << ", U: " << U << ", ctrl action: " << ctrl_action );
-	for (int i = 0; i<NUM_STATES; i++)
+	if(ctrl_action > 0){
+		U=dist_x; //mov izquierda
+	} else if (ctrl_action < 0) {
+		U=-dist_x; // mov derecha
+	}
+	
+	std_msgs::Float32MultiArray q;
+	ROS_INFO_STREAM("Control: " << ctrl_action << ", U: " << U << ", dist_x: " << dist_x);
+	for (int i = 0; i<NUM_STATES*STATE_WIDTH; i++)
 	{
 		double s = 0.0;
 		
 		//HISTOGRAMA CICLICLO
 		//EXACT
 		int mov = i+U;		
-		int mod2 = (mov) % NUM_STATES;
-		if(mod2<0) mod2 = NUM_STATES+mod2;
+		int mod2 = (mov) % (NUM_STATES*STATE_WIDTH);
+		if(mod2<0) mod2 = NUM_STATES*STATE_WIDTH+mod2;
 		s = p_exact * prob.data[mod2];
 		
 		//HISTOGRAMA CICLICLO
 		//UNDERSHOOT
 		mov = i+U-1;
-		mod2 = (mov) % NUM_STATES;
-		if(mod2<0) mod2 = NUM_STATES+mod2;
+		mod2 = (mov) % (NUM_STATES*STATE_WIDTH);
+		if(mod2<0) mod2 = NUM_STATES*STATE_WIDTH+mod2;
 		s += p_undershoot * prob.data[mod2];
 		
 		//mov = i+U+mov_over;
 		//HISTOGRAMA CICLICLO
 		//OVERSHOOT
 		mov = i+U+1;
-		mod2 = (mov) % NUM_STATES;
-		if(mod2<0) mod2 = NUM_STATES+mod2;
+		mod2 = (mov) % (NUM_STATES*STATE_WIDTH);
+		if(mod2<0) mod2 = NUM_STATES*STATE_WIDTH+mod2;
 		s += p_overshoot * prob.data[mod2];
 		
 		q.data.push_back(s);
-		//ROS_INFO_STREAM("p1: " << (edo_ini + .1) / NUM_STATES << " p2: " << p_bin );	
 	}
 	return q;
 }
 
-int enQueEstadoEsta(std_msgs::Float32MultiArray locArray){
+int actual_state(std_msgs::Float32MultiArray locArray){
 	float max=0;
-	for(int i=0;i<NUM_STATES;i++){
+	for(int i=0;i<NUM_STATES*STATE_WIDTH;i++){
 	 	if(locArray.data[i]>max){
 	 		max=locArray.data[i];
 	 	}
 	}
 
-	int countEstados=0;
-	int estado = -1;
-	for(int i=NUM_STATES-1;i>=0;i--){
+	int countStates=0;
+	int state = -1;
+	for(int i=NUM_STATES*STATE_WIDTH-1;i>=0;i--){
         if(locArray.data[i]==max){
-            // ROS_INFO_STREAM("Estas en:" << nombre_estado[i]);
-            estado = i;
-            countEstados++;
+        	int temp_state = (int)floor(i/STATE_WIDTH);
+            if (temp_state != state){
+	            state = temp_state;
+	            countStates++;
+        	}
         }
     }
 
-    if (countEstados==1)
-    	return (int)floor(estado/3);
+    if (countStates==1)
+    	return state;
     else
     	return -1; // no se pudo determinar el estado, ya que hay mas de uno posible
 }
 
-void print_state_order()
-{
-	std_msgs::Float32MultiArray order;
-	float max = 0, max_ant = 2;
-	int i_max = -1;
-	std::string str;
-	std::stringstream ss;
-//ss << a;
-//string str = ss.str();
-	for (int i = 0; i < NUM_STATES; ++i)
+void write_to_file(const char* type, std_msgs::Float32MultiArray p) {
+	// observe behavior of probabilities
+	FILE *f = fopen("/home/eduardo/TESIS/git/AutoNOMOS/src/histogramfilter.txt", "a");
+
+	fprintf(f, "%s", type);
+	for (int i = 0; i < NUM_STATES*STATE_WIDTH; ++i)
 	{
-		order.data.push_back(p.data[i]);
+		fprintf(f, "\t%.2f ", p.data[i]);
 	}
-	for (int i = 0; i < NUM_STATES; ++i)
-	{
-	    //ROS_INFO_STREAM("[" << p.data[0] << "," << p.data[1] << "," << p.data[2] << ","<< p.data[3] << ","<< p.data[4] << ","<< p.data[5] << "," << p.data[6] << "," << p.data[7] << ","<< p.data[8] << "]");
-		for (int j = 0; j < NUM_STATES; ++j)
-		{
-			if (order.data[j] <=1 && max <= order.data[j])
-			{
-				max = order.data[j];
-				i_max = j;
-			}	
-		}
-		order.data[i_max] = 2;
-		//max_ant = max;
-		ss << i_max;
-		ss << "\t";
-		max = 0;
-	}
-	ROS_INFO_STREAM("Order: " << ss.str() ) ;
+	fprintf(f, "\n");
+
+	fclose(f);
 }
+
+void write_to_file(const char* type, float* p, int values) {
+	// observe behavior of probabilities
+	FILE *f = fopen("/home/eduardo/TESIS/git/AutoNOMOS/src/histogramfilter.txt", "a");
+
+	fprintf(f, "%s", type);
+	for (int i = 0; i < values; ++i)
+	{
+		fprintf(f, "\t%.2f ", p[i]);
+	}
+	fprintf(f, "\n");
+
+	fclose(f);
+}
+
 
 int main(int argc, char** argv){
 	ros::init(argc, argv, "lane_states_node");
@@ -444,63 +434,106 @@ int main(int argc, char** argv){
 	std::string node_name = ros::this_node::getName();
         ROS_INFO_STREAM("Getting parameters");
         priv_nh_.param<float>(node_name+"/alpha", alpha,8);
+        priv_nh_.param<int>(node_name+"/width_center",width_center,80);
+        // priv_nh_.param<float>(node_name+"/speed", speed,0.1);
 	
-	const char * format = "P(x)=[%.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f]\n";
+	const char * format = "P(x)=[%.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f]\n";
+	
+	std_msgs::Float32MultiArray m;	
+	std_msgs::Float32MultiArray s;	
 
-	//float bel_RC [NUM_STATES] = {0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.33f,0.33f,0.33f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f};
-    float bel_RC [NUM_STATES] = {0.0f,0.0f,0.0f,0.0f,0.0f,1.0f,0.0f,0.0f,0.0f};
-	for (int i = 0; i < NUM_STATES; ++i)
+	for (int i = 0; i < NUM_STATES*STATE_WIDTH; ++i)
 	{
 		// Iniciar con distribucion uniforme
-		// p.data.push_back((float) (1/(float)NUM_STATES));
+		m.data.push_back((float)(1/(float)(NUM_STATES*STATE_WIDTH)));
 		// Iniciar con carril derecho
-		p.data.push_back(bel_RC[i]);
+		//p.data.push_back(bel_RC[i]);
 	}
 
+	write_to_file("init", m);
 	//const char * format = "P(x)=[%.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f]\n";
 	// ROS_INFO_STREAM("Array initialization: ");
   	// printf (format, p.data[1],p.data[4],p.data[7],p.data[10],p.data[13],p.data[16],p.data[19],p.data[22],p.data[25]);
 		
 
 	ROS_INFO_STREAM("alpha: " << alpha);
-	ROS_INFO_STREAM("Array initialization: \n" << p);
+	ROS_INFO_STREAM("Array initialization: \n" << m);
 
 	pub_loc = nh.advertise<std_msgs::Float32MultiArray>("/localization_array", rate_hz);
 
 	ros::Subscriber sub_pts_left = nh.subscribe("/points/left",1, get_pts_left);
 	ros::Subscriber sub_pts_center = nh.subscribe("/points/center",1, get_pts_center);
 	ros::Subscriber sub_pts_right = nh.subscribe("/points/right",1, get_pts_right);
+	ros::Subscriber sub_des_state = nh.subscribe("/desired_state", 1, get_ctrl_desired_state);
+
 	// actualizar topico de control
-	// /manual_control/steering
-	// /autonomos/steer/steer_position_controller/command
+	// /manual_control/steering // real car
+	// /autonomos/steer/steer_position_controller/command // simulation
 	ros::Subscriber sub_mov = nh.subscribe("/autonomos/steer/steer_position_controller/command", 1, get_ctrl_action);
-	ros::Subscriber sub_des_state = nh.subscribe("/desire_state",1, get_des_state);
+
+	ros::Subscriber sub_vel = nh.subscribe("/cmd_vel", 1, get_velocity);
+	// ros::Subscriber sub_des_state = nh.subscribe("/desire_state",1, get_des_state);
 	
 	loop_rate.sleep();
 	int estadoEstimado;
-	//int contador = 0;
+	float* hits;
+	float* datos = new float[10];
 
 	while(nh.ok())
 	{
+
 	    ros::spinOnce();
 	    ROS_INFO_STREAM("Sensing update");
-	    p = sense(p);
-	    printf (format, p.data[0],p.data[1],p.data[2],p.data[3],p.data[4],p.data[5],p.data[6],p.data[7],p.data[8]);
-	    // printf (format, p.data[1],p.data[4],p.data[7],p.data[10],p.data[13],p.data[16],p.data[19],p.data[22],p.data[25]);
-	    pub_loc.publish(p);
-	    int estadoEstimado = enQueEstadoEsta(p);
+
+	    hits = det_hits();
+	    if(lanes_detected > 0) {
+	    	write_to_file("hits", hits, NUM_STATES*STATE_WIDTH);
+	    	s = sense(m, hits);
+		} else {
+			s = m; // mantain previous probabilities
+		}
+
+	    write_to_file("sense", s);
+
+	    printf (format, s.data[0*STATE_WIDTH],s.data[1*STATE_WIDTH],s.data[2*STATE_WIDTH],s.data[3*STATE_WIDTH],s.data[4*STATE_WIDTH],s.data[5*STATE_WIDTH],s.data[6*STATE_WIDTH]);
+	    pub_loc.publish(s);
+
+	    int estadoEstimado = actual_state(s);
+	    
+	    datos[0] = (float)L;
+	    datos[1] = (float)C;
+	    datos[2] = (float)R;
+
+	    datos[3] = dist_ll;
+	    datos[4] = dist_cc;
+	    datos[5] = dist_rr;
+
+	    datos[6] = speed;
+	    datos[7] = ctrl_action;
+
 	    if(estadoEstimado>=0){
-		printf("%d, %d, %d, %d, %.2f, %.2f, %.2f, %.2f, %s\n", 0, L, C, R, dist_ll, dist_cc, dist_rr, angulo_real, nombre_estado[estadoEstimado].c_str());
-	    }else {
-		printf("%d, %d, %d, %d, %.2f, %.2f, %.2f, %.2f, %s\n", 0, L, C, R, dist_ll, dist_cc, dist_rr, angulo_real, "?");
+	    	datos[8] = (float)estadoEstimado;
+			printf("%d, %d, %d, %d, %.2f, %.2f, %.2f, %.2f, %.2f, %s\n", 0, L, C, R, dist_ll, dist_cc, dist_rr, speed, ctrl_action, nombre_estado[estadoEstimado].c_str());
+	    } else {
+	    	datos[8] = -0.0f;
+			printf("%d, %d, %d, %d, %.2f, %.2f, %.2f, %.2f, %.2f, %s\n", 0, L, C, R, dist_ll, dist_cc, dist_rr, speed, ctrl_action, "?");
 	    }
+	    datos[9] = ctrl_estado;
+
+	    write_to_file("L C R d_ll d_cc d_rr speed ctrl state ctrl_estado", datos, 10);
+	    
 	    ROS_INFO_STREAM("Motion update: ");
-	    p = move(p);
-	    printf (format, p.data[0],p.data[1],p.data[2],p.data[3],p.data[4],p.data[5],p.data[6],p.data[7],p.data[8]);	    
-            // printf (format, p.data[1],p.data[4],p.data[7],p.data[10],p.data[13],p.data[16],p.data[19],p.data[22],p.data[25]);
-	    // print_state_order();
+
+	    m = move(s);
+
+	    write_to_file("move", m);
+
+	    printf (format, m.data[0*STATE_WIDTH],m.data[1*STATE_WIDTH],m.data[2*STATE_WIDTH],m.data[3*STATE_WIDTH],m.data[4*STATE_WIDTH],m.data[5*STATE_WIDTH],m.data[6*STATE_WIDTH]);
 	    loop_rate.sleep();
+
+	    
 	}
+
+	delete []hits;
 	return 0;
 }
-

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(lane_controller_sim)
+project(teleop)
 
 ## Add support for C++11, supported in ROS Kinetic and newer
 # add_definitions(-std=c++11)
@@ -7,10 +7,7 @@ project(lane_controller_sim)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(gazebo REQUIRED )
-find_package(catkin REQUIRED roscpp std_msgs gazebo_msgs )
-
-
+find_package(catkin REQUIRED roscpp std_msgs )
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -102,12 +99,11 @@ find_package(catkin REQUIRED roscpp std_msgs gazebo_msgs )
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS ${GAZEBO_INCLUDE_DIRS}
+#  INCLUDE_DIRS include
 #  LIBRARIES lane_states
 #  CATKIN_DEPENDS other_catkin_pkg
 #  DEPENDS system_lib
 )
-
 
 ###########
 ## Build ##
@@ -116,14 +112,12 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 # include_directories(include)
-include_directories(include 
-		${GAZEBO_INCLUDE_DIRS})
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
 #   src/${PROJECT_NAME}/lane_states.cpp
 # )
-link_directories(${GAZEBO_LIBRARY_DIRS})
+
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
@@ -133,7 +127,8 @@ link_directories(${GAZEBO_LIBRARY_DIRS})
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME}_node src/lane_states_node.cpp)
-add_executable(lane_controller_sim_node PIDcontroller_lane_sim.cpp)
+add_executable(drive_base drive_base.cpp)
+#add_executable(lane_planning lane_planning.cpp)
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
@@ -146,11 +141,11 @@ add_executable(lane_controller_sim_node PIDcontroller_lane_sim.cpp)
 
 ## Specify libraries to link a library or executable target against
 # target_link_libraries(${PROJECT_NAME}_node
-target_link_libraries(lane_controller_sim_node ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
+target_link_libraries(drive_base ${catkin_LIBRARIES})
+#target_link_libraries(lane_planning ${catkin_LIBRARIES})
+
 #   ${catkin_LIBRARIES}
 # )
-
-
 
 #############
 ## Install ##
