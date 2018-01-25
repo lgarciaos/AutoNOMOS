@@ -681,7 +681,7 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
 
 /* compute based on distance y_next_dist the points in pixels that the car needs to head to */
 void cLaneDetectionFu::ackerman_control_next_points(double y_next_dist, cv::Point& pt_car, cv::Point& y_next_pt, cv::Point& y_next_pt2) {
-    int next_move_y = maxYRoi-y_next_dist;
+    int next_move_y = maxYRoi-2*y_next_dist; // sin el 2* funcionaba bien
     int next_move2_y = maxYRoi-2*y_next_dist-10;
     cv::Point nextPoint, nextPoint2;
 

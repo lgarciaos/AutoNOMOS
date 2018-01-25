@@ -325,20 +325,22 @@ std_msgs::Float32MultiArray move(std_msgs::Float32MultiArray prob)
 
 	// a que estado podria llegar basado en velocidad y steering
 	// double speed = 0.15; // m/s
-	// plus 100 to convert meters to cm  
+	// plus 100 to convert meters to cm
 	// adjusted to 40 for better reflection of real motion
-	double dist_x = speed * 40 * cos(PI/2 - ctrl_action); //*; 
+	double dist_x = speed * 40 * cos(PI/2 - ctrl_action); //*;
 	
-	int U=0;
+	int U=dist_x;
+	/* NO ES NECESARIO ESTE CÓDIGO
 	if(ctrl_action > 0){
 		U=dist_x; //mov izquierda
 	} else if (ctrl_action < 0) {
 		U=-dist_x; // mov derecha
 	}
-	
+	*/
+
 	std_msgs::Float32MultiArray q;
 	ROS_INFO_STREAM("Control: " << ctrl_action << ", U: " << U << ", dist_x: " << dist_x);
-	for (int i = 0; i<NUM_STATES*STATE_WIDTH; i++)
+	for (int i = 0; i < NUM_STATES*STATE_WIDTH; i++)
 	{
 		double s = 0.0;
 		
@@ -511,7 +513,7 @@ int main(int argc, char** argv){
 	    datos[6] = speed;
 	    datos[7] = ctrl_action;
 
-	    if(estadoEstimado>=0){
+	    if(estadoEstimado>=0) {
 	    	datos[8] = (float)estadoEstimado;
 			printf("%d, %d, %d, %d, %.2f, %.2f, %.2f, %.2f, %.2f, %s\n", 0, L, C, R, dist_ll, dist_cc, dist_rr, speed, ctrl_action, nombre_estado[estadoEstimado].c_str());
 	    } else {
