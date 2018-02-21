@@ -1,5 +1,5 @@
 src/CMakeLists.txt
-src/histogramfilter.txt
+src/histogramfilter*
 **/*.*~
 build/
 install/

@@ -29,8 +29,13 @@ double c_v;
 double cam_deg;
 double cam_height;
 
-double speed=0;
-float ctrl_action = 0;
+// ackerman model params
+double kalpha, kbeta;
+
+std::string topico_estandarizado;
+
+double actual_speed=0;
+float actual_steering = 0;
 
 //msgs head
 unsigned int head_sequence_id = 0;
@@ -44,9 +49,9 @@ geometry_msgs::Point punto_des;
 const static int g_kernel1DWidth = 5;
 
 std::string nombre_estado [NUM_STATES] = { "OL",   "LL",   "LC",   "CC",   "RC",   "RR",   "OR"};
-int estadoActual = -1;
-int estadoPrevio = -1;
-int ctrl_estado = 0;
+int estado_actual = -1;
+int estado_deseado = 4; //RC
+// int ctrl_estado = 0;
 
 cLaneDetectionFu::cLaneDetectionFu(ros::NodeHandle nh)
     : nh_(nh), priv_nh_("~")
@@ -109,6 +114,10 @@ cLaneDetectionFu::cLaneDetectionFu(ros::NodeHandle nh)
     priv_nh_.param<double>(node_name+"/cam_deg", cam_deg, 27); 
     priv_nh_.param<double>(node_name+"/cam_height", cam_height, 18);
 
+    priv_nh_.param<std::string>(node_name+"/topico_estandarizado", topico_estandarizado, "/standarized_vel_ste");
+    priv_nh_.param<double>(node_name+"/kalpha", kalpha, 1); 
+    priv_nh_.param<double>(node_name+"/kbeta", kbeta, 1); 
+
     ipMapper = IPMapper(cam_w, cam_h_half, f_u, f_v, c_u, c_v, cam_deg, cam_height);
     
 
@@ -165,10 +174,12 @@ cLaneDetectionFu::cLaneDetectionFu(ros::NodeHandle nh)
 
     sub_planning = nh.subscribe("/planning", MY_ROS_QUEUE_SIZE, &cLaneDetectionFu::ProcessPlanning,this);
     sub_localization = nh.subscribe("/localization_array", MY_ROS_QUEUE_SIZE, &cLaneDetectionFu::get_localization, this);
-    sub_vel = nh.subscribe("/cmd_vel", MY_ROS_QUEUE_SIZE, &cLaneDetectionFu::get_velocity, this);
-    sub_mov = nh.subscribe("/autonomos/steer/steer_position_controller/command", MY_ROS_QUEUE_SIZE, &cLaneDetectionFu::get_ctrl_action, this);
     sub_des_state = nh.subscribe("/desired_state", MY_ROS_QUEUE_SIZE, &cLaneDetectionFu::get_ctrl_desired_state, this);
     planningxy = nh.subscribe("/planningxy", MY_ROS_QUEUE_SIZE, &cLaneDetectionFu::ProcessPlanningXY,this);
+
+    sub_vel = nh.subscribe(topico_estandarizado, MY_ROS_QUEUE_SIZE, &cLaneDetectionFu::get_ctrl_action, this);
+    // sub_mov = nh.subscribe("/autonomos/steer/steer_position_controller/command", MY_ROS_QUEUE_SIZE, &cLaneDetectionFu::get_ctrl_action, this);
+    
 
     //publish_curvature = nh.advertise<std_msgs::Float32>("/lane_model/curvature", MY_ROS_QUEUE_SIZE);
     publish_angle = nh.advertise<std_msgs::Float32>("/lane_model/angle", MY_ROS_QUEUE_SIZE);
@@ -533,12 +544,16 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
         // printf("\n dist between lines %d ", pRight.x - pLeft.x);
 
         // muestra en el estado en que me encuentro
-        cv::Point pointTextEstado = cv::Point(90, 170);
-        if(estadoActual >=0)
-            cv::putText(transformedImagePaintable,nombre_estado[estadoActual],pointTextEstado,FONT_HERSHEY_SIMPLEX,.4,cv::Scalar(200,221,0));
+        cv::Point pointTextEstado = cv::Point(70, 170);
+        if (estado_actual >= 0)
+            cv::putText(transformedImagePaintable, nombre_estado[estado_actual], pointTextEstado, FONT_HERSHEY_SIMPLEX,.4,cv::Scalar(200,221,0));
         else
-            cv::putText(transformedImagePaintable,"?",pointTextEstado,FONT_HERSHEY_SIMPLEX,.4,cv::Scalar(200,221,0));
+            cv::putText(transformedImagePaintable, "?", pointTextEstado, FONT_HERSHEY_SIMPLEX, .4, cv::Scalar(200,221,0));
 
+        // muestra el estado al que me quiero desplazar
+        pointTextEstado = cv::Point(95, 170);
+        cv::putText(transformedImagePaintable, nombre_estado[estado_deseado], pointTextEstado, FONT_HERSHEY_SIMPLEX,.4,cv::Scalar(200,221,0));
+        
         /* mostrar puntos HORIZONTALES
         if(polyDetectedHorizontal){
             for(int i = 0; i < 160; i++) {
@@ -680,13 +695,13 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
 
 
 /* compute based on distance y_next_dist the points in pixels that the car needs to head to */
-void cLaneDetectionFu::ackerman_control_next_points(double y_next_dist, cv::Point& pt_car, cv::Point& y_next_pt, cv::Point& y_next_pt2) {
-    int next_move_y = maxYRoi-2*y_next_dist; // sin el 2* funcionaba bien
-    int next_move2_y = maxYRoi-2*y_next_dist-10;
+bool cLaneDetectionFu::ackerman_control_next_points(double y_next_dist, cv::Point& pt_car, cv::Point& y_next_pt, cv::Point& y_next_pt2) {
+    int next_move_y = maxYRoi-3*y_next_dist; // sin el 2* funcionaba bien, checar fuera de limite para polylinea
+    int next_move2_y = maxYRoi-3*y_next_dist-10;
     cv::Point nextPoint, nextPoint2;
 
     // 2.- Si RC o LC (computed with average of lines)
-    if (estadoActual == 2 || estadoActual == 4) {
+    if (estado_actual == 2 || estado_actual == 4) {
         // target point (angle alpha)
         nextPoint = cv::Point((polyCenter.at(next_move_y) + polyRight.at(next_move_y))/2, next_move_y);
         
@@ -695,16 +710,23 @@ void cLaneDetectionFu::ackerman_control_next_points(double y_next_dist, cv::Poin
         nextPoint2 = cv::Point((polyCenter.at(next_move2_y) + polyRight.at(next_move2_y))/2, next_move2_y);
     }
     // 3.- Si LL, CC o RR (computed with closest poly to car)
-    else if (estadoActual == 1 || estadoActual == 3 || estadoActual == 5) {
+    else if (estado_actual == 1 || estado_actual == 3 || estado_actual == 5) {
         // target point (angle alpha)
         double x_center = polyCenter.at(next_move_y);
         double x_right = polyRight.at(next_move_y);
         bool center_closer = abs(pt_car.x - x_center) <= abs(pt_car.x - x_right);
-        nextPoint = cv::Point(center_closer ? x_center : x_right, next_move_y);
-
-        // point to compute angle for ackermann control
-        // angle beta
-        nextPoint2 = cv::Point(center_closer ? polyCenter.at(next_move2_y) : polyRight.at(next_move2_y), next_move2_y);
+        
+        // FALTA dato dist_lines en launch file
+        // checar si la distancia con la linea mas cercana es 12 si no no puede pertenecer la linea a 
+        // uno de estos estados y nos está mandando para otro lado
+        if (abs(pt_car.x - (center_closer ? x_center : x_right)) <= 12) {
+            nextPoint = cv::Point(center_closer ? x_center : x_right, next_move_y);
+            // point to compute angle for ackermann control
+            // angle beta
+            nextPoint2 = cv::Point(center_closer ? polyCenter.at(next_move2_y) : polyRight.at(next_move2_y), next_move2_y);
+        } else {
+            return false;
+        }
     }
     // 4.- Si OL, OR (computed with increment to closest poly to car)
     else {
@@ -724,6 +746,7 @@ void cLaneDetectionFu::ackerman_control_next_points(double y_next_dist, cv::Poin
     y_next_pt.y = nextPoint.y;
     y_next_pt2.x = nextPoint2.x;
     y_next_pt2.y = nextPoint2.y;
+    return true;
 }
 
 void cLaneDetectionFu::ackerman_control(cv::Mat& imagePaint, NewtonPolynomial& polyLeft, NewtonPolynomial& polyCenter,
@@ -734,7 +757,7 @@ void cLaneDetectionFu::ackerman_control(cv::Mat& imagePaint, NewtonPolynomial& p
     // 1.- Steering requerido para cambiar de estado 
     //      (positivo o negativo dependiendo del estado actual)
     // 2.- Ciertos pixeles en eje y (marco carro) por ejemplo 10 para hacer un cambio suave
-    //      con base a esta y, calcular steering de acuerdo a velocidad
+    //      con base a y, calcular steering de acuerdo a velocidad
     // 3.- El 10 es positivo o negativo de acuerdo a si nuevo estado es mayor o menor
     // 4.- Enviar este steering como accion de control
     //
@@ -743,63 +766,73 @@ void cLaneDetectionFu::ackerman_control(cv::Mat& imagePaint, NewtonPolynomial& p
     cv::Point ptCar = cv::Point(90,170);
     cv::circle(imagePaint,ptCar,0,cv::Scalar(0,255,255),-1);
 
-    double steering;    
-    // calcular siguiente punto del carro de acuerdo a velocidad y steering actual
-    double dist_y = speed * 100 * sin(PI/2 - ctrl_action); //*; 
-    cv::Point nextPoint, nextPoint2;
-    ackerman_control_next_points(dist_y, ptCar, nextPoint, nextPoint2);
-
-    if (ctrl_estado != 0) {
-    // } else if (estadoActual > siguienteEstado) {
-        nextPoint.x = nextPoint.x + (22 * ctrl_estado);
-        nextPoint2.x = nextPoint2.x + (22 * ctrl_estado);
-    } 
-
-    // SI estado actual es IGUAL a estado requerido
-    // 1.- Utilizar polinomios para coordenada siguiente
-    // 2.- Si RC o LC
-    // 3.- Si LL, CC o RR
-    // 4.- Si OL, OR
-    // { "OL",   "LL",   "LC",   "CC",   "RC",   "RR",   "OR"}
-    
-    
-    
-    // -- visualize points ---------
-    cv::circle(imagePaint,nextPoint,0,cv::Scalar(255,255,0),-1);
-    cv::circle(imagePaint,nextPoint2,0,cv::Scalar(245,245,0),-1);
-
-    // ------------- ACKERMAN CONTROL -------------------
-    // ---angles
-    // intercambio de coordenadas por frame rotado
-    double G_x_cord = -nextPoint.y - -ptCar.y;
-    double G_y_cord = ptCar.x - nextPoint.x;
-    // alpha, angel between car and GOAL in radians
-    double alpha = atan2(G_y_cord, G_x_cord);
-
-    double G_sup_x = -nextPoint2.y - -ptCar.y;
-    double G_sup_y = ptCar.x - nextPoint2.x;
-
-    // law of cosines to compute beta, the angle of the goal with respect to alpha
-    double a = sqrt(pow(G_x_cord, 2) + pow(G_y_cord, 2));
-    double b = sqrt(pow(G_x_cord-G_sup_x, 2) + pow(G_y_cord-G_sup_y, 2));
-    double c = sqrt(pow(-G_sup_x, 2) + pow(-G_sup_y,2));
-    double beta = acos((pow(a, 2) + pow(b, 2) - pow(c, 2)) / (2 * a * b));
-    beta = PI - beta;
-    printf("\n alpha: %.2f, beta: %.2f", alpha, beta);
-
-    //-----PUBLISH ------
-    double kalpha = 1;
-    double kbeta = 0.5;
-    steering = kalpha * alpha + kbeta * beta;
-    // -------------- FINISH ACKERMAN CONTROL -----------
-    
-    if (!std::isnan(steering)) {
-        printf("\n steering: %.2f", steering);
         
-        geometry_msgs::Twist vel;
-        vel.angular.z=steering;
+    // calcular siguiente punto sobre eje y de acuerdo a velocidad y steering actual
+    double dist_y = actual_speed * 100 * sin(PI/2 - actual_steering); //*; 
+    cv::Point nextPoint, nextPoint2;
+    
+    // siguente punto en el estado en que se encuentra
+    bool puntosValidos = ackerman_control_next_points(dist_y, ptCar, nextPoint, nextPoint2);
 
-        pub_speed.publish(vel);    
+    if (puntosValidos) {
+        // aqui cambia de estado, puede haber una forma más suave
+        if (estado_actual >= 0) {
+            if (estado_actual < estado_deseado) {
+                nextPoint.x = nextPoint.x + 22 * (estado_deseado - estado_actual);
+                nextPoint2.x = nextPoint2.x + 22 * (estado_deseado - estado_actual);
+            } else if (estado_actual > estado_deseado) {
+                nextPoint.x = nextPoint.x - 22 * (estado_actual - estado_deseado);
+                nextPoint2.x = nextPoint2.x - 22 * (estado_actual - estado_deseado);
+            }
+        }
+
+        // SI estado actual es IGUAL a estado requerido
+        // 1.- Utilizar polinomios para coordenada siguiente
+        // 2.- Si RC o LC
+        // 3.- Si LL, CC o RR
+        // 4.- Si OL, OR
+        // { "OL",   "LL",   "LC",   "CC",   "RC",   "RR",   "OR"}
+        
+        
+        
+        // -- visualize points ---------
+        cv::circle(imagePaint, nextPoint, 1, cv::Scalar(255,255,0), -1);
+        cv::circle(imagePaint, nextPoint2, 1, cv::Scalar(245,245,0), -1);
+
+        // ------------- ACKERMAN CONTROL -------------------
+        // ---angles
+        // intercambio de coordenadas por frame rotado
+        double G_x_cord = -nextPoint.y - -ptCar.y;
+        double G_y_cord = ptCar.x - nextPoint.x;
+        // alpha, angel between car and GOAL in radians
+        double alpha = atan2(G_y_cord, G_x_cord);
+
+        double G_sup_x = -nextPoint2.y - -ptCar.y;
+        double G_sup_y = ptCar.x - nextPoint2.x;
+
+        // law of cosines to compute beta, the angle of the goal with respect to alpha
+        double a = sqrt(pow(G_x_cord, 2) + pow(G_y_cord, 2));
+        double b = sqrt(pow(G_x_cord-G_sup_x, 2) + pow(G_y_cord-G_sup_y, 2));
+        double c = sqrt(pow(-G_sup_x, 2) + pow(-G_sup_y,2));
+        double beta = acos((pow(a, 2) + pow(b, 2) - pow(c, 2)) / (2 * a * b));
+        beta = PI - beta;
+        printf("\n alpha: %.2f, beta: %.2f", alpha, beta);
+
+        //-----PUBLISH ------
+        // double kalpha = 1.5;
+        // double kbeta = 0.5;
+        double steering = kalpha * alpha + kbeta * beta;
+        // -------------- FINISH ACKERMAN CONTROL -----------
+        
+        if (!std::isnan(steering)) {
+            printf("\n steering: %.2f", steering);
+            
+            geometry_msgs::Twist vel;
+            vel.angular.z=steering;
+            // speed is constant
+
+            pub_speed.publish(vel);    
+        }
     }
 }
 
@@ -1088,7 +1121,7 @@ void cLaneDetectionFu::ProcessPlanningXY(const geometry_msgs::Point& path) {
 }
 
 void cLaneDetectionFu::get_localization(const std_msgs::Float32MultiArray& locArray) {
-    estadoPrevio = estadoActual;
+    int estadoPrevio = estado_actual;
 
     float max=0;
     for(int i=0;i<NUM_STATES*STATE_WIDTH;i++){
@@ -1110,26 +1143,33 @@ void cLaneDetectionFu::get_localization(const std_msgs::Float32MultiArray& locAr
     }
 
     if (countStates==1)
-        estadoActual = state;
+        estado_actual = state;
     else
-        estadoActual = -1; // no se pudo determinar el estado, ya que hay mas de uno posible
+        estado_actual = -1; // no se pudo determinar el estado, ya que hay mas de uno posible
 
-    if (estadoActual != estadoPrevio)
-        ctrl_estado = 0;
+    // dejar de cambiar de estado
+    // if (estadoActual != estadoPrevio)
+    //     ctrl_estado = 0;
 }
 
-void cLaneDetectionFu::get_velocity(const geometry_msgs::Twist& val) {
+void cLaneDetectionFu::get_ctrl_action(const geometry_msgs::Twist& val) {
     // negative is forward
-    speed = sqrt(val.linear.x * val.linear.x);
+    actual_speed = sqrt(val.linear.x * val.linear.x);
+    actual_steering = val.angular.z; //steering
     // printf("\n vel: %.2f ", speed);
 }
 
+/*
 void cLaneDetectionFu::get_ctrl_action(const std_msgs::Float64& val) {
-    ctrl_action = val.data;
+    
 }
+*/
 
 void cLaneDetectionFu::get_ctrl_desired_state(const std_msgs::Float64& val) {
-    ctrl_estado = val.data;
+    // ctrl_estado = val.data;
+    // prevenir un estado deseado fuera de limites
+    if (estado_deseado + val.data >= 0 && estado_deseado + val.data < NUM_STATES)
+        estado_deseado += val.data;
 }
 
 /* LaneMarkingDetector methods */

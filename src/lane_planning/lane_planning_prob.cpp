@@ -36,6 +36,7 @@ double nav_velocity_pixels = 0.0;
 
 //std::string nombre_estado [NUM_STATES] = {"Dont Know Left", "Out Left", "Left Left", "Left Center", "Center Center", "Right Center", "Out Right", "Dont Know Right"};
 int des_state = 16; //o 5
+int RPM = 0;
 
 // estados: 	 NSI,   FI,   CI,   CD,   FD, NSD
 void get_pts_lane(const nav_msgs::GridCells& array) {

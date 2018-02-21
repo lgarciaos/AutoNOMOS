@@ -90,7 +90,7 @@ class cLaneDetectionFu
         ros::Subscriber planningxy;
         ros::Subscriber sub_localization;
         ros::Subscriber sub_vel;
-        ros::Subscriber sub_mov;
+        // ros::Subscriber sub_mov;
         ros::Subscriber sub_des_state;
 
         // publishers
@@ -384,13 +384,13 @@ class cLaneDetectionFu
 
         void get_localization(const std_msgs::Float32MultiArray& locArray);
         
-        void get_velocity(const geometry_msgs::Twist& val);
+        // void get_velocity(const geometry_msgs::Twist& val);
 
-        void get_ctrl_action(const std_msgs::Float64& val);
+        void get_ctrl_action(const geometry_msgs::Twist& val);
 
         void get_ctrl_desired_state(const std_msgs::Float64& val);
 
-        void ackerman_control_next_points(double y_next_dist, cv::Point& pt_car, cv::Point& y_next_pt, 
+        bool ackerman_control_next_points(double y_next_dist, cv::Point& pt_car, cv::Point& y_next_pt, 
             cv::Point& y_next_pt2);
 
         void ackerman_control(cv::Mat& imagePaint, NewtonPolynomial& polyLeft, NewtonPolynomial& polyCenter,

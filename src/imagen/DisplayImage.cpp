@@ -121,7 +121,7 @@ int masCercano(std::vector<cv::Point> puntos, cv::Point referencia, int restricc
 			}
 		}
 	}
-	printf("\nmas cercano de (%d,%d) es %d: (%d,%d)", referencia.x, referencia.y, idxmasCercano, puntos[idxmasCercano].x, puntos[idxmasCercano].y);
+	// printf("\nmas cercano de (%d,%d) es %d: (%d,%d)", referencia.x, referencia.y, idxmasCercano, puntos[idxmasCercano].x, puntos[idxmasCercano].y);
 	return idxmasCercano;
 }
 
@@ -291,7 +291,7 @@ cv::Mat puntoAMoverse(cv::Mat& entrada){
 		// objetos.push_back(cv::Point(x, y));
 		
 	}
-	printf("\nobj centrales OK");
+	// printf("\nobj centrales OK");
 	
 	int limite = 7;
 	datos datosIzquierda;
@@ -338,7 +338,7 @@ cv::Mat puntoAMoverse(cv::Mat& entrada){
 	// mostrar el punto en la imagen
 	cv::line(cdst, cv::Point(centroCarroX, centroCarroY), cv::Point(p2X, p2Y), cv::Scalar(100,30,255), 10, CV_AA);
 
-	printf("\nSegundo punto: (%f, %f)", p2X, p2Y);
+	printf("\nObjetivo: (%f, %f)", p2X, p2Y);
 	//printf("\nSegundo punto (procesado): (%f, %f)", xreal, yreal);
 
 	// aqui se tiene que enviar la posicion con respecto al robot del punto	

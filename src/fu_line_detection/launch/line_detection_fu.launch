@@ -51,6 +51,10 @@
     <param name="c_u"                   type="double"   value="312.773367"/>
     <param name="c_v"                   type="double"   value="7.779505"/>
     
+    <param name="topico_estandarizado"           type="string"   value="/standarized_vel_ste" />
+    <param name="kalpha"                   type="double"   value="1.5"/>
+    <param name="kbeta"                   type="double"   value="0.5"/>
+
   </node>
  
 </launch>

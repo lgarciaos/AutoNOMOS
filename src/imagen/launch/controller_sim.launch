@@ -13,8 +13,7 @@
     <param name="velocity"          type="double" value="-0.05"/>
     <param name="altura"          type="double" value="70.0"/>
 
-    <param name="topico_steering"          type="string" value="/autonomos/steer/steer_position_controller/command"/>
-    <param name="topico_velocidad"          type="string" value="/cmd_vel"/>
+    <param name="topico_estandarizado"          type="string" value="/standarized_vel_ste"/>
 
     </node> 
 </launch>

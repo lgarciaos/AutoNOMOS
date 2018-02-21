@@ -28,6 +28,8 @@
 
 #define PI 3.14159265
 
+static const uint32_t MY_ROS_QUEUE_SIZE = 1;
+
 int librarobstaculo = 0;
 double distancialibrarobstaculo=0;
 double distancia_librarobstaculomasmenos=0.1;
@@ -52,8 +54,8 @@ geometry_msgs::Twist positionObj;
 
 geometry_msgs::Twist vel;
 
-ros::Publisher pub_speed;
-ros::Publisher pub_steering;
+ros::Publisher pub_speed_ste;
+// ros::Publisher pub_steering;
 
 nav_msgs::GridCells path_planning;
 
@@ -105,7 +107,7 @@ void get_vel_vec(const geometry_msgs::Twist& msg) {
 	//velocity_msg.linear.y = msg.linear.y;
 	//velocity_msg.angular.z = msg.angular.z; 
 
-	vel.linear.x=velocity;
+	
 
     //path_planning.cells = path.cells;
 	//path_planning.cell_width = path.cell_width;
@@ -115,8 +117,8 @@ void get_vel_vec(const geometry_msgs::Twist& msg) {
 	//if(path_planning.cell_width > 0){
 		double p = 0.0;
 		double pid_res = 0.0;
-		std_msgs::Int16 value_motor;
-		std_msgs::Float64 value_steering;
+		// std_msgs::Int16 value_motor;
+		// std_msgs::Float64 value_steering;
 
 
 		
@@ -170,10 +172,11 @@ void get_vel_vec(const geometry_msgs::Twist& msg) {
 		ROS_INFO_STREAM("Error theta:" << theta <<", Res PID: " << p << ", Senal Servo:" << pid_res );
 
 		//value_motor.data = velocity;
-		value_steering.data = pid_res;
+		vel.angular.z = pid_res;
+		vel.linear.x = velocity;
 
-		pub_speed.publish(vel); 
-		pub_steering.publish(value_steering); 
+		pub_speed_ste.publish(vel); 
+		//pub_steering.publish(value_steering); 
 
 		// ROS_INFO_STREAM("velocity: " << value_motor.data << ", steering: " << value_steering.data << " )");
 	
@@ -190,8 +193,8 @@ int main(int argc, char** argv){
 
 		std::string node_name = ros::this_node::getName();
 		// ROS_INFO_STREAM("Obteniendo p");
-		std::string topico_steering;
-		std::string topico_velocidad;
+		// std::string topico_steering;
+		std::string topico_estandarizado;
 
 		priv_nh_.param<double>(node_name+"/Kp", Kp, 0.6);
 		priv_nh_.param<double>(node_name+"/Ki", Ki, 0.3);
@@ -208,18 +211,22 @@ int main(int argc, char** argv){
 		priv_nh_.param<double>(node_name+"/distancia_librarobstaculomasmenos", distancia_librarobstaculomasmenos, 9.0);
 
 		priv_nh_.param<double>(node_name+"/pendienteTrancazo", pendienteTrancazo, 0.66);
-		priv_nh_.param<std::string>(node_name+"/topico_steering", topico_steering, "/steering");
-		priv_nh_.param<std::string>(node_name+"/topico_velocidad", topico_velocidad, "/velocidad");
+		
+		// priv_nh_.param<std::string>(node_name+"/topico_steering", topico_steering, "/steering");
+		// priv_nh_.param<std::string>(node_name+"/topico_velocidad", topico_velocidad, "/velocidad");
+
+		priv_nh_.param<std::string>(node_name+"/topico_estandarizado", topico_estandarizado, "/velocidad");
 
 		// ROS_INFO_STREAM("Parametros obtenidos");
 
-		pub_speed = nh.advertise<geometry_msgs::Twist>(topico_velocidad, rate_hz);
-		pub_steering = nh.advertise<std_msgs::Float64>(topico_steering, rate_hz);
+
+		pub_speed_ste = nh.advertise<geometry_msgs::Twist>(topico_estandarizado, MY_ROS_QUEUE_SIZE);
+		// pub_steering = nh.advertise<std_msgs::Float64>(topico_steering, rate_hz);
 
 		// esto va mejor en el launch file
 		// ros::Subscriber sub_vel = nh.subscribe("/target_position_topic", 1000, &get_vel_vec);
 
-		ros::Subscriber sub_lidar = nh.subscribe("/target_pose", 1000, &get_vel_vec);
+		ros::Subscriber sub_lidar = nh.subscribe("/target_pose", MY_ROS_QUEUE_SIZE, &get_vel_vec);
 
 		//pub_lidar = nh.advertise<geometry_msgs::Twist>("/target_pose", rate_hz);
 
