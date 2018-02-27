@@ -6,5 +6,5 @@ logs/
 .catkin_tools/
 devel/lib
 devel/share
-devel/.*
+devel/
 src/Gazebo_plugin/build/
