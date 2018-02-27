@@ -1,1 +1,0 @@
-/home/ros/AutoNOMOS/devel/.private/line_detection_fu_mod/include/line_detection_fu_mod/LaneDetectionConfig.h
