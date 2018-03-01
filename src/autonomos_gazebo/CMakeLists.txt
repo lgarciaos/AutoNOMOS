@@ -11,7 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   autonomos_description
   gazebo_plugins
   gazebo_ros
-  gazebo_ros_control
+  #gazebo_ros_control
 )
 
 ## System dependencies are found with CMake's conventions

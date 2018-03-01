@@ -399,7 +399,7 @@ int actual_state(std_msgs::Float32MultiArray locArray){
 
 void write_to_file(const char* type, std_msgs::Float32MultiArray p) {
 	// observe behavior of probabilities
-	FILE *f = fopen("/home/eduardo/TESIS/git/AutoNOMOS/src/histogramfilter.txt", "a");
+	FILE *f = fopen("~/histogramfilter.txt", "a");
 
 	fprintf(f, "%s", type);
 	for (int i = 0; i < NUM_STATES*STATE_WIDTH; ++i)
@@ -413,7 +413,7 @@ void write_to_file(const char* type, std_msgs::Float32MultiArray p) {
 
 void write_to_file(const char* type, float* p, int values) {
 	// observe behavior of probabilities
-	FILE *f = fopen("/home/eduardo/TESIS/git/AutoNOMOS/src/histogramfilter.txt", "a");
+	FILE *f = fopen("~/histogramfilter.txt", "a");
 
 	fprintf(f, "%s", type);
 	for (int i = 0; i < values; ++i)

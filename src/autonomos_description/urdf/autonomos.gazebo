@@ -161,6 +161,7 @@
 	 <odometryTopic>odom</odometryTopic>
 	 <odometryFrame>base_link</odometryFrame>
 	 <robotBaseFrame>base_footprint</robotBaseFrame>
+   <legacyMode> False </legacyMode> 
 	 <!-- <robotNamespace>autonomos</robotNamespace> -->
     </plugin>
   </gazebo>
