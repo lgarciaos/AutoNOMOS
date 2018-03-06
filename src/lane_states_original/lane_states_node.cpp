@@ -405,35 +405,6 @@ int actual_state(std_msgs::Float32MultiArray locArray) {
     	return -1; // no se pudo determinar el estado, ya que hay mas de uno posible
 }
 
-void write_to_file(const char* type, std_msgs::Float32MultiArray p) {
-	// observe behavior of probabilities
-	FILE *f = fopen("histogramfilter.txt", "a");
-
-	fprintf(f, "%s", type);
-	for (int i = 0; i < NUM_STATES*STATE_WIDTH; ++i)
-	{
-		fprintf(f, "\t%.2f ", p.data[i]);
-	}
-	fprintf(f, "\n");
-
-	fclose(f);
-}
-
-void write_to_file(const char* type, float* p, int values) {
-	// observe behavior of probabilities
-	FILE *f = fopen("histogramfilter.txt", "a");
-
-	fprintf(f, "%s", type);
-	for (int i = 0; i < values; ++i)
-	{
-		fprintf(f, "\t%.2f ", p[i]);
-	}
-	fprintf(f, "\n");
-
-	fclose(f);
-}
-
-
 int main(int argc, char** argv){
 	ros::init(argc, argv, "lane_states_node");
 	// ROS_INFO_STREAM("lane_states_node initialized");
@@ -460,7 +431,7 @@ int main(int argc, char** argv){
 		//p.data.push_back(bel_RC[i]);
 	}
 
-	write_to_file("init", m);
+
 	//const char * format = "P(x)=[%.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f]\n";
 	// ROS_INFO_STREAM("Array initialization: ");
   	// printf (format, p.data[1],p.data[4],p.data[7],p.data[10],p.data[13],p.data[16],p.data[19],p.data[22],p.data[25]);
@@ -498,13 +469,10 @@ int main(int argc, char** argv){
 
 	    hits = det_hits();
 	    if(lanes_detected > 0) {
-	    	write_to_file("hits", hits, NUM_STATES*STATE_WIDTH);
 	    	s = sense(m, hits);
 		} else {
 			s = m; // mantain previous probabilities
 		}
-
-	    write_to_file("sense", s);
 
 	    printf (format, s.data[0*STATE_WIDTH],s.data[1*STATE_WIDTH],s.data[2*STATE_WIDTH],s.data[3*STATE_WIDTH],s.data[4*STATE_WIDTH],s.data[5*STATE_WIDTH],s.data[6*STATE_WIDTH]);
 	    pub_loc.publish(s);
@@ -530,14 +498,10 @@ int main(int argc, char** argv){
 			printf("%d, %d, %d, %d, %.2f, %.2f, %.2f, %.2f, %.2f, %s\n", 0, L, C, R, dist_sensado_ll, dist_sensado_cc, dist_sensado_rr, speed, ctrl_action, "?");
 	    }
 	    datos[9] = ctrl_estado;
-
-	    write_to_file("L C R d_ll d_cc d_rr speed ctrl state ctrl_estado", datos, 10);
 	    
 	    ROS_INFO_STREAM("Motion update: ");
 
 	    m = move(s);
-
-	    write_to_file("move", m);
 
 	    printf (format, m.data[0*STATE_WIDTH],m.data[1*STATE_WIDTH],m.data[2*STATE_WIDTH],m.data[3*STATE_WIDTH],m.data[4*STATE_WIDTH],m.data[5*STATE_WIDTH],m.data[6*STATE_WIDTH]);
 	    loop_rate.sleep();
