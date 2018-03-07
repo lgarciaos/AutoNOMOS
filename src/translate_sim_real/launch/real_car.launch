@@ -1,0 +1,11 @@
+<launch>
+
+    <node name="translate_sim_real_node" pkg="translate_sim_real" type="translate_sim_real_node" output="screen" > 
+        <param name="topico_steering_real"         type="string" value="/manual_control/steering"/>
+        <param name="topico_velocidad_real"        type="string" value="/manual_control/speed"/>
+        <param name="topico_estandarizado"         type="string" value="/standarized_vel_ste"/>
+	<!-- simulacion for simulation, anything else for real car -->
+        <param name="seleccion_real_simulacion"    type="string" value="real"/>
+    </node> 
+ 
+</launch>
