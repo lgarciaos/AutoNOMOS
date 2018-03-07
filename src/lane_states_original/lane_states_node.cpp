@@ -28,18 +28,6 @@ nav_msgs::GridCells arr_left;
 nav_msgs::GridCells arr_center;
 nav_msgs::GridCells arr_right;
 
-
-// estados: 	 NSI,   FI,   CI,   CD,   FD, NSD
-
-// float c0 [6] = {0.40, 0.05, 0.05, 0.05, 0.05, 0.40};
-// float c1 [6] = {1/30, 0.40, 0.25, 0.25, 1/30, 1/30};
-// float c2 [6] = {1/30, 1/30, 0.35, 0.20, 0.35, 1/30};
-// float c3 [6] = {1/40, 1/40, 0.60, 0.30, 1/40, 1/40};
-// float c4 [6] = {1/40, 1/40, 1/40, 0.30, 0.60, 1/40};
-// float c5 [6] = {0.02, 0.02, 0.02, 0.90, 0.02, 0.02};
-// float c6 [6] = {1/40, 1/40, 1/40, 0.30, 0.60, 1/40};
-// float c7 [6] = {0.02, 0.02, 0.02, 0.90, 0.02, 0.02};
-
 // std::string nombre_estado [9] = {"DNL",   "OL",   "LL",   "LC",   "CC",   "RC",   "RR",   "OR", "DNR"};
 std::string nombre_estado [NUM_STATES] = { "OL",   "LL",   "LC",   "CC",   "RC",   "RR",   "OR"};
 
@@ -54,7 +42,9 @@ float p_overshoot = 0.1;
 float p_hit = 0.95;
 float p_miss = 0.05;
 
-float alpha = 12; //TODO
+// distance to lines
+float dist_lines = 12; //TODO
+
 int width_center = 80; //TODO
 float speed = 0;
 
@@ -71,11 +61,11 @@ int pixeles_cambio_estado=0;
 
 int lanes_detected = 0;
 
-float dist_rr;
-float dist_cc;
-float dist_ll;
+float dist_sensado_rr;
+float dist_sensado_cc;
+float dist_sensado_ll;
 
-// define if each distance is smaller than alpha
+// define if each distance is smaller than dist_lines
 bool rr;
 bool cc;
 bool ll;
@@ -84,8 +74,7 @@ bool ll;
 // double angulo_real;
 
 //gets the left points
-void get_pts_left(const nav_msgs::GridCells& array)
-{
+void get_pts_left(const nav_msgs::GridCells& array) {
 	arr_left.cells = array.cells;
 	if (array.cell_width > 5 && array.cells[0].x > 0) {
 		L = array.cell_width;
@@ -96,8 +85,7 @@ void get_pts_left(const nav_msgs::GridCells& array)
 }
 
 //gets the center points
-void get_pts_center(const nav_msgs::GridCells& array)
-{
+void get_pts_center(const nav_msgs::GridCells& array) {
 	arr_center.cells = array.cells;
 	if (array.cell_width > 5 && array.cells[0].x > 0) {
 		C = array.cell_width;
@@ -108,8 +96,7 @@ void get_pts_center(const nav_msgs::GridCells& array)
 }
 
 //gets the right points
-void get_pts_right(const nav_msgs::GridCells& array)
-{
+void get_pts_right(const nav_msgs::GridCells& array) {
 	arr_right.cells = array.cells;
 	if (array.cell_width > 5 && array.cells[0].x > 0) {
 		R = array.cell_width;
@@ -119,15 +106,10 @@ void get_pts_right(const nav_msgs::GridCells& array)
 	}
 }
 
-//transforms the motion into values for shift >> used before but maybe not useful anymore (290317)
-void get_ctrl_action(const std_msgs::Float64& val)
-{
-	ctrl_action = val.data;
-}
-
-void get_velocity(const geometry_msgs::Twist& val)
-{
+// reads speed and steering from standarized topic
+void get_ctrl_action(const geometry_msgs::Twist& val) {
 	// negative is forward
+	ctrl_action = val.angular.z;
 	speed = sqrt(val.linear.x * val.linear.x);
 	// printf("\n vel: %.2f ", speed);
 }
@@ -138,8 +120,7 @@ void get_ctrl_desired_state(const std_msgs::Float64& val) {
 
 //calculates the distance in pixels. NOTE: only using th x component because Y is asumed constant, maybe isnt the best way to have it.
 //If y is asumed constant ==> using abs() instead of sqrt might be more efficient
-float horizontal_dist(geometry_msgs::Point p1, geometry_msgs::Point p2)
-{
+float horizontal_dist(geometry_msgs::Point p1, geometry_msgs::Point p2) {
 	float dif_x = p1.x - p2.x;
 	return sqrt(dif_x * dif_x); // absolute value
 }
@@ -169,8 +150,7 @@ float horizontal_dist(geometry_msgs::Point p1, geometry_msgs::Point p2)
 //   0	| 1   |2 | 3  |4  |5  |6  | 7  | 8		ND -> No se Derecha
 //	
 //
-int det_hit (int position)
-{
+int det_hit (int position) {
 	int state = (int)floor(position/STATE_WIDTH);
 	//Determine the number of lanes seen
 	int hit;
@@ -188,25 +168,37 @@ int det_hit (int position)
 		// 6 |  1  |  1  |  0
 		// 7 |  1  |  1  |  1
 		case 0: //OL
-			hit = !(ll || cc || rr ) && (lanes_detected == 1);
+			hit = !(cc || rr ) && (lanes_detected == 1);
 			// if(hit) ROS_INFO_STREAM("Hit at state: " << state);
 			break;
 		case 1: // LL
 			hit = (cc || rr ) && (lanes_detected >= 1 && lanes_detected <= 3);
 			// if(hit) ROS_INFO_STREAM("Hit at state: " << state);
+			
+			if (hit) {
+				double state_center = (state*STATE_WIDTH + (state+1)*STATE_WIDTH) / 2;
+				// el supuesto es que solo ve una linea: right or center
+				double dist_car_in_state = dist_sensado_rr < dist_sensado_cc ? dist_sensado_rr : dist_sensado_cc;
+
+        		if ((position < state_center - dist_car_in_state - RADIO / 2 || position >  state_center - dist_car_in_state + RADIO / 2) && (position < state_center + dist_car_in_state - RADIO / 2 || position >  state_center + dist_car_in_state + RADIO / 2))
+					hit = !hit;
+        	}
+			
 			break;
 		case 2: //LC
-			hit = !(rr || cc || ll) && (lanes_detected == 3); 
+			hit = !(rr || cc ) && (lanes_detected == 3); 
 
-			if(hit) {
+			// discriminar la posicion con base en la distancia a las lineas
+			if (hit) {
 				double min_coord = state*STATE_WIDTH;
 				double max_coord = (state+1)*STATE_WIDTH;
 				// pt_c debe estar a la izquierda, en este caso se cumple
-				if (dist_cc > 0 && dist_cc < 1000) 
-					min_coord = state*STATE_WIDTH + dist_cc - alpha - RADIO;
+				if (dist_sensado_cc > 0 && dist_sensado_cc < 1000) 
+					min_coord += dist_sensado_cc - dist_lines - RADIO;
 				// pt_r debe estar a la derecha, en este caso se cumple
-				if (dist_rr > 0 && dist_rr < 1000) 
-					max_coord = (state+1)*STATE_WIDTH - dist_rr + alpha + RADIO;
+				if (dist_sensado_rr > 0 && dist_sensado_rr < 1000) 
+					max_coord += -dist_sensado_rr + dist_lines + RADIO;
+				// el supuesto es que cc esta a la izquierda y rr a la derecha
 				if (position < min_coord || position > max_coord)
 					hit = !hit;
 			}
@@ -215,29 +207,51 @@ int det_hit (int position)
 			break;
 		case 3: //CC, no puede estar en el centro viendo solo una linea
 			hit = (cc || rr ) && ((lanes_detected == 3) || (lanes_detected >= 5 && lanes_detected <= 7));
+			
+			if (hit) {
+				double state_center = (state*STATE_WIDTH + (state+1)*STATE_WIDTH) / 2;
+				// el supuesto es que solo ve una linea: right or center
+				double dist_car_in_state = dist_sensado_rr < dist_sensado_cc ? dist_sensado_rr : dist_sensado_cc;
+
+        		if ((position < state_center - dist_car_in_state - RADIO / 2 || position >  state_center - dist_car_in_state + RADIO / 2) && (position < state_center + dist_car_in_state - RADIO / 2 || position >  state_center + dist_car_in_state + RADIO / 2))
+					hit = !hit;
+        	}
+			
+
 			// if(hit) ROS_INFO_STREAM("Hit at state: " << state);
 			break;
 		case 4: //RC
 			hit = !(cc || rr || ll) && ((lanes_detected == 3) ||  (lanes_detected >= 5 && lanes_detected <= 7)) ;
 			// if(hit) ROS_INFO_STREAM("Hit at state: " << state);
 
-			if(hit) {
+			// discriminar la posicion con base en la distancia a las lineas
+			if (hit) {
 				double min_coord = state*STATE_WIDTH;
 				double max_coord = (state+1)*STATE_WIDTH;
 				// pt_c debe estar a la izquierda, en este caso se cumple
-				if (dist_cc > 0 && dist_cc < 1000) 
-					min_coord = state*STATE_WIDTH + dist_cc - alpha - RADIO;
+				if (dist_sensado_cc > 0 && dist_sensado_cc < 1000) 
+					min_coord += dist_sensado_cc - dist_lines - RADIO;
 				// pt_r debe estar a la derecha, en este caso se cumple
-				if (dist_rr > 0 && dist_rr < 1000) 
-					max_coord = (state+1)*STATE_WIDTH - dist_rr + alpha + RADIO;
+				if (dist_sensado_rr > 0 && dist_sensado_rr < 1000) 
+					max_coord += -dist_sensado_rr + dist_lines + RADIO;
+
 				if (position < min_coord || position > max_coord)
 					hit = !hit;
 			}
-
 			break;
 		case 5: //RR
 			hit = (cc || rr ) && ((lanes_detected >= 1 && lanes_detected <= 3) || (lanes_detected >= 5 && lanes_detected <= 7));
 			// if(hit) ROS_INFO_STREAM("Hit at state: " << state);
+			
+			if (hit) {
+				double state_center = (state*STATE_WIDTH + (state+1)*STATE_WIDTH) / 2;
+				// el supuesto es que solo ve una linea: right or center
+				double dist_car_in_state = dist_sensado_rr < dist_sensado_cc ? dist_sensado_rr : dist_sensado_cc;
+
+        		if ((position < state_center - dist_car_in_state - RADIO / 2 || position >  state_center - dist_car_in_state + RADIO / 2) && (position < state_center + dist_car_in_state - RADIO / 2 || position >  state_center + dist_car_in_state + RADIO / 2))
+					hit = !hit;
+        	}
+			
 			break;
 		case 6: //OR
 			hit = !(rr || ll || cc) && (lanes_detected == 2 || lanes_detected == 4 || lanes_detected == 6);
@@ -248,8 +262,7 @@ int det_hit (int position)
 	return hit;
 }
 
-float* det_hits()
-{
+float* det_hits() {
 	lanes_detected = (L > 0);
 	lanes_detected = lanes_detected << 1;
 	lanes_detected = lanes_detected | C > 0;
@@ -272,14 +285,14 @@ float* det_hits()
 	if ( L > 0 ) pt_l = arr_left.cells[L - 1];
 	
 	// if there are points in the lines, get the distance between the car and the closest point if not, assign a BIG number
-	dist_rr = R > 0 ?  horizontal_dist(pt_r, pt_car) : 1000;
-	dist_cc = C > 0 ?  horizontal_dist(pt_c, pt_car) : 1000;
-	dist_ll = L > 0 ?  horizontal_dist(pt_l, pt_car) : 1000;
+	dist_sensado_rr = R > 0 ?  horizontal_dist(pt_r, pt_car) : 1000;
+	dist_sensado_cc = C > 0 ?  horizontal_dist(pt_c, pt_car) : 1000;
+	dist_sensado_ll = L > 0 ?  horizontal_dist(pt_l, pt_car) : 1000;
 	
-	// define if each distance is smaller than alpha
-	rr = dist_rr <= alpha;
-	cc = dist_cc <= alpha;
-	ll = dist_ll <= alpha;
+	// define if each distance is smaller than dist_lines
+	rr = dist_sensado_rr <= dist_lines;
+	cc = dist_sensado_cc <= dist_lines;
+	ll = dist_sensado_ll <= dist_lines;
 	
 	
 	// based on sensing update probabilities
@@ -295,8 +308,7 @@ float* det_hits()
 	return hits;
 }
 
-std_msgs::Float32MultiArray sense(std_msgs::Float32MultiArray p, float* hits)
-{
+std_msgs::Float32MultiArray sense(std_msgs::Float32MultiArray p, float* hits) {
 	std_msgs::Float32MultiArray q;
 	for (int i = 0; i < NUM_STATES*STATE_WIDTH; ++i) {	
 		q.data.push_back(p.data[i] * hits[i]);
@@ -307,19 +319,16 @@ std_msgs::Float32MultiArray sense(std_msgs::Float32MultiArray p, float* hits)
 
 	// normalizacion
 	float sum = 0;
-	for (int i = 0; i < NUM_STATES*STATE_WIDTH; ++i)
-	{
+	for (int i = 0; i < NUM_STATES*STATE_WIDTH; ++i) {
 		sum += q.data[i];
 	}
-	for (int i = 0; i < NUM_STATES*STATE_WIDTH; ++i)
-	{
+	for (int i = 0; i < NUM_STATES*STATE_WIDTH; ++i) {
 		q.data[i] /= sum;
 	}
 	return q;
 }
 
-std_msgs::Float32MultiArray move(std_msgs::Float32MultiArray prob)
-{
+std_msgs::Float32MultiArray move(std_msgs::Float32MultiArray prob) {
 	//ctrl_action: radians in simulation
 	// positive is left
 
@@ -340,22 +349,21 @@ std_msgs::Float32MultiArray move(std_msgs::Float32MultiArray prob)
 
 	std_msgs::Float32MultiArray q;
 	ROS_INFO_STREAM("Control: " << ctrl_action << ", U: " << U << ", dist_x: " << dist_x);
-	for (int i = 0; i < NUM_STATES*STATE_WIDTH; i++)
-	{
+	for (int i = 0; i < NUM_STATES*STATE_WIDTH; i++) {
 		double s = 0.0;
 		
 		//HISTOGRAMA CICLICLO
 		//EXACT
 		int mov = i+U;		
 		int mod2 = (mov) % (NUM_STATES*STATE_WIDTH);
-		if(mod2<0) mod2 = NUM_STATES*STATE_WIDTH+mod2;
+		if (mod2<0) mod2 = NUM_STATES*STATE_WIDTH+mod2;
 		s = p_exact * prob.data[mod2];
 		
 		//HISTOGRAMA CICLICLO
 		//UNDERSHOOT
 		mov = i+U-1;
 		mod2 = (mov) % (NUM_STATES*STATE_WIDTH);
-		if(mod2<0) mod2 = NUM_STATES*STATE_WIDTH+mod2;
+		if (mod2<0) mod2 = NUM_STATES*STATE_WIDTH+mod2;
 		s += p_undershoot * prob.data[mod2];
 		
 		//mov = i+U+mov_over;
@@ -363,7 +371,7 @@ std_msgs::Float32MultiArray move(std_msgs::Float32MultiArray prob)
 		//OVERSHOOT
 		mov = i+U+1;
 		mod2 = (mov) % (NUM_STATES*STATE_WIDTH);
-		if(mod2<0) mod2 = NUM_STATES*STATE_WIDTH+mod2;
+		if (mod2<0) mod2 = NUM_STATES*STATE_WIDTH+mod2;
 		s += p_overshoot * prob.data[mod2];
 		
 		q.data.push_back(s);
@@ -371,9 +379,9 @@ std_msgs::Float32MultiArray move(std_msgs::Float32MultiArray prob)
 	return q;
 }
 
-int actual_state(std_msgs::Float32MultiArray locArray){
+int actual_state(std_msgs::Float32MultiArray locArray) {
 	float max=0;
-	for(int i=0;i<NUM_STATES*STATE_WIDTH;i++){
+	for (int i=0;i<NUM_STATES*STATE_WIDTH;i++) {
 	 	if(locArray.data[i]>max){
 	 		max=locArray.data[i];
 	 	}
@@ -381,7 +389,7 @@ int actual_state(std_msgs::Float32MultiArray locArray){
 
 	int countStates=0;
 	int state = -1;
-	for(int i=NUM_STATES*STATE_WIDTH-1;i>=0;i--){
+	for (int i=NUM_STATES*STATE_WIDTH-1;i>=0;i--) {
         if(locArray.data[i]==max){
         	int temp_state = (int)floor(i/STATE_WIDTH);
             if (temp_state != state){
@@ -397,6 +405,7 @@ int actual_state(std_msgs::Float32MultiArray locArray){
     	return -1; // no se pudo determinar el estado, ya que hay mas de uno posible
 }
 
+<<<<<<< HEAD
 void write_to_file(const char* type, std_msgs::Float32MultiArray p) {
 	// observe behavior of probabilities
 	FILE *f = fopen("~/histogramfilter.txt", "a");
@@ -426,6 +435,8 @@ void write_to_file(const char* type, float* p, int values) {
 }
 
 
+=======
+>>>>>>> 99cae1ef690c0d2cd4d94302f168136595a9571d
 int main(int argc, char** argv){
 	ros::init(argc, argv, "lane_states_node");
 	// ROS_INFO_STREAM("lane_states_node initialized");
@@ -434,15 +445,15 @@ int main(int argc, char** argv){
 	ros::Rate loop_rate(rate_hz);
 	
 	std::string node_name = ros::this_node::getName();
-        ROS_INFO_STREAM("Getting parameters");
-        priv_nh_.param<float>(node_name+"/alpha", alpha,8);
-        priv_nh_.param<int>(node_name+"/width_center",width_center,80);
-        // priv_nh_.param<float>(node_name+"/speed", speed,0.1);
-	
+	ROS_INFO_STREAM("Getting parameters");
+	priv_nh_.param<float>(node_name+"/dist_lines", dist_lines, 8);
+	priv_nh_.param<int>(node_name+"/width_center", width_center, 80);
+	// priv_nh_.param<float>(node_name+"/speed", speed,0.1);
+
 	const char * format = "P(x)=[%.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f]\n";
 	
-	std_msgs::Float32MultiArray m;	
-	std_msgs::Float32MultiArray s;	
+	std_msgs::Float32MultiArray m;
+	std_msgs::Float32MultiArray s;
 
 	for (int i = 0; i < NUM_STATES*STATE_WIDTH; ++i)
 	{
@@ -452,28 +463,29 @@ int main(int argc, char** argv){
 		//p.data.push_back(bel_RC[i]);
 	}
 
-	write_to_file("init", m);
+
 	//const char * format = "P(x)=[%.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f]\n";
 	// ROS_INFO_STREAM("Array initialization: ");
   	// printf (format, p.data[1],p.data[4],p.data[7],p.data[10],p.data[13],p.data[16],p.data[19],p.data[22],p.data[25]);
 		
 
-	ROS_INFO_STREAM("alpha: " << alpha);
+	ROS_INFO_STREAM("dist_lines: " << dist_lines);
 	ROS_INFO_STREAM("Array initialization: \n" << m);
 
-	pub_loc = nh.advertise<std_msgs::Float32MultiArray>("/localization_array", rate_hz);
+	pub_loc = nh.advertise<std_msgs::Float32MultiArray>("/localization_array", MY_ROS_QUEUE_SIZE);
 
-	ros::Subscriber sub_pts_left = nh.subscribe("/points/left",1, get_pts_left);
-	ros::Subscriber sub_pts_center = nh.subscribe("/points/center",1, get_pts_center);
-	ros::Subscriber sub_pts_right = nh.subscribe("/points/right",1, get_pts_right);
-	ros::Subscriber sub_des_state = nh.subscribe("/desired_state", 1, get_ctrl_desired_state);
+	ros::Subscriber sub_pts_left = nh.subscribe("/points/left", MY_ROS_QUEUE_SIZE, &get_pts_left);
+	ros::Subscriber sub_pts_center = nh.subscribe("/points/center", MY_ROS_QUEUE_SIZE, &get_pts_center);
+	ros::Subscriber sub_pts_right = nh.subscribe("/points/right", MY_ROS_QUEUE_SIZE, &get_pts_right);
+	ros::Subscriber sub_des_state = nh.subscribe("/desired_state", MY_ROS_QUEUE_SIZE, &get_ctrl_desired_state);
 
 	// actualizar topico de control
 	// /manual_control/steering // real car
 	// /autonomos/steer/steer_position_controller/command // simulation
-	ros::Subscriber sub_mov = nh.subscribe("/autonomos/steer/steer_position_controller/command", 1, get_ctrl_action);
+	ros::Subscriber sub_mov = nh.subscribe("/standarized_vel_ste", MY_ROS_QUEUE_SIZE, &get_ctrl_action);
+	// ros::Subscriber sub_vel = nh.subscribe("/cmd_vel", 1, get_velocity);
 
-	ros::Subscriber sub_vel = nh.subscribe("/cmd_vel", 1, get_velocity);
+	
 	// ros::Subscriber sub_des_state = nh.subscribe("/desire_state",1, get_des_state);
 	
 	loop_rate.sleep();
@@ -489,13 +501,10 @@ int main(int argc, char** argv){
 
 	    hits = det_hits();
 	    if(lanes_detected > 0) {
-	    	write_to_file("hits", hits, NUM_STATES*STATE_WIDTH);
 	    	s = sense(m, hits);
 		} else {
 			s = m; // mantain previous probabilities
 		}
-
-	    write_to_file("sense", s);
 
 	    printf (format, s.data[0*STATE_WIDTH],s.data[1*STATE_WIDTH],s.data[2*STATE_WIDTH],s.data[3*STATE_WIDTH],s.data[4*STATE_WIDTH],s.data[5*STATE_WIDTH],s.data[6*STATE_WIDTH]);
 	    pub_loc.publish(s);
@@ -506,29 +515,25 @@ int main(int argc, char** argv){
 	    datos[1] = (float)C;
 	    datos[2] = (float)R;
 
-	    datos[3] = dist_ll;
-	    datos[4] = dist_cc;
-	    datos[5] = dist_rr;
+	    datos[3] = dist_sensado_ll;
+	    datos[4] = dist_sensado_cc;
+	    datos[5] = dist_sensado_rr;
 
 	    datos[6] = speed;
 	    datos[7] = ctrl_action;
 
 	    if(estadoEstimado>=0) {
 	    	datos[8] = (float)estadoEstimado;
-			printf("%d, %d, %d, %d, %.2f, %.2f, %.2f, %.2f, %.2f, %s\n", 0, L, C, R, dist_ll, dist_cc, dist_rr, speed, ctrl_action, nombre_estado[estadoEstimado].c_str());
+			printf("%d, %d, %d, %d, %.2f, %.2f, %.2f, %.2f, %.2f, %s\n", 0, L, C, R, dist_sensado_ll, dist_sensado_cc, dist_sensado_rr, speed, ctrl_action, nombre_estado[estadoEstimado].c_str());
 	    } else {
 	    	datos[8] = -0.0f;
-			printf("%d, %d, %d, %d, %.2f, %.2f, %.2f, %.2f, %.2f, %s\n", 0, L, C, R, dist_ll, dist_cc, dist_rr, speed, ctrl_action, "?");
+			printf("%d, %d, %d, %d, %.2f, %.2f, %.2f, %.2f, %.2f, %s\n", 0, L, C, R, dist_sensado_ll, dist_sensado_cc, dist_sensado_rr, speed, ctrl_action, "?");
 	    }
 	    datos[9] = ctrl_estado;
-
-	    write_to_file("L C R d_ll d_cc d_rr speed ctrl state ctrl_estado", datos, 10);
 	    
 	    ROS_INFO_STREAM("Motion update: ");
 
 	    m = move(s);
-
-	    write_to_file("move", m);
 
 	    printf (format, m.data[0*STATE_WIDTH],m.data[1*STATE_WIDTH],m.data[2*STATE_WIDTH],m.data[3*STATE_WIDTH],m.data[4*STATE_WIDTH],m.data[5*STATE_WIDTH],m.data[6*STATE_WIDTH]);
 	    loop_rate.sleep();
