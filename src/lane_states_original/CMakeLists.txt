@@ -7,7 +7,10 @@ project(lane_states_original)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED roscpp std_msgs )
+find_package(catkin REQUIRED roscpp std_msgs cv_bridge sensor_msgs)
+find_package(OpenCV REQUIRED)
+
+set(ROS_LINK_FLAGS "-lopencv_core -lopencv_highgui -lopencv_legacy -lopencv_imgproc -lopencv_features2d")
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -112,6 +115,7 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 # include_directories(include)
+include_directories(include ${OpenCV_INCLUDE_DIRS})
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
@@ -141,7 +145,7 @@ add_executable(lane_states_node lane_states_node.cpp)
 
 ## Specify libraries to link a library or executable target against
 # target_link_libraries(${PROJECT_NAME}_node
-target_link_libraries(lane_states_node ${catkin_LIBRARIES})
+target_link_libraries(lane_states_node ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 #target_link_libraries(lane_planning ${catkin_LIBRARIES})
 
 #   ${catkin_LIBRARIES}

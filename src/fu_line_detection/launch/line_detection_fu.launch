@@ -4,21 +4,21 @@
     <param name="cam_w"                         type="int"    value="640"/>  
     <param name="cam_h"                         type="int"    value="480"/> <!--we will use only bottom half of this...-->  
     <param name="proj_y_start"                  type="int"    value="40"/> <!-- 50 def. Offset vertical imagen. -->
-    <param name="proj_image_h"                  type="int"    value="180"/> <!-- 160 -->
+    <param name="proj_image_h"                  type="int"    value="200"/> <!-- 160 -->
     <param name="proj_image_w"                  type="int"    value="180"/>
     <param name="proj_image_horizontal_offset"  type="int"    value="0"/>
     <param name="roi_top_w"                     type="int"    value="160"/> <!-- 132 def. Igual que image width. Max 160. -->
-    <param name="roi_bottom_w"                  type="int"    value="60"/>  <!-- 54 def.  -->
+    <param name="roi_bottom_w"                  type="int"    value="160"/>  <!-- 54 def.  -->
     <param name="maxYRoi"                       type="int"    value="160"/> <!-- 159, ajuste abajo de la region de interes -->
-    <param name="minYDefaultRoi"                type="int"    value="10"/> <!-- 110 -->
-    <param name="minYPolyRoi"                   type="int"    value="10"/> <!-- 20, ajuste parte superior ROI -->
-    <param name="defaultXLeft"                  type="int"    value="30"/>
-    <param name="defaultXCenter"                type="int"    value="70"/>
-    <param name="defaultXRight"                 type="int"    value="110"/>
+    <param name="minYDefaultRoi"                type="int"    value="0"/> <!-- 110 -->
+    <param name="minYPolyRoi"                   type="int"    value="0"/> <!-- 20, ajuste parte superior ROI -->
+    <param name="defaultXLeft"                  type="int"    value="25"/>
+    <param name="defaultXCenter"                type="int"    value="75"/>
+    <param name="defaultXRight"                 type="int"    value="125"/>
     <param name="defaultYHorizontal"                 type="int"    value="100"/>
     
-    <param name="interestDistancePoly"          type="int"    value="22"/>
-    <param name="interestDistanceDefault"       type="int"    value="22"/>
+    <param name="interestDistancePoly"          type="int"    value="25"/>
+    <param name="interestDistanceDefault"       type="int"    value="25"/>
     <param name="iterationsRansac"              type="int"    value="30"/> <!-- 40 defa. -->
     <param name="proportionThreshould"          type="double" value="0.85"/> <!-- 0.85 def -->
     <param name="m_gradientThreshold"           type="int"    value="8"/>
@@ -52,8 +52,10 @@
     <param name="c_v"                   type="double"   value="7.779505"/>
     
     <param name="topico_estandarizado"           type="string"   value="/standarized_vel_ste" />
-    <param name="kalpha"                   type="double"   value="1.5"/>
-    <param name="kbeta"                   type="double"   value="0.5"/>
+    <param name="kalpha"                type="double"   value="1.0"/>
+    <param name="kbeta"                 type="double"   value="0.5"/>
+    <param name="car_center"            type="int"      value="87" />
+    <param name="dbscan_epsilon"        type="int"      value="45" />
 
   </node>
  

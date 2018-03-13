@@ -15,7 +15,7 @@ THIS SOFTWARE IS PROVIDED BY AUDI AG AND CONTRIBUTORS “AS IS” AND ANY EXPRESS OR
 // Christoph Brickl, AEV:
 
 /*! \brief cSpurerkennung
- *         
+          
 •	Zur Erkennung einer Spur wird das RGB Bild der Asus Xtion eingelesen und verarbeitet
 •	Weiteres Vorgehen:
 •	Zuschneiden des Orginal Bildes auf die eingestellte Größe
@@ -59,7 +59,7 @@ THIS SOFTWARE IS PROVIDED BY AUDI AG AND CONTRIBUTORS “AS IS” AND ANY EXPRESS OR
 #include "tools/enums.h"
 #include "tools/IPMapper.h"
 
-#include "tools/MergeSort.h"
+#include "tools/dbscan.h"
 
 #include <dynamic_reconfigure/server.h>
 #include <line_detection_fu_mod/LaneDetectionConfig.h>
@@ -90,12 +90,9 @@ class cLaneDetectionFu
         ros::Subscriber planningxy;
         ros::Subscriber sub_localization;
         ros::Subscriber sub_vel;
-        // ros::Subscriber sub_mov;
         ros::Subscriber sub_des_state;
 
         // publishers
-        //ros::Publisher publish_images;
-        //ros::Publisher publish_curvature;
         ros::Publisher publish_angle;
 
         ros::Publisher pub_left;
@@ -140,6 +137,7 @@ class cLaneDetectionFu
         int polyY3;
 
         int estado;
+        int dbscan_epsilon;
         
 
         /**
@@ -149,6 +147,13 @@ class cLaneDetectionFu
         NewtonPolynomial polyCenter;
         NewtonPolynomial polyRight;
         NewtonPolynomial polyHorizontal;
+
+        /**
+         *  default lane marking lines as polynomials
+         */
+        NewtonPolynomial polyDefaultLeft;
+        NewtonPolynomial polyDefaultCenter;
+        NewtonPolynomial polyDefaultRight;
 
         /**
          * Horizontal relative positions of the default lane marking lines.
@@ -286,7 +291,6 @@ class cLaneDetectionFu
 
         int maxAngleDiff;
 
-        // fu_line_detection::pts_array pts1;
         nav_msgs::GridCells array_left;
         nav_msgs::GridCells array_center;
         nav_msgs::GridCells array_right;
@@ -311,10 +315,6 @@ class cLaneDetectionFu
     	virtual ~cLaneDetectionFu();
         
         void ProcessInput(const sensor_msgs::Image::ConstPtr& msg);
-
-        void ProcessPlanning(const nav_msgs::GridCells& path);
-
-        void ProcessPlanningXY(const geometry_msgs::Point& path);
         
         void pubRGBImageMsg(cv::Mat& rgb_mat, image_transport::CameraPublisher publisher);
 
@@ -330,7 +330,7 @@ class cLaneDetectionFu
 
         std::vector<FuPoint<int>> extractLaneMarkingsHorizontal(const std::vector<std::vector<EdgePoint>>& edges);
 
-        void buildLaneMarkingsLists(const std::vector<FuPoint<int>> &laneMarkings);
+        void buildLaneMarkingsLists(const dbscan::point_t *points, const int num_points, const unsigned int num_clusters );
 
         void buildLaneMarkingsListsHorizontal(const std::vector<FuPoint<int>> &laneMarkings);
 
@@ -383,15 +383,13 @@ class cLaneDetectionFu
         void config_callback(line_detection_fu::LaneDetectionConfig &config, uint32_t level);
 
         void get_localization(const std_msgs::Float32MultiArray& locArray);
-        
-        // void get_velocity(const geometry_msgs::Twist& val);
 
         void get_ctrl_action(const geometry_msgs::Twist& val);
 
         void get_ctrl_desired_state(const std_msgs::Float64& val);
 
         bool ackerman_control_next_points(double y_next_dist, cv::Point& pt_car, cv::Point& y_next_pt, 
-            cv::Point& y_next_pt2);
+            cv::Point& y_next_pt2, cv::Point& pt_slope);
 
         void ackerman_control(cv::Mat& imagePaint, NewtonPolynomial& polyLeft, NewtonPolynomial& polyCenter,
     NewtonPolynomial& polyRight);

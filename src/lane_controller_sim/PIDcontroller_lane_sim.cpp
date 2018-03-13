@@ -38,7 +38,6 @@ bool rebasando = false;
 
 double rate_hz = 10;
 
-// Variables globales 
 double max;
 double min;
 double dt;
@@ -51,37 +50,21 @@ double pE;
 double velocity;
 geometry_msgs::Twist velocity_msg;
 geometry_msgs::Twist positionObj;
-
 geometry_msgs::Twist vel;
 
 ros::Publisher pub_speed_ste;
-// ros::Publisher pub_steering;
-
-nav_msgs::GridCells path_planning;
 
 double theta = 0.0; 
-/*
-	@param pActual posicion origen (del vehiculo)
-	@param pEsperada posicion destino
-*/
-double getThetaError (double pActual, double pEsperada){
-	// Asumiendo 'y' = 100 fijo, que pE y p estan en unidades: pixeles
-	double x = (pActual - pEsperada);
-	double theta = atan2(x,100);
 
-	//conversion a grados	
-	//theta = (theta * 180 / PI)/2; // quite el /2
+double steering_actual = 0.0;
+double speed = 0.0;
 
-	// theta = -theta; // por correccion con el carro 90 es izquierda
-	// Regresa valores entre -45 y 45 grados
-
-	return theta;
-
-}
-
+// pActual es el angulo actual del steering en radianes
+// pDestino angulo requerido en radianes
+// dt delta t para D, pero no se utiliza
+// Constantes Kp, Kd, Ki
 double PIDtime(double pActual, double pDestino, double dt, double Kp, double Kd, double Ki){
-	// ROS_INFO_STREAM("PID time");
-	theta = pDestino; // getThetaError
+	theta = pDestino; 
 	double error = theta;
 	double pOut = Kp * error;
 	integral += error * dt;
@@ -95,6 +78,13 @@ double PIDtime(double pActual, double pDestino, double dt, double Kp, double Kd,
 }
 
 
+// reads speed and steering from standarized topic
+void get_ctrl_action(const geometry_msgs::Twist& val) {
+	// negative is forward
+	steering_actual = val.angular.z;
+	speed = sqrt(val.linear.x * val.linear.x);
+}
+
 //void get_lidar(const geometry_msgs::Twist& msg) {
 	//positionObj.linear.x = msg.linear.x;
 	//positionObj.linear.y = msg.linear.y;
@@ -103,33 +93,13 @@ double PIDtime(double pActual, double pDestino, double dt, double Kp, double Kd,
 
 void get_vel_vec(const geometry_msgs::Twist& msg) {
 
-	//velocity_msg.linear.x = msg.linear.x;
-	//velocity_msg.linear.y = msg.linear.y;
-	//velocity_msg.angular.z = msg.angular.z; 
-
-	
-
-    //path_planning.cells = path.cells;
-	//path_planning.cell_width = path.cell_width;
-
-	// ROS_INFO_STREAM("cells_width: " << path_planning.cell_width);
-
-	//if(path_planning.cell_width > 0){
 		double p = 0.0;
 		double pid_res = 0.0;
-		// std_msgs::Int16 value_motor;
-		// std_msgs::Float64 value_steering;
-
-
-		
-		// p = point.x;
 
 		double posEsp = msg.angular.z; // pixeles: velocity_msg.linear.x;
-		double posActual = 0; // pixeles: pE; 
-		ROS_INFO_STREAM("PID2: posPixel Esperada: " << posEsp << ", posPixel Actual:" << posActual );
+		double posActual = steering_actual; // pixeles: pE; 
 		
-		// 'p' en terminos de theta en grados de -45 a 45
-		// p = getThetaError(posActual, posEsp);
+		printf("\n Angulo Esperado: %+010.4f, Actual: %+010.4f", posEsp, posActual);
 		
 		// OBSTACULO
 		/*
@@ -157,88 +127,61 @@ void get_vel_vec(const geometry_msgs::Twist& msg) {
 		}
 		*/
 
-		// El servomotor del coche siempre tiene que estar en 45 grados
 		p = PIDtime(posActual, posEsp, dt, Kp, Kd, Ki);
-
-		//pid_res = 45 + p; // por detalle con el carro de los angulos
 		
 		pid_res=p;
-		// Restriction
+		// Restriction en las llantas
 		if( pid_res > max )
 			pid_res = max;
 		else if( pid_res < min )
 			pid_res = min;
 
-		ROS_INFO_STREAM("Error theta:" << theta <<", Res PID: " << p << ", Senal Servo:" << pid_res );
+		printf("\n Error theta: %+010.4f, Res PID: %+010.4f, Senal Servo: %+010.4f", theta, p, pid_res );
 
-		//value_motor.data = velocity;
 		vel.angular.z = pid_res;
 		vel.linear.x = velocity;
 
 		pub_speed_ste.publish(vel); 
-		//pub_steering.publish(value_steering); 
-
-		// ROS_INFO_STREAM("velocity: " << value_motor.data << ", steering: " << value_steering.data << " )");
-	
 }
 
 int main(int argc, char** argv){
 		ros::init(argc, argv, "PID controller sim");
-		// ROS_INFO_STREAM("PID controller initialized");
+		ROS_INFO_STREAM("PID controller initialized");
 		ros::NodeHandle priv_nh_("~");
-		//head_time_stamp = ros::Time::now();
 		ros::NodeHandle nh;
 
 		ros::Rate loop_rate(rate_hz);
 
 		std::string node_name = ros::this_node::getName();
-		// ROS_INFO_STREAM("Obteniendo p");
-		// std::string topico_steering;
 		std::string topico_estandarizado;
 
+		ROS_INFO_STREAM("Parametros obtenidos");
 		priv_nh_.param<double>(node_name+"/Kp", Kp, 0.6);
 		priv_nh_.param<double>(node_name+"/Ki", Ki, 0.3);
 		priv_nh_.param<double>(node_name+"/Kd", Kd, 0.0);
 		priv_nh_.param<double>(node_name+"/dt", dt, 10.0);
-
 		priv_nh_.param<double>(node_name+"/pE", pE, 80.0);
 		priv_nh_.param<double>(node_name+"/min", min, 0.0);
 		priv_nh_.param<double>(node_name+"/max", max, 90.0);
 		priv_nh_.param<double>(node_name+"/velocity", velocity, 30.0);
-
 		priv_nh_.param<int>(node_name+"/activa_librarobstaculo", librarobstaculo, 0);
 		priv_nh_.param<double>(node_name+"/distancia_librarobstaculo", distancialibrarobstaculo, 9.0);
 		priv_nh_.param<double>(node_name+"/distancia_librarobstaculomasmenos", distancia_librarobstaculomasmenos, 9.0);
-
 		priv_nh_.param<double>(node_name+"/pendienteTrancazo", pendienteTrancazo, 0.66);
-		
-		// priv_nh_.param<std::string>(node_name+"/topico_steering", topico_steering, "/steering");
-		// priv_nh_.param<std::string>(node_name+"/topico_velocidad", topico_velocidad, "/velocidad");
-
 		priv_nh_.param<std::string>(node_name+"/topico_estandarizado", topico_estandarizado, "/velocidad");
 
-		// ROS_INFO_STREAM("Parametros obtenidos");
-
-
+		// publicar acciones de control a topico estandarizado
 		pub_speed_ste = nh.advertise<geometry_msgs::Twist>(topico_estandarizado, MY_ROS_QUEUE_SIZE);
-		// pub_steering = nh.advertise<std_msgs::Float64>(topico_steering, rate_hz);
 
-		// esto va mejor en el launch file
-		// ros::Subscriber sub_vel = nh.subscribe("/target_position_topic", 1000, &get_vel_vec);
-
+		ros::Subscriber sub_steering = nh.subscribe(topico_estandarizado, MY_ROS_QUEUE_SIZE, &get_ctrl_action);
 		ros::Subscriber sub_lidar = nh.subscribe("/target_pose", MY_ROS_QUEUE_SIZE, &get_vel_vec);
 
-		//pub_lidar = nh.advertise<geometry_msgs::Twist>("/target_pose", rate_hz);
-
-		// ROS_INFO_STREAM("antes de while");
 		while (nh.ok())
 		{
-			// ROS_INFO_STREAM("while 1");
 			ros::spinOnce();
-		// convertir entre 0 y 90
-		// pE siempre es la misma
 			loop_rate.sleep();
 		}
+
 		return 0;
 	}
 

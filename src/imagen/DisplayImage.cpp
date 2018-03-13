@@ -238,7 +238,7 @@ cv::Mat puntoAMoverse(cv::Mat& entrada){
 	 // cv::Mat histImage = histograma(Result); // crear histograma de la imagen
 	 
 	 cv::Mat contours, cdst;
-	 cv::Canny(dilate_dst,contours,50,350);
+	 cv::Canny(dilate_dst,contours, 50, 350);
 	 cv::Mat contoursInv;
 	 int houghVote;
 	 cv::vector<cv::Vec4i> lines;
@@ -388,15 +388,15 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
  
     // The 4 points that select quadilateral on the input , from top-left in clockwise order
     // These four pts are the sides of the rect box used as input 
-    inputQuad[0] = cv::Point2f( 0,200 );
-    inputQuad[1] = cv::Point2f( 640 ,200);
-    inputQuad[2] = cv::Point2f( 640,400);
-    inputQuad[3] = cv::Point2f( 0,400  );  
+    inputQuad[0] = cv::Point2f( 0, 200 );
+    inputQuad[1] = cv::Point2f( 640, 200);
+    inputQuad[2] = cv::Point2f( 640, 400);
+    inputQuad[3] = cv::Point2f( 0, 400  );  
     // The 4 points where the mapping is to be done , from top-left in clockwise order
-    outputQuad[0] = cv::Point2f( 0,0 );
-    outputQuad[1] = cv::Point2f( input.cols-1,0);
-    outputQuad[2] = cv::Point2f( input.cols-1,input.rows-1);
-    outputQuad[3] = cv::Point2f( 0,input.rows-1  );
+    outputQuad[0] = cv::Point2f( 0, 0 );
+    outputQuad[1] = cv::Point2f( input.cols-1, 0);
+    outputQuad[2] = cv::Point2f( input.cols-1, input.rows-1);
+    outputQuad[3] = cv::Point2f( 0, input.rows-1  );
  
     // Get the Perspective Transform Matrix i.e. lambda 
     lambda = cv::getPerspectiveTransform( inputQuad, outputQuad );

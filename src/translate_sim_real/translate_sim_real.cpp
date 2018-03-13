@@ -163,14 +163,13 @@ int main(int argc, char** argv)
 
   TranslationSimReal driver(nh);
 
-  // driver.translate_instructions();
-
   //! Loop forever while translating the instructions from simulation or real car to a standarized topic
   while(nh.ok())
   {
     ros::spinOnce();
     loop_rate.sleep();
   }
+  
   return 0;
 
 }

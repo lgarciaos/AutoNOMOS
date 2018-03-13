@@ -2,8 +2,8 @@
 
     <node name="lane_controller_sim_node" pkg="lane_controller_sim" type="lane_controller_sim_node" output="screen" > 
 
-        <param name="Kp"          type="double" value="2.0"/>
-        <param name="Ki"          type="double" value="0.02"/>
+        <param name="Kp"          type="double" value="1.8"/>
+        <param name="Ki"          type="double" value="0.04"/>
         <param name="Kd"          type="double" value="0.0"/>
         <param name="dt"          type="double" value="1.0"/>
         <param name="pE"          type="double" value="320.0"/>
