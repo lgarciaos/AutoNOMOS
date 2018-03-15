@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<launch>
+
+  <rosparam file="$(find autonomos_gazebo_control)/config/autonomos_gazebo_control.yaml" command="load"/>
+
+  <!-- load every controller in the yaml -->
+  <node name="spawner" pkg="controller_manager" type="spawner"
+    output="screen" ns="/autonomos"
+    args="joint_state_controller
+       steer/steer_position_controller"/>
+
+  <include file="$(find autonomos_gazebo)/launch/autonomos_camino_s.launch">
+    
+  </include>
+
+</launch>

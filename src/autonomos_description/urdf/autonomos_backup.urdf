@@ -1,0 +1,527 @@
+<?xml version="1.0"?>
+<robot name="autonomos">
+  <!-- Used for fixing robot to Gazebo 'base_link' -->
+  <link name="world"/>
+
+  <joint name="fixed" type="fixed">
+    <parent link="world"/>
+    <child link="link1"/>
+  </joint>
+  
+
+  <gazebo reference="base_link">
+    <material>Gazebo/Blue</material>
+  </gazebo>
+  <gazebo reference="back_left_wheel_link">
+    <material>Gazebo/Green</material>
+  </gazebo>
+  <gazebo reference="back_right_wheel_link">
+    <material>Gazebo/Green</material>
+  </gazebo>
+  <gazebo reference="front_left_bar_link">
+    <material>Gazebo/Red</material>
+  </gazebo>
+  <gazebo reference="front_right_bar_link">
+    <material>Gazebo/Red</material>
+  </gazebo>
+  <gazebo reference="ackermann_bar_link">
+    <material>Gazebo/Red</material>
+  </gazebo>
+  <gazebo reference="steer_link">
+    <material>Gazebo/Red</material>
+  </gazebo>
+  <gazebo reference="front_left_wheel_link">
+    <material>Gazebo/Green</material>
+  </gazebo>
+  <gazebo reference="front_right_wheel_link">
+    <material>Gazebo/Green</material>
+  </gazebo>
+  <gazebo reference="laser_link">
+    <material>Gazebo/Green</material>
+  </gazebo>
+
+  <!-- Include materials -->
+  <material name="Black">
+    <color rgba="0.0 0.0 0.0 1.0"/>
+  </material>
+  <material name="Blue">
+    <color rgba="0.0 0.0 0.8 1.0"/>
+  </material>
+  <material name="Green">
+    <color rgba="0.0 0.8 0.0 1.0"/>
+  </material>
+  <material name="Red">
+    <color rgba="0.8 0.0 0.0 1.0"/>
+  </material>
+  <material name="White">
+    <color rgba="1.0 1.0 1.0 1.0"/>
+  </material>
+
+  <link name='base_link'>
+      <inertial>
+        <origin xyz="0.002623 0.000000 0.022951"/>
+        <mass value="0.61"/>
+        <inertia ixx="0.611350" ixy="0.000000" ixz="0.000160" iyy="0.611606" iyz="0.000000" izz="0.610256"/>
+      </inertial>
+      <collision name='base_link_geom'>
+        <geometry>
+          <box size="0.400000 0.150000 0.09500000"/>
+        </geometry>
+      </collision>
+      <visual name='base_link_visual'>
+        <geometry>
+          <box size="0.400000 0.150000 0.09500000"/>
+        </geometry>
+        <material name="Blue"/>
+      </visual>
+      <!-- link_geom_front -->
+      <collision>
+        <origin xyz="0.160000 0.000000 -0.0500000"/>
+        <geometry>
+          <box size="0.020000 0.150000 0.005000"/>
+        </geometry>
+      </collision>
+      <visual>
+        <origin xyz="0.160000 0.000000 -0.0500000 "/>
+        <geometry>
+          <box size="0.020000 0.150000 0.005000"/>
+        </geometry>
+        <material name="Red"/>
+      </visual>
+      
+      
+      
+      <!-- pilar_front_right -->
+      <collision>
+<origin rpy="0.000000 -0.385398 0.200000" xyz="0.060000 -0.074 0.065"/>
+        <geometry>
+          <box size="0.022 0.001 0.08"/>
+        </geometry>
+      </collision>
+      <visual>
+<origin rpy="0.000000 -0.385398 0.2000000" xyz="0.060000 -0.075 0.065"/>
+        <geometry>
+          <box size="0.022 0.001 0.08"/>
+        </geometry>
+        <material name="Blue"/>
+      </visual>
+      <!-- pilar_front_left -->
+      <collision>
+<origin rpy="0.000000 -0.385398 0.200000" xyz="0.060000 0.074 0.065"/>
+        <geometry>
+          <box size="0.022 0.001 0.08"/>
+        </geometry>
+      </collision>
+      <visual>
+<origin rpy="0.000000 -0.385398 -0.2000000" xyz="0.060000 0.074 0.065"/>
+        <geometry>
+          <box size="0.022 0.001 0.08"/>
+        </geometry>
+        <material name="Blue"/>
+      </visual>
+      <!-- pilar_back_left -->
+      <collision>
+<origin rpy="0.000000 0.585398 0.2000000" xyz="-0.115 0.074 0.065"/>
+        <geometry>
+          <box size="0.042 0.001 0.08"/>
+        </geometry>
+      </collision>
+      <visual>
+<origin rpy="0.000000 0.585398 0.2000000" xyz="-0.115 0.074 0.07"/>
+        <geometry>
+          <box size="0.042 0.001 0.08"/>
+        </geometry>
+        <material name="Blue"/>
+      </visual>
+      <!-- pilar_back_right -->
+      <collision>
+<origin rpy="0.000000 0.585398 -0.2000000" xyz="-0.115 -0.074 0.065"/>
+        <geometry>
+          <box size="0.042 0.001 0.08"/>
+        </geometry>
+      </collision>
+      <visual>
+<origin rpy="0.000000 0.585398 -0.2000000" xyz="-0.115 -0.074 0.07"/>
+        <geometry>
+          <box size="0.042 0.001 0.08"/>
+        </geometry>
+        <material name="Blue"/>
+      </visual>
+      <!-- ceiling -->
+      <collision>
+<origin rpy="1.57 0 0" xyz="-0.035 0.0 0.11"/>
+        <geometry>
+          <box size="0.17 0.01 0.15"/>
+        </geometry>
+      </collision>
+      <visual>
+<origin rpy="1.57 0 0" xyz="-0.035 0.0 0.11"/>
+        <geometry>
+          <box size="0.17 0.01 0.15"/>
+        </geometry>
+        <material name="Blue"/>
+      </visual>
+  </link>
+
+  <!-- back left wheel -->
+  <link name='back_left_wheel_link'>
+      <inertial>
+        <mass value="0.001"/>
+        <inertia
+          ixx="0.0010000"
+          ixy="0.000000"
+          ixz="0.000000"
+          iyy="0.0010000"
+          iyz="0.000000"
+          izz="0.0010000" />
+      </inertial>
+      <collision>
+        <geometry>
+          <cylinder length="0.005" radius="0.02"/>
+        </geometry>
+      </collision>
+      <visual>
+        <geometry>
+          <cylinder length="0.005" radius="0.02" />
+        </geometry>
+        <material name="Green"/>
+      </visual>
+  </link>
+
+  <joint name="back_left_wheel_joint" type="revolute">
+    <parent link="base_link"/>
+    <child link="back_left_wheel_link"/>
+    <origin rpy="1.57 0 0" xyz="-0.160000 0.100000 -0.0500000"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="300" lower="-3.14" upper="3.14" velocity="1"/>
+    <dynamics damping="50" friction="1"/>
+  </joint>
+
+  <!-- back right wheel -->
+  <link name='back_right_wheel_link'>
+      <inertial>
+        <mass value="0.001"/>
+        <inertia
+          ixx="0.0010000"
+          ixy="0.000000"
+          ixz="0.000000"
+          iyy="0.0010000"
+          iyz="0.000000"
+          izz="0.0010000" />
+      </inertial>
+      <collision>
+        <geometry>
+          <cylinder length="0.005" radius="0.02"/>
+        </geometry>
+      </collision>
+      <visual>
+        <geometry>
+          <cylinder length="0.005" radius="0.02" />
+        </geometry>
+        <material name="Green"/>
+      </visual>
+  </link>
+
+  <joint name="back_right_wheel_joint" type="revolute">
+    <parent link="base_link"/>
+    <child link="back_right_wheel_link"/>
+    <origin rpy="1.57 0 0" xyz="-0.160000 -0.100000 -0.0500000"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="300" lower="-3.14" upper="3.14" velocity="1"/>
+    <dynamics damping="50" friction="1"/>
+  </joint>
+
+  <!-- front left bar -->  
+  <link name='front_left_bar_link'>
+      <inertial>
+        <mass value="0.001"/>
+        <inertia
+          ixx="0.0010000"
+          ixy="0.000000"
+          ixz="0.000000"
+          iyy="0.0010000"
+          iyz="0.000000"
+          izz="0.0010000" />
+      </inertial>
+      <collision>
+        <geometry>
+          <box size="0.04 0.02 0.005"/>
+        </geometry>
+      </collision>
+      <visual>
+        <geometry>
+          <box size="0.04 0.02 0.005"/>
+        </geometry>
+        <material name="Red"/>
+      </visual>
+  </link>
+
+  <joint name="front_left_bar_joint" type="revolute">
+    <parent link="base_link"/>
+    <child link="front_left_bar_link"/>
+    <origin rpy="0 0 0" xyz="0.140000 0.060000 -0.0500000"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="300" lower="-0.5" upper="0.5" velocity="1"/>
+    <dynamics damping="50" friction="1"/>
+  </joint>
+
+  <!-- front left wheel -->
+  <link name='front_left_wheel_link'>
+      <inertial>
+        <mass value="0.001"/>
+        <inertia
+          ixx="0.0010000"
+          ixy="0.000000"
+          ixz="0.000000"
+          iyy="0.0010000"
+          iyz="0.000000"
+          izz="0.0010000" />
+      </inertial>
+      <collision>
+        <geometry>
+          <cylinder length="0.005" radius="0.02"/>
+        </geometry>
+      </collision>
+      <visual>
+        <geometry>
+          <cylinder length="0.005" radius="0.02" />
+        </geometry>
+        <material name="Green"/>
+      </visual>
+  </link>
+
+  <joint name="front_left_wheel_joint" type="revolute">
+    <parent link="front_left_bar_link"/>
+    <child link="front_left_wheel_link"/>
+    <origin rpy="1.57 0 0" xyz="0.000000 0.040000 0.000000"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="300" lower="-3.14" upper="3.14" velocity="1"/>
+    <dynamics damping="50" friction="1"/>
+  </joint>
+
+  
+  <!-- front right bar -->
+  <link name='front_right_bar_link'>
+      <inertial>
+        <mass value="0.001"/>
+        <inertia
+          ixx="0.0010000"
+          ixy="0.000000"
+          ixz="0.000000"
+          iyy="0.0010000"
+          iyz="0.000000"
+          izz="0.0010000" />
+      </inertial>
+      <collision>
+        <geometry>
+          <box size="0.04 0.02 0.005"/>
+        </geometry>
+      </collision>
+      <visual>
+        <geometry>
+          <box size="0.04 0.02 0.005"/>
+        </geometry>
+        <material name="Red"/>
+      </visual>
+  </link>
+  
+  <joint name="front_right_bar_joint" type="revolute">
+    <parent link="base_link"/>
+    <child link="front_right_bar_link"/>
+    <origin rpy="0 0 0" xyz="0.140000 -0.060000 -0.0500000"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="300" lower="-0.5" upper="0.5" velocity="1"/>
+    <dynamics damping="50" friction="1"/>
+  </joint>
+
+  <!-- front right wheel -->
+  <link name='front_right_wheel_link'>
+      <inertial>
+        <mass value="0.001"/>
+        <inertia
+          ixx="0.0010000"
+          ixy="0.000000"
+          ixz="0.000000"
+          iyy="0.0010000"
+          iyz="0.000000"
+          izz="0.0010000" />
+      </inertial>
+      <collision>
+        <geometry>
+          <cylinder length="0.005" radius="0.02"/>
+        </geometry>
+      </collision>
+      <visual>
+        <geometry>
+          <cylinder length="0.005" radius="0.02" />
+        </geometry>
+        <material name="Green"/>
+      </visual>
+  </link>
+
+  <joint name="front_right_wheel_joint" type="revolute">
+    <parent link="front_right_bar_link"/>
+    <child link="front_right_wheel_link"/>
+    <origin rpy="1.57 0 0" xyz="0.0000 -0.04000 0.000000"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="300" lower="-3.14" upper="3.14" velocity="1"/>
+    <dynamics damping="50" friction="1"/>
+  </joint>
+  
+  <!-- steer link -->
+  <link name='steer_link'>
+      <inertial>
+        <mass value="0.001"/>
+        <inertia
+          ixx="0.0010000"
+          ixy="0.000000"
+          ixz="0.000000"
+          iyy="0.0010000"
+          iyz="0.000000"
+          izz="0.0010000" />
+      </inertial>
+      <collision>
+        <geometry>
+          <box size="0.04 0.02 0.005"/>
+        </geometry>
+      </collision>
+      <visual>
+        <geometry>
+          <box size="0.04 0.02 0.005"/>
+        </geometry>
+        <material name="Red"/>
+      </visual>
+  </link>
+
+  <joint name="steer_joint" type="revolute">
+    <parent link="base_link"/>
+    <child link="steer_link"/>
+    <origin rpy="0 0 0" xyz="0.140000 0.000000 -0.0500000"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="300" lower="-0.5" upper="0.5" velocity="1"/>
+    <dynamics damping="50" friction="1"/>
+  </joint>
+
+  <!-- ackerman link -->
+  <link name='ackermann_bar_link'>
+      <inertial>
+        <mass value="0.001"/>
+        <inertia
+          ixx="0.0010000"
+          ixy="0.000000"
+          ixz="0.000000"
+          iyy="0.0010000"
+          iyz="0.000000"
+          izz="0.0010000" />
+      </inertial>
+      <collision>
+        <geometry>
+          <box size="0.020000 0.150000 0.010000"/>
+        </geometry>
+      </collision>
+      <visual>
+        <geometry>
+          <box size="0.020000 0.150000 0.010000"/>
+        </geometry>
+        <material name="Red"/>
+      </visual>
+  </link>
+
+  <joint name="ackermann_joint" type="revolute">
+    <parent link="steer_link"/>
+    <child link="ackermann_bar_link"/>
+    <origin rpy="0 0 0" xyz="-0.020 0.000000 0.000000"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="300" lower="-0.5" upper="0.5" velocity="1"/>
+    <dynamics damping="50" friction="1"/>
+  </joint>
+
+  <joint name="ackermann_left_bar_joint" type="revolute">
+    <parent link="front_left_bar_link"/>
+    <child link="ackermann_bar_link"/>
+    <origin rpy="0 0 0" xyz="-0.020000 -0.060000 0.000000"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="300" lower="-0.5" upper="0.5" velocity="1"/>
+    <dynamics damping="50" friction="1"/>
+  </joint>
+
+  <joint name="ackermann_right_bar_joint" type="revolute">
+    <parent link="front_right_bar_link"/>
+    <child link="ackermann_bar_link"/>
+    <origin rpy="0 0 0" xyz="-0.030000 0.060000 0.000000"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="300" lower="-0.5" upper="0.5" velocity="1"/>
+    <dynamics damping="50" friction="1"/>
+  </joint>
+
+  <!-- laser link -->
+  <joint name="laser_joint" type="fixed">
+    <origin rpy="0 0 0" xyz="0 0 .07"/>
+    <parent link="base_link"/>
+    <child link="laser_link"/>
+  </joint>
+  <link name="laser_link">
+    <inertial>
+      <mass value="0.1197"/>
+      <inertia ixx="0.00000429247" ixy="0.00000000000" ixz="0.00000002565" iyy="0.00000008027" iyz="0.00000000000" izz="0.00000427339"/>
+    </inertial>
+    <collision>
+<!-- <origin xyz="0.000000 0.000000 0.075000"/> -->
+        <geometry>
+          <box size="0.050000 0.050000 0.050000"/>
+        </geometry>
+    </collision>
+    <visual>
+<!-- <origin xyz="0.000000 0.000000 0.07000"/> -->
+        <geometry>
+          <cylinder radius="0.025" length="0.05"/>
+        </geometry>
+        <material name="Green"/>
+    </visual>
+  </link>
+  <gazebo reference="laser_link">
+      <sensor name="laser" type="ray">
+        <pose>0.01 0 0.07 0 -0 0</pose>
+        <ray>
+          <scan>
+            <horizontal>
+              <samples>360</samples>
+              <resolution>1</resolution>
+              <min_angle>0</min_angle>
+              <max_angle>6.28318530718</max_angle>
+            </horizontal>
+          </scan>
+          <range>
+            <min>0.08</min>
+            <max>3</max>
+            <resolution>0.01</resolution>
+          </range>
+        </ray>
+        <plugin name="laser" filename="libgazebo_ros_laser.so"> 
+          <robotNamespace></robotNamespace>
+          <topicName>/scan</topicName> 
+          <frameName>map</frameName> 
+        </plugin>
+        <always_on>1</always_on>
+        <update_rate>1</update_rate>
+        <visualize>true</visualize>
+      </sensor>
+  </gazebo>
+  
+  <gazebo>
+    <plugin name="differential_drive_controller" filename="libgazebo_ros_diff_drive.so">
+	 <alwaysOn>true</alwaysOn>
+	 <updateRate>20</updateRate>
+	 <leftJoint>back_left_wheel_joint</leftJoint>
+	 <rightJoint>back_right_wheel_joint</rightJoint>
+	 <wheelSeparation>0.15</wheelSeparation>
+	 <wheelDiameter>0.02</wheelDiameter>
+	 <!-- no se que haga este parametro -->
+	 <torque>20</torque>
+	 <commandTopic>cmd_vel</commandTopic>
+	 <odometryTopic>odom</odometryTopic>
+	 <odometryFrame>odom</odometryFrame>
+	 <robotBaseFrame>base_footprint</robotBaseFrame>
+    </plugin>
+  </gazebo>
+</robot>
