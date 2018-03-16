@@ -1,6 +1,7 @@
 <launch>
 
-  <node name="line_detection_fu_node" pkg="line_detection_fu_mod" type="line_detection_fu_node" output="screen" > 
+  <node name="line_detection_fu_node" pkg="vision" type="line_detection_fu_node" output="screen" > 
+
     <param name="cam_w"                         type="int"    value="640"/>  
     <param name="cam_h"                         type="int"    value="480"/> <!--we will use only bottom half of this...-->  
     <param name="proj_y_start"                  type="int"    value="50"/>
@@ -33,8 +34,8 @@
     <param name="detectLaneStartX"              type="int"    value="155"/> <!--this was originally 0.7m, which is about 90 in our case... used for gradient computation, might help us to get rid of too crazy polynomials-->
     <param name="maxAngleDiff"                  type="int"    value="999"/>
 
-    <param name="camera_name"           type="string"   value="/camera_name_ir/camera_name/depth/image_raw"/>      
-    <!-- <param name="camera_name"           type="string"   value="app/camera/rgb/image_raw"/>       -->
+    <!-- <param name="camera_name"           type="string"   value="/camera_name_ir/camera_name/depth/image_raw"/>    -->  
+    <param name="camera_name"           type="string"   value="app/camera/rgb/image_raw"/>       
     <param name="cam_deg"               type="double"   value="8"/>
     <param name="cam_height"            type="double"   value="18"/>
 

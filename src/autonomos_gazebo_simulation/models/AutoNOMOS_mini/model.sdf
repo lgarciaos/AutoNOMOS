@@ -159,7 +159,7 @@
       <self_collide>0</self_collide>
 
       <sensor name="camera" type="depth">
-        <pose>0.04 0 0.08 0 0.4 0</pose>
+        <pose>0.04 0 0.2 0 0.4 0</pose>
         <update_rate>20</update_rate>
         <visualize>true</visualize>
         <always_on>1</always_on>
@@ -201,13 +201,12 @@
         <baseline>0.2</baseline>
         <alwaysOn>true</alwaysOn>
         <updateRate>20</updateRate>
-        <cameraName>camera_name_ir</cameraName>
-        <imageTopicName>camera_name/depth/image_raw</imageTopicName>
-        <cameraInfoTopicName>camera_name/depth/camera_info</cameraInfoTopicName>
-        <depthImageTopicName>camera_name/depth/image_raw</depthImageTopicName>
-      
-        <depthImageCameraInfoTopicName>camera_name/depth/camera_info</depthImageCameraInfoTopicName>
-        <pointCloudTopicName>camera_name/depth/points</pointCloudTopicName>
+        <cameraName>app</cameraName>
+        <imageTopicName>camera/rgb/image_raw</imageTopicName>
+        <cameraInfoTopicName>camera/rgb/camera_info</cameraInfoTopicName>
+        <depthImageTopicName>camera/depth/image_raw</depthImageTopicName>
+        <depthImageCameraInfoTopicName>camera/depth/camera_info</depthImageCameraInfoTopicName>
+        <pointCloudTopicName>camera/points</pointCloudTopicName>
         <frameName>map</frameName>
         <pointCloudCutoffMax>0.5</pointCloudCutoffMax>
         <pointCloudCutoff>0.5</pointCloudCutoff>
