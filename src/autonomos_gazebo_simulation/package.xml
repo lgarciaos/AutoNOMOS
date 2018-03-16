@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package>
-  <name>autonomos_gazebo</name>
+  <name>autonomos_gazebo_simulation</name>
   <version>0.1.0</version>
   <description>The autonomos_gazebo package</description>
 

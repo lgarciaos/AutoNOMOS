@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(line_detection_fu_mod)
+project(vision)
  
 add_compile_options(-std=c++11)
 ## Find catkin macros and libraries
