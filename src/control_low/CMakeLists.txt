@@ -7,7 +7,8 @@ project(control_low)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED)
+find_package(gazebo REQUIRED )
+find_package(catkin REQUIRED roscpp std_msgs gazebo_msgs )
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -105,16 +106,18 @@ catkin_package(
 #  DEPENDS system_lib
 )
 
+include_directories(include ${catkin_INCLUDE_DIRS})
+
 ###########
 ## Build ##
 ###########
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-include_directories(
-# include
-# ${catkin_INCLUDE_DIRS}
-)
+include_directories(include 
+		${GAZEBO_INCLUDE_DIRS})
+
+link_directories(${GAZEBO_LIBRARY_DIRS})
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
@@ -130,6 +133,7 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME}_node src/control_low_node.cpp)
+add_executable(control_low PIDcontroller_lane_sim.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -145,6 +149,8 @@ include_directories(
 # target_link_libraries(${PROJECT_NAME}_node
 #   ${catkin_LIBRARIES}
 # )
+target_link_libraries(control_low ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
+
 
 #############
 ## Install ##

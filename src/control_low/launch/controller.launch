@@ -1,0 +1,19 @@
+<launch>
+
+    <node name="control_low" pkg="control_low" type="control_low" output="screen" > 
+
+        <param name="Kp"          type="double" value="1.8"/>
+        <param name="Ki"          type="double" value="0.04"/>
+        <param name="Kd"          type="double" value="0.0"/>
+        <param name="dt"          type="double" value="1.0"/>
+        <param name="pE"          type="double" value="320.0"/>
+        <param name="min"          type="double" value="-0.5"/>
+        <param name="max"          type="double" value="0.5"/>
+        <param name="velocity"      type="double" value="10"/>
+        <param name="altura"          type="double" value="70.0"/>
+        <param name="topico_steering"          type="string" value="/AutoNOMOS_mini/manual_control/steering"/>
+        <param name="topico_velocidad"          type="string" value="/AutoNOMOS_mini/manual_control/velocity"/>
+
+    </node> 
+ 
+</launch>
