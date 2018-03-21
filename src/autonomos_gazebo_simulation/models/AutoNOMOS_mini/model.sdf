@@ -159,7 +159,7 @@
       <self_collide>0</self_collide>
 
       <sensor name="camera" type="depth">
-        <pose>0.04 0 0.2 0 0.4 0</pose>
+        <pose>0.04 0 0.2 0 0.15 0</pose>
         <update_rate>20</update_rate>
         <visualize>true</visualize>
         <always_on>1</always_on>
