@@ -1,0 +1,6 @@
+<launch>
+
+    <node name="lane_states_node" pkg="navigation" type="lane_states_node" output="screen" > 
+    </node> 
+ 
+</launch>

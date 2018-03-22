@@ -14,5 +14,8 @@
   <node name = "robot_pose" pkg = "autonomos_gazebo_simulation" type = "robot_pose_publisher" />
 
   <include file="$(find vision)/launch/line_detection_fu.launch"/>
+
+  <include file="$(find navigation)/launch/lane_states.launch"/>
+
 </launch>
 	

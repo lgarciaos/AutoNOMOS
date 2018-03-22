@@ -57,16 +57,16 @@ float dist(geometry_msgs::Point p1, geometry_msgs::Point p2)
 // 7 |  1  |  1  |  1
 //
 //The states are:
-//		|	|	|			NI -> No se  Izq
-//		|		|			AI -> Afuera Izq
-//		|	|	|			LL -> Left Left
-//		|		|			LC -> Left Center
-//		|	|	|			CC -> Center Center
-//		|		|			RC -> Right Center
-//		|	|	|			RR -> Right Right
+//			  |	        |		  |			NI -> No se  Izq
+//			  |	        		  |			AI -> Afuera Izq
+//			  |	        |		  |			LL -> Left Left
+//			  |	        		  |			LC -> Left Center
+//			  |	        |		  |			CC -> Center Center
+//			  |	        		  |			RC -> Right Center
+//			  |	        |	      |			RR -> Right Right
 //   NI | AI  |LL| LC |CC |RC |RR | AD | ND		AD -> Afuera Derecha
 //   0	| 1   |2 | 3  |4  |5  |6  | 7  | 8		ND -> No se Derecha
-//	
+//			  	
 //
 int det_hit (int state)
 {
@@ -198,22 +198,6 @@ std_msgs::Float32MultiArray sense(std_msgs::Float32MultiArray prob)
 	return q;
 }
 
-// int comb(int n, int r)
-// {
-// 	int i, j;
-// 	int row[101];
-// 	row[0] = 1;
-// 	for (int i = 1; i <= n; ++i)
-// 	{
-// 		for (int j = i; j > 0; j--)
-// 		{
-// 			row[j] += row[ j - 1];
-// 		}
-// 		/* code */
-// 	}
-
-// 	return row[r];
-// }
 
 int combinaciones( int n, int r )
 {
@@ -245,20 +229,6 @@ float det_prob(int edo_ini, int ctrl_action, int edo_fin)
 	ctrl_action = (90 - ctrl_action); //Might be neccesary to fix steering direction
 
 	int sig_edo = 0;
-	//ROS_INFO_STREAM("ctrl: " << ctrl_action );
-	// if( ctrl_action == 45)
-	// {
-	// 	sig_edo = edo_ini;
-	// } else {
-	// 	sig_edo = HEIGHT / (float) tan( ( ctrl_action + 45 ) * M_PI / 180) ;
-	// 	ROS_INFO_STREAM("dist_X: " << sig_edo << " tan: " << tan( ( 
-	// 		ctrl_action + 45 ) * M_PI / 180) << " ctrl: " << ctrl_action );
-	// 	sig_edo = edo_fin + sig_edo / 20;
-	// }
-	
-	// ROS_INFO_STREAM("sig_edo: " << sig_edo);
-	// sig_edo = edo_fin;
-
 
 	if (ctrl_action > 75)
 	{
@@ -290,48 +260,6 @@ float det_prob(int edo_ini, int ctrl_action, int edo_fin)
 	} else {
 		p_bin -= ( ctrl_action / 100 ) / 4;
 	}
-	// if (sig_edo > 0)
-	// {
-
-	// 	sig_edo += edo_fin;
-
-	// } else if(sig_edo < 0)
-	// {
-	// 	total = NUM_STATES - sig_edo;
-	// 	sig_edo = edo_fin - sig_edo;
-	// } else {
-	// 	sig_edo = edo_fin ;
-	// ed	total = NUM_STATES;
-	// }
-
-
-	//FUNCIONA:
-	//p_bin = (sig_edo + 2 )/ 4.1;
-
-	//TESTING:
-//	p_bin = ctrl_action + 0.1  / 91.0;
-
-
-
-	// k = edo_fin + sig_edo;
-	// sig_edo += edo_ini;
-
-	// if (sig_edo < 0)
-	// {
-	// 	sig_edo = 0;
-
-	// } else if (sig_edo > NUM_STATES)
-	// {
-	// 	sig_edo = NUM_STATES;
-	// }
-	// if(k > NUM_STATES)
-	// {
-	// 	k = NUM_STATES;
-	// } else if(k < 0) {
-	// 	k = 0;
-	// }
-	//p_bin = (sig_edo +.09) / (float)(NUM_STATES+.1) ;
-	//p_bin = .5;// edo_ini / (float)(NUM_STATES) ;
 
 	prob = combinaciones(n,k) * pow(p_bin, k) * pow(1-p_bin, (n-k));
 	if(edo_fin == 0)
@@ -465,7 +393,7 @@ int main(int argc, char** argv){
 	    
 	    pub_loc.publish(p);
 
-	    print_state_order();
+	    // print_state_order();
 	    
 
 	    movement = 0;
