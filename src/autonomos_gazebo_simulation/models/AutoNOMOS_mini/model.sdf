@@ -55,6 +55,7 @@
           </friction>
         </surface>
       </collision>
+
       <collision name='base_link_geom_laser_base_link'>
         <pose>0.000000 0.000000 0.075000 0.000000 0.000000 0.000000</pose>
         <geometry>
@@ -71,6 +72,7 @@
           </friction>
         </surface>
       </collision>
+
       <visual name='base_link_visual'>
         <pose>0.000000 0.000000 0.000000 0.000000 0.000000 0.000000</pose>
         <geometry>
@@ -116,6 +118,7 @@
           </script>
         </material>
       </visual>
+
       <visual name='base_link_visuallaser_base_link'>
         <pose>0.000000 0.000000 0.07000 0.000000 0.000000 0.000000</pose>
         <geometry>
@@ -131,31 +134,39 @@
           </script>
         </material>
       </visual>
+
       <velocity_decay>
         <linear>0.000000</linear>
         <angular>0.000000</angular>
       </velocity_decay>
+
       <velocity_decay>
         <linear>0.000000</linear>
         <angular>0.000000</angular>
       </velocity_decay>
+
       <velocity_decay>
         <linear>0.000000</linear>
         <angular>0.000000</angular>
       </velocity_decay>
+
       <velocity_decay>
         <linear>0.000000</linear>
         <angular>0.000000</angular>
       </velocity_decay>
+
       <velocity_decay>
         <linear>0.000000</linear>
         <angular>0.000000</angular>
       </velocity_decay>
+
       <gravity>1</gravity>
+
       <velocity_decay>
         <linear>0.000000</linear>
         <angular>0.000000</angular>
       </velocity_decay>
+
       <self_collide>0</self_collide>
 
       <sensor name="camera" type="depth">
@@ -194,9 +205,7 @@
             <depthimagecamerainfotopicname>CameraLeft/depth/camera_info</depthimagecamerainfotopicname>            
             <pointcloudcutoff>0.8</pointcloudcutoff>
             <pointcloudcutoffmax>3.5</pointcloudcutoffmax>
-        </plugin>
-
-      </sensor> -->
+        </plugin> -->
       <plugin name="${link_name}_controller" filename="libgazebo_ros_openni_kinect.so">
         <baseline>0.2</baseline>
         <alwaysOn>true</alwaysOn>
@@ -251,6 +260,24 @@
         <update_rate>1</update_rate>
         <visualize>true</visualize>
       </sensor>
+
+    <sensor name="imu_sensor" type="imu">
+      <always_on>true</always_on>
+      <update_rate>100</update_rate>
+      <visualize>true</visualize>
+      <topic>__default_topic__</topic>
+      <plugin filename="libgazebo_ros_imu_sensor.so" name="imu_plugin">
+        <topicName>imu</topicName>
+        <!-- <bodyName>imu_link</bodyName> -->
+        <updateRateHZ>10.0</updateRateHZ>
+        <gaussianNoise>0.0</gaussianNoise>
+        <xyzOffset>0 0 0</xyzOffset>
+        <rpyOffset>0 0 0</rpyOffset>
+        <frameName>imu_link</frameName>
+      </plugin>
+      <pose>0 0 0 0 0 0</pose>
+    </sensor>
+
 
       <collision name='pilar_front_right'>
         <pose>0.060000 -0.074 0.065 0.000000 -0.385398 0.200000</pose>

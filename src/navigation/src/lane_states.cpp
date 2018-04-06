@@ -2,6 +2,7 @@
 #include "lane_states.h"
 //@AUTHOR: GARY
 
+#define STATE_WIDTH 22
 
 //gets the left points
 void get_pts_left(const nav_msgs::GridCells& array)
@@ -160,9 +161,9 @@ std_msgs::Float32MultiArray conv(std_msgs::Float32MultiArray p)
 		//ROS_INFO_STREAM("-------------------------" << i << "------------------------"); 
 		if (p.data[i] < 0.001)
 		{
-			bool hit = det_hit(i);
+			// bool hit = det_hit(i);
 		//	ROS_INFO_STREAM("PROB @SENSE_1: " << p.data[i]  * (hit * p_hit + (1-hit) * 0.001) );
-			q.data.push_back(p.data[i]  * (hit * p_hit + (1-hit) * 0.001) );
+			q.data.push_back(0.001 );
 		} else {
 			bool hit = det_hit(i);
 			 //ROS_INFO_STREAM(p.data[i] << " ==> " << p.data[i] * (hit * p_hit + (1-hit) * p_miss));
@@ -244,7 +245,7 @@ float det_prob(int edo_ini, int ctrl_action, int edo_fin)
 		sig_edo = 0;
 	} else if(ctrl_action > 15)
 	{
-		sig_edo = 1;// + ctrl_action - 15;
+		sig_edo = 1;// + ctrll_action - 15;
 		p_bin  = .2 + (ctrl_action - 15) / 100.0;
 	} else {
 		sig_edo = 2;
@@ -297,6 +298,96 @@ std_msgs::Float32MultiArray move(std_msgs::Float32MultiArray prob)
 	}
 
 	 return q;
+
+
+	//ctrl_action: radians in simulation
+	// positive is left
+
+	// a que estado podria llegar basado en velocidad y steering
+	// double speed = 0.15; // m/s
+	// multiplied by 100 to convert meters to cm (last 60) 
+	// adjusted to 40 for better reflection of real motion
+	// TODO conversion from pixels to cm
+
+
+	// float p_exact = 0.7;
+	// float p_undershoot = 0.1;
+	// float p_undershoot_2 = 0.05;
+	// float p_overshoot = 0.1;
+	// float p_overshoot_2 = 0.05;
+
+	// float speed = 3;
+
+
+	// double dist_x = speed * 60 * cos(M_PI/2 - ctrl_action); //*;
+	
+
+
+	// int U=dist_x;
+
+	// std_msgs::Float32MultiArray q;
+	// ROS_INFO_STREAM("Control: " << ctrl_action << ", U: " << U << ", dist_x: " << dist_x);
+	// for (int i = 0; i < NUM_STATES*STATE_WIDTH; i++) {
+
+	// 	double s = 0.0;
+		
+	// 	//HISTOGRAMA CICLICO
+	// 	//EXACT
+	// 	int mov = i+U;
+	// 	int mod2 = mov;
+		
+	// 	if (mov < 0)
+	// 		mod2 = abs(mov);
+	// 	if (mov > (NUM_STATES*STATE_WIDTH - 1))
+	// 		mod2 = (NUM_STATES*STATE_WIDTH - 1) - (mov - (NUM_STATES*STATE_WIDTH - 1));
+	// 	s = p_exact * prob.data[mod2];
+		
+	// 	//HISTOGRAMA CICLICLO
+	// 	//UNDERSHOOT
+	// 	mov = i+U-1;
+	// 	mod2 = mov;
+		
+	// 	if (mov < 0)
+	// 		mod2 = abs(mov);
+	// 	if (mov > (NUM_STATES*STATE_WIDTH - 1))
+	// 		mod2 = (NUM_STATES*STATE_WIDTH - 1) - (mov - (NUM_STATES*STATE_WIDTH - 1));
+	// 	s += p_undershoot * prob.data[mod2];
+
+	// 	// UNDERSHOOT 2
+	// 	mov = i+U-2;
+	// 	mod2 = mov;
+		
+	// 	if (mov < 0)
+	// 		mod2 = abs(mov);
+	// 	if (mov > (NUM_STATES*STATE_WIDTH - 1))
+	// 		mod2 = (NUM_STATES*STATE_WIDTH - 1) - (mov - (NUM_STATES*STATE_WIDTH - 1));
+	// 	s += p_undershoot_2 * prob.data[mod2];
+		
+	// 	//HISTOGRAMA CICLICLO
+	// 	//OVERSHOOT
+	// 	mov = i+U+1;
+	// 	mod2 = mov;
+		
+	// 	if (mov < 0)
+	// 		mod2 = abs(mov);
+	// 	if (mov > (NUM_STATES*STATE_WIDTH - 1))
+	// 		mod2 = (NUM_STATES*STATE_WIDTH - 1) - (mov - (NUM_STATES*STATE_WIDTH - 1));
+	// 	s += p_overshoot * prob.data[mod2];
+
+	// 	//OVERSHOOT 2
+	// 	mov = i+U+1;
+	// 	mod2 = mov;
+		
+	// 	if (mov < 0)
+	// 		mod2 = abs(mov);
+	// 	if (mov > (NUM_STATES*STATE_WIDTH - 1))
+	// 		mod2 = (NUM_STATES*STATE_WIDTH - 1) - (mov - (NUM_STATES*STATE_WIDTH - 1));
+	// 	s += p_overshoot_2 * prob.data[mod2];
+		
+	// 	q.data.push_back(s);
+
+	// }
+	// return q;
 }
 
 void print_state_order()
@@ -364,7 +455,7 @@ int main(int argc, char** argv){
 	ros::Subscriber sub_pts_left = nh.subscribe("/points/left",1, get_pts_left);
 	ros::Subscriber sub_pts_center = nh.subscribe("/points/center",1, get_pts_center);
 	ros::Subscriber sub_pts_right = nh.subscribe("/points/right",1, get_pts_right);
-	ros::Subscriber sub_mov = nh.subscribe("/manual_control/steering",1,get_ctrl_action);
+	ros::Subscriber sub_mov = nh.subscribe("/AutoNOMOS_mini/manual_control/steering",1,get_ctrl_action);
 	ros::Subscriber sub_des_state = nh.subscribe("/desire_state",1, get_des_state);
 	
 
@@ -380,7 +471,7 @@ int main(int argc, char** argv){
 
 	    
 		ROS_INFO_STREAM("MOVING: ");
-	    p = move(p);
+	    // p = move(p);
 	    ros::spinOnce();
 	    //ROS_INFO_STREAM("[" << p.data[0] << "," << p.data[1] << "," << p.data[2] << ","<< p.data[3] << ","<< p.data[4] << ","<< p.data[5] << "," << p.data[6] << "," << p.data[7] << ","<< p.data[8] << "]");
 		ROS_INFO_STREAM("[" << p.data[0] << "," << p.data[1] << "," << p.data[2] << ","<< p.data[3] << ","<< p.data[4] << ","<< p.data[5] << "," << p.data[6] << "," << p.data[7] << ","<< p.data[8] << "]");

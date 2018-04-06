@@ -8,6 +8,7 @@
 #include "ros/callback_queue.h"
 #include "ros/subscribe_options.h"
 #include "std_msgs/Float32.h"
+#include "std_msgs/Int16.h"
 
 namespace gazebo
 {
@@ -96,7 +97,7 @@ namespace gazebo
         
         // Create a named topic, and subscribe to it.
         ros::SubscribeOptions so =
-          ros::SubscribeOptions::create<std_msgs::Float32>(
+          ros::SubscribeOptions::create<std_msgs::Int16>(
               "/" + this->model->GetName() + "/manual_control/steering",
               1,
               boost::bind(&autonomos_plugin::OnRosMsg_steering, this, _1),
@@ -104,7 +105,7 @@ namespace gazebo
         this->rosSub = this->rosNode->subscribe(so);
         
         ros::SubscribeOptions so_vel =
-          ros::SubscribeOptions::create<std_msgs::Float32>(
+          ros::SubscribeOptions::create<std_msgs::Int16>(
               "/" + this->model->GetName() + "/manual_control/velocity",
               1,
               boost::bind(&autonomos_plugin::OnRosMsg_vel, this, _1),
@@ -140,12 +141,12 @@ namespace gazebo
       /// \brief Handle an incoming message from ROS
       /// \param[in] _msg A float value that is used to set the velocity
       /// of the Velodyne.
-      public: void OnRosMsg_steering(const std_msgs::Float32ConstPtr &_msg)
+      public: void OnRosMsg_steering(const std_msgs::Int16ConstPtr &_msg)
       {
         this->position = _msg->data;
       }
 
-      public: void OnRosMsg_vel(const std_msgs::Float32ConstPtr &_msg)
+      public: void OnRosMsg_vel(const std_msgs::Int16ConstPtr &_msg)
       {
         this->vel = _msg->data;
         std::cout << "On OnRosMsg_vel" << this->vel << std::endl;

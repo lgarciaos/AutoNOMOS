@@ -1,0 +1,7 @@
+<launch>
+
+    <!-- <node name="gen_next_pose" pkg="navigation" type="gen_next_pose_node" output="screen" >  -->
+    <node name="gen_next_pose" pkg="navigation" type="gen_next_pose_node" > 
+    </node> 
+ 
+</launch>

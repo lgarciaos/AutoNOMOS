@@ -1,18 +1,16 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(navigation)
+project(referee)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-# add_compile_options(-std=c++11)
+add_compile_options(-std=c++11)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(
 	catkin REQUIRED COMPONENTS
-	roscpp
+	roscpp 
 	std_msgs
-	nav_msgs
-	geometry_msgs
 	)
 
 ## System dependencies are found with CMake's conventions
@@ -105,8 +103,8 @@ find_package(
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
- INCLUDE_DIRS include
-#  LIBRARIES navigation
+#  INCLUDE_DIRS include
+#  LIBRARIES referee
 #  CATKIN_DEPENDS other_catkin_pkg
 #  DEPENDS system_lib
 )
@@ -118,13 +116,13 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-include
-${catkin_INCLUDE_DIRS}
+	include
+	${catkin_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/navigation.cpp
+#   src/${PROJECT_NAME}/referee.cpp
 # )
 
 ## Add cmake target dependencies of the library
@@ -135,8 +133,9 @@ ${catkin_INCLUDE_DIRS}
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_executable(lane_states_node src/lane_states.cpp)
-add_executable(gen_next_pose_node src/gen_next_pose.cpp)
+add_executable(
+	referee_node 
+	src/referee.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -150,14 +149,10 @@ add_executable(gen_next_pose_node src/gen_next_pose.cpp)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(
-	lane_states_node
-  	${catkin_LIBRARIES}
+	${PROJECT_NAME}_node
+	${catkin_LIBRARIES}
 )
 
-target_link_libraries(
-	gen_next_pose_node
-  	${catkin_LIBRARIES}
-)
 #############
 ## Install ##
 #############
@@ -198,7 +193,7 @@ target_link_libraries(
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_navigation.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_referee.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()

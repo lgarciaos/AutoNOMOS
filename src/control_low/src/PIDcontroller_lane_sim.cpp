@@ -23,9 +23,11 @@
 #include <std_msgs/Float32MultiArray.h>
 #include <nav_msgs/GridCells.h>
 #include <std_msgs/Int16.h>
-#include <std_msgs/Float32.h>
-#include <std_msgs/Float64.h>
+#include <std_msgs/Int32.h>
+// #include <std_msgs/Float32.h>
+// #include <std_msgs/Float64.h>
 #include <geometry_msgs/Twist.h>
+#include <geometry_msgs/Pose2D.h>
 
 #define PI 3.14159265
 
@@ -37,7 +39,7 @@ double distancia_librarobstaculomasmenos=0.1;
 double pendienteTrancazo =0.0;
 bool rebasando = false;
 
-double rate_hz = 10;
+double rate_hz = 5;
 
 double max;
 double min;
@@ -51,8 +53,8 @@ double pE;
 double velocity;
 geometry_msgs::Twist velocity_msg;
 geometry_msgs::Twist positionObj;
-std_msgs::Float32 vel;
-std_msgs::Float32 steer;
+std_msgs::Int16 vel;
+std_msgs::Int16 steer;
 
 ros::Publisher pub_speed_ste;
 ros::Publisher pub_steer_ste;
@@ -82,72 +84,48 @@ double PIDtime(double pActual, double pDestino, double dt, double Kp, double Kd,
 
 
 // reads steering from standarized topic
-void get_ctrl_action_steer(const std_msgs::Float32& val) {
-	steering_actual = val.data;
+void get_ctrl_action_steer(const geometry_msgs::Pose2D& val) {
+	ROS_INFO_STREAM("steer angle: " << val.theta);
+	steering_actual = val.theta ;
 }
 
 // reads speed from standarized topic
-void get_ctrl_action_vel(const std_msgs::Float32& val) {
+void get_ctrl_action_vel(const std_msgs::Int16& val) {
 	// negative is forward
-	speed = sqrt(val.data * val.data);
+	// speed = sqrt(val.data * val.data);
 }
 
-//void get_lidar(const geometry_msgs::Twist& msg) {
-	//positionObj.linear.x = msg.linear.x;
-	//positionObj.linear.y = msg.linear.y;
-    //positionObj.angular.z = msg.linear.z; 
-//}
 
-void get_vel_vec(const geometry_msgs::Twist& msg) {
+void get_vel_vec(const geometry_msgs::Pose2D& msg) {
 
 		double p = 0.0;
 		float pid_res = 0.0;
 
-		double posEsp = msg.angular.z; // pixeles: velocity_msg.linear.x;
+		double posEsp = msg.theta; // pixeles: velocity_msg.linear.x;
 		double posActual = steering_actual; // pixeles: pE; 
 		
-		printf("\n Angulo Esperado: %+010.4f, Actual: %+010.4f", posEsp, posActual);
+		// printf("Angulo Esperado: %+010.4f, Actual: %+010.4f \n", posEsp, posActual);
 		
-		// OBSTACULO
-		/*
-		if(librarobstaculo){
-			double distanciaObstaculo = sqrt((velocity_msg.linear.x*velocity_msg.linear.x)+(velocity_msg.linear.y*velocity_msg.linear.y));
-			if((positionObj.angular.z > 70 && positionObj.angular.z < 120)){
-				
-				if(distanciaObstaculo < distancialibrarobstaculo){
-					//APLICAR CORRECCION a la IZQUIERDA
-					posEsp -= velocity*pendienteTrancazo; // -100px talvez
-					// activar rebasando
-					rebasando = true;
-				}
-			}
-			else if(positionObj.angular.z < -70 && positionObj.angular.z > -120) {
-				// si rebasando
 
-				if(distanciaObstaculo < distancialibrarobstaculo){
-				// aplicar correccion a la derecha
-					posEsp += velocity*pendienteTrancazo; // -100px talvez
-					// activar rebasando
-					rebasando = false;
-				}
-			}
-		}
-		*/
-
-		p = PIDtime(posActual, posEsp, dt, Kp, Kd, Ki);
+		// p = PIDtime(posActual, posEsp, dt, Kp, Kd, Ki);
 		
-		pid_res=p;
+		// double error = posActual - posEsp;
+		// p = posEsp;
+
+		// pid_res=p;
 		// Restriction en las llantas
-		if( pid_res > max )
-			pid_res = max;
-		else if( pid_res < min )
-			pid_res = min;
+		// if( pid_res > max )
+		// 	pid_res = max;
+		// else if( pid_res < min )
+		// 	pid_res = min;
+		// ROS_INFO_STREAM("Desired:  " << posEsp);
+		ROS_INFO_STREAM("steering: " << posEsp);
 
-		printf("\n Error theta: %+010.4f, Res PID: %+010.4f, Senal Servo: %+010.4f", theta, p, pid_res );
+		// printf("Error theta: %+010.4f, Res PID: %+010.4f, Senal Servo: %+010.4f\n", theta, p, pid_res );
 
-		vel.data = (float)velocity;
-		steer.data = pid_res;
-
+		vel.data = -200;
+		steer.data = posEsp;
+		// steering_actual = pid_res;
 		pub_speed_ste.publish(vel);
 		pub_steer_ste.publish(steer);
 }
@@ -177,20 +155,21 @@ int main(int argc, char** argv){
 		priv_nh_.param<double>(node_name+"/distancia_librarobstaculo", distancialibrarobstaculo, 9.0);
 		priv_nh_.param<double>(node_name+"/distancia_librarobstaculomasmenos", distancia_librarobstaculomasmenos, 9.0);
 		priv_nh_.param<double>(node_name+"/pendienteTrancazo", pendienteTrancazo, 0.66);
-		priv_nh_.param<std::string>(node_name+"/topico_velocidad", topico_velocidad, "/AutoNOMOS_mini/manual_control/velocity");
-		priv_nh_.param<std::string>(node_name+"/topico_steering", topico_steering, "/AutoNOMOS_mini/manual_control/steering");
+		priv_nh_.param<std::string>(node_name+"/topico_velocidad", topico_velocidad, "/manual_control/speed");
+		priv_nh_.param<std::string>(node_name+"/topico_steering", topico_steering, "/manual_control/steering");
 
-		pub_speed_ste = nh.advertise<std_msgs::Float32>(topico_velocidad, MY_ROS_QUEUE_SIZE);
-		pub_steer_ste = nh.advertise<std_msgs::Float32>(topico_steering, MY_ROS_QUEUE_SIZE);
+		pub_speed_ste = nh.advertise<std_msgs::Int16>("/manual_control/speed", MY_ROS_QUEUE_SIZE);
+		pub_steer_ste = nh.advertise<std_msgs::Int16>("/manual_control/steering"	, MY_ROS_QUEUE_SIZE);
 
 		//CREO QUE ESTO NO SIRVE DE NADA
-		ros::Subscriber sub_steering = nh.subscribe(topico_steering, MY_ROS_QUEUE_SIZE, &get_ctrl_action_steer);
+		// ros::Subscriber sub_steering = nh.subscribe("/robot/pose", MY_ROS_QUEUE_SIZE, &get_ctrl_action_steer);
 		ros::Subscriber sub_velocity = nh.subscribe(topico_velocidad, MY_ROS_QUEUE_SIZE, &get_ctrl_action_vel);
 
 		ros::Subscriber sub_lidar = nh.subscribe("/target_pose", MY_ROS_QUEUE_SIZE, &get_vel_vec);
 
 		while (nh.ok())
 		{
+			// ste
 			ros::spinOnce();
 			loop_rate.sleep();
 		}

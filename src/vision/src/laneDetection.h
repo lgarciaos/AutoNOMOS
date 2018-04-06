@@ -294,7 +294,7 @@ class cLaneDetectionFu
         nav_msgs::GridCells array_lane_model;
         nav_msgs::GridCells array_ransac_horizontal;
 
-        double rate_hz = 30;
+        double rate_hz = 10;
 
     public:
                 
