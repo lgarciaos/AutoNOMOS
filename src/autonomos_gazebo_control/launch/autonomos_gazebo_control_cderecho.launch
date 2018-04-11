@@ -9,7 +9,7 @@
     args="joint_state_controller
        steer/steer_position_controller"/>
 
-  <include file="$(find autonomos_gazebo)/launch/autonomos_camino_derecho.launch">
+  <include file="/home/eduardo/TESIS/git/AutoNOMOS/src/autonomos_gazebo/launch/autonomos_camino_derecho.launch">
     
   </include>
 

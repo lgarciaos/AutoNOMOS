@@ -7,7 +7,7 @@
         <param name="seleccion_real_simulacion"    type="string" value="simulacion"/>
   </node> 
 
-  <node name="line_detection_fu_node" pkg="line_detection_fu_mod" type="line_detection_fu_node" > 
+  <node name="line_detection_fu_node" pkg="line_detection_fu_mod" type="line_detection_fu_node" output="screen" > 
         <param name="cam_w"                         type="int"    value="640"/>  
         <param name="cam_h"                         type="int"    value="480"/> <!--we will use only bottom half of this...-->  
         <param name="proj_y_start"                  type="int"    value="40"/> <!-- 50 def. Offset vertical imagen. -->
@@ -27,7 +27,7 @@
         <param name="interestDistancePoly"          type="int"    value="25"/>
         <param name="interestDistanceDefault"       type="int"    value="25"/>
         <param name="iterationsRansac"              type="int"    value="30"/> <!-- 40 defa. -->
-        <param name="proportionThreshould"          type="double" value="0.85"/> <!-- 0.85 def -->
+        <param name="proportionThreshould"          type="double" value="0.8"/> <!-- 0.85 def -->
         <param name="m_gradientThreshold"           type="int"    value="8"/>
         <param name="m_nonMaxWidth"                 type="int"    value="8"/> <!-- 10 default -->
         <param name="laneMarkingSquaredThreshold"   type="int"    value="49"/> <!-- 49 default. Al perecer se utiliza para filtrar posibles marcas -->
@@ -59,27 +59,36 @@
         <param name="c_v"                   type="double"   value="7.779505"/>
         
         <param name="topico_estandarizado"           type="string"   value="/standarized_vel_ste" />
-        <param name="kalpha"                type="double"   value="1.0"/>
-        <param name="kbeta"                 type="double"   value="0.5"/>
-        <param name="car_center"            type="int"      value="87" />
+        <!-- www2.maths.lth.se/matematiklth/personal/.../zls-iccv13.pdf -->
+        <param name="kalpha"                type="double"   value="1.8"/>
+        <param name="kbeta"                 type="double"   value="0.6"/>
+        <param name="car_center"            type="int"      value="90" />
         <param name="dbscan_epsilon"        type="int"      value="45" />
 
   </node>
 
+  
   <node name="lane_states_node" pkg="lane_states_original" type="lane_states_node" output="screen" >
-        <param name="car_center"           type="int" value="87" />
+        <param name="car_center"           type="int" value="90" />
   </node>
 
-  <node name="lane_controller_sim_node" pkg="lane_controller_sim" type="lane_controller_sim_node" output="screen" > 
-        <param name="Kp"                   type="double" value="1.8"/>
-        <param name="Ki"                   type="double" value="0.04"/>
+  
+  <node name="lane_controller_sim_node" pkg="lane_controller_sim" type="lane_controller_sim_node" > 
+        <param name="Kp"                   type="double" value="1.5"/>
+        <param name="Ki"                   type="double" value="0.02"/>
         <param name="Kd"                   type="double" value="0.0"/>
         <param name="dt"                   type="double" value="1.0"/>
+        
+        <!--
         <param name="pE"                   type="double" value="320.0"/>
-        <param name="min"                  type="double" value="-0.5"/>
-        <param name="max"                  type="double" value="0.5"/>
+        -->
+
+        <param name="min"                  type="double" value="-0.7"/>
+        <param name="max"                  type="double" value="0.7"/>
         <param name="velocity"             type="double" value="-0.15"/>
         <param name="altura"               type="double" value="70.0"/>
 	    <param name="topico_estandarizado" type="string" value="/standarized_vel_ste"/>
    </node> 
+   
+
 </launch>

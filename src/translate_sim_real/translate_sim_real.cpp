@@ -5,7 +5,7 @@
 #include <std_msgs/Float64.h>
 #include <std_msgs/Int16.h>
 
-#define RATE_HZ 100
+#define RATE_HZ 30
 
 // This project standarizes how calls are made from every node in the proyect to the car
 // making transparent the selection if one looks to use simulation or the real car

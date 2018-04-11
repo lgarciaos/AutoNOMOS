@@ -109,6 +109,7 @@ class cLaneDetectionFu
 
         ros::Publisher pub_speed;
         ros::Publisher pub_steering;
+        ros::Publisher pub_orientation;
 
         IPMapper ipMapper;
 
@@ -330,7 +331,7 @@ class cLaneDetectionFu
 
         std::vector<FuPoint<int>> extractLaneMarkingsHorizontal(const std::vector<std::vector<EdgePoint>>& edges);
 
-        void buildLaneMarkingsLists(const dbscan::point_t *points, const int num_points, const unsigned int num_clusters );
+        int buildLaneMarkingsLists(const dbscan::point_t *points, const int num_points, const unsigned int num_clusters );
 
         void buildLaneMarkingsListsHorizontal(const std::vector<FuPoint<int>> &laneMarkings);
 
@@ -389,7 +390,7 @@ class cLaneDetectionFu
         void get_ctrl_desired_state(const std_msgs::Float64& val);
 
         bool ackerman_control_next_points(double y_next_dist, cv::Point& pt_car, cv::Point& y_next_pt, 
-            cv::Point& y_next_pt2, cv::Point& pt_slope);
+            cv::Point& y_next_pt2);
 
         void ackerman_control(cv::Mat& imagePaint, NewtonPolynomial& polyLeft, NewtonPolynomial& polyCenter,
     NewtonPolynomial& polyRight);

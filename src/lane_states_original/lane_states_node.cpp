@@ -7,6 +7,7 @@
 #include <std_msgs/Float32MultiArray.h>
 #include <nav_msgs/GridCells.h>
 #include <std_msgs/Int16.h>
+#include <std_msgs/Float32.h>
 #include <std_msgs/Float64.h>
 #include <string>
 #include <sstream>
@@ -17,17 +18,20 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/core.hpp>
 
+#include "gazebo_msgs/LinkStates.h"
+#include "tf/tf.h"
+
 static const uint32_t MY_ROS_QUEUE_SIZE = 1;
 #define NUM_STATES 7
 #define STATE_WIDTH 22
-#define RADIO 7
+#define RADIO 15
 #define PI 3.14159265
 
 #define PRINT_OUTPUT 
 #define PUBLISH_DEBUG_OUTPUT 
 
 geometry_msgs::Twist destiny_position;
-double rate_hz = 5;
+double rate_hz = 15;
 ros::Publisher pub_loc;
 ros::Publisher pub_lidar;
 ros::Publisher pub_image;
@@ -37,22 +41,25 @@ nav_msgs::GridCells arr_left;
 nav_msgs::GridCells arr_center;
 nav_msgs::GridCells arr_right;
 
+geometry_msgs::Twist car_global_pose;
+
 // std::string nombre_estado [9] = {"DNL",   "OL",   "LL",   "LC",   "CC",   "RC",   "RR",   "OR", "DNR"};
 std::string nombre_estado [NUM_STATES] = { "OL",   "LL",   "LC",   "CC",   "RC",   "RR",   "OR"};
 
 // movement
 float p_exact = 0.7;
-float p_undershoot = 0.1;
+float p_undershoot = 0.15;
 float p_undershoot_2 = 0.05;
-float p_overshoot = 0.1;
+float p_overshoot = 0.15;
 float p_overshoot_2 = 0.05;
 
 // sensor
-float p_hit = 0.95;
-float p_miss = 0.05;
+float p_hit = 0.99;
+float p_miss = 0.01;
 
 int car_center = 80; //TODO
 float speed = 0;
+float car_orientation = 0;
 
 //int movement = 45;
 // PERCEPCION DE LIDAR
@@ -61,9 +68,15 @@ int L = 0;
 int C = 0;
 int R = 0;
 int des_state = 5;
-float ctrl_action = 0;
+float steering_action = 0;
 float ctrl_estado = 0;
+double dist_x_steering = 0;
+double pix_x_prob = 0;
 int pixeles_cambio_estado=0;
+
+double odom_x = 0;
+double odom_y = 0;
+double odom_theta = 0;
 
 int lanes_detected = 0;
 
@@ -114,7 +127,7 @@ void get_pts_right(const nav_msgs::GridCells& array) {
 void get_ctrl_action(const geometry_msgs::Twist& val) {
 	// negative speed is forward
 	// it is not required to know if the car is moving forward or backward, positive for simplification
-	ctrl_action = val.angular.z;
+	steering_action = val.angular.z;
 	speed = sqrt(val.linear.x * val.linear.x);
 }
 
@@ -122,8 +135,24 @@ void get_ctrl_desired_state(const std_msgs::Float64& val) {
     ctrl_estado = val.data;
 }
 
-//calculates the distance in pixels. NOTE: only using th x component because Y is asumed constant, maybe isnt the best way to have it.
-//If y is asumed constant ==> using abs() instead of sqrt might be more efficient
+// get global orientation
+void get_car_orientation(const std_msgs::Float32& val) {
+	car_orientation = val.data;
+}
+
+// get global pose of car
+void poseCallback(const gazebo_msgs::LinkStates& msg){
+	// msg.name 
+	// TODO search by car name
+	car_global_pose.linear.x = msg.pose[2].position.x;
+	car_global_pose.linear.y = msg.pose[2].position.y;
+	double yaw = tf::getYaw(msg.pose[2].orientation);
+	car_global_pose.angular.z = yaw;
+}
+
+// Calculates the distance in pixels. NOTE: only using th x component because Y is asumed constant, 
+// maybe isnt the best way to have it.
+// If y is asumed constant ==> using abs() instead of sqrt might be more efficient
 float horizontal_dist(geometry_msgs::Point p1, geometry_msgs::Point p2) {
 	float dif_x = p1.x - p2.x;
 	return sqrt(dif_x * dif_x); // absolute value
@@ -195,19 +224,72 @@ int det_hit (int position) {
 			hit = (ll || cc || rr ) && ((lanes_detected == 1 && rr) ||
 										(lanes_detected == 3 && cc) ||
 										(lanes_detected == 7 && ll));
+
+			if (hit) {
+				double state_center = (state * STATE_WIDTH + (state+1) * STATE_WIDTH) / 2;
+				// el supuesto es que solo ve una linea: right or center
+				double dist_car_in_state = dist_sensado_rr < dist_sensado_cc ? dist_sensado_rr : dist_sensado_cc;
+				dist_car_in_state = dist_car_in_state < dist_sensado_ll ? dist_car_in_state : dist_sensado_ll;
+
+	        	if ((position < state_center - dist_car_in_state - RADIO / 2 || position >  state_center - dist_car_in_state + RADIO / 2) && (position < state_center + dist_car_in_state - RADIO / 2 || position >  state_center + dist_car_in_state + RADIO / 2))
+					hit = !hit;
+			}
 			
 			break;
+
+			// FALTA APROVECHAR INFORMACION DE SENSADO 
+
 		case 2: //LC
 			// posibles combinaciones:
 			// no esta cerca de ninguna linea
 			// 2L carro entre C y R
 			// 3L carro entre L y C
 
-
 			// hit = !(rr || cc ) && (lanes_detected == 3); 
-			if (R > 0 || C > 0 || R > 0)
+			if (R > 0 || C > 0 || R > 0) {
 				hit = !(ll || cc || rr) && ((lanes_detected == 3 && car_center > arr_center.cells[0].x) ||
-			 							(lanes_detected == 7 && car_center < arr_center.cells[0].x)) ;
+			 								(lanes_detected == 7 && car_center < arr_center.cells[0].x));
+
+				
+				if (hit) {
+					double min_coord = state * STATE_WIDTH;
+					double max_coord = (state + 1) * STATE_WIDTH;
+					double temp_min, temp_max;
+
+					if ( car_center > arr_center.cells[0].x ) {
+						// pt_c debe estar a la izquierda, en este caso se cumple
+						if (dist_sensado_cc > 0 && dist_sensado_cc < 1000)
+							temp_min = min_coord + dist_sensado_cc - STATE_WIDTH / 2 - RADIO;
+						// pt_r debe estar a la derecha, en este caso se cumple
+						if (dist_sensado_rr > 0 && dist_sensado_rr < 1000)
+							temp_max = max_coord + -dist_sensado_rr + STATE_WIDTH / 2 + RADIO;
+					} else {
+						// pt_c debe estar a la izquierda, en este caso se cumple
+						if (dist_sensado_cc > 0 && dist_sensado_cc < 1000)
+							temp_min = min_coord + dist_sensado_ll - STATE_WIDTH / 2 - RADIO;
+						// pt_r debe estar a la derecha, en este caso se cumple
+						if (dist_sensado_rr > 0 && dist_sensado_rr < 1000)
+							temp_max = max_coord + -dist_sensado_cc + STATE_WIDTH / 2 + RADIO;
+					}
+					if (temp_min > min_coord) {
+						if (temp_min > max_coord - RADIO)
+							min_coord =  max_coord - RADIO;
+						else
+							min_coord = temp_min;
+					}
+					if (temp_max < max_coord) {
+						if (temp_max < min_coord + RADIO)
+							max_coord = min_coord + RADIO;
+						else
+							max_coord = temp_max;
+					}
+
+
+					if (position < min_coord || position > max_coord)
+						hit = !hit;
+				}
+				
+			}
 
 			break;
 		case 3: //CC
@@ -219,6 +301,18 @@ int det_hit (int position) {
 			hit = ( cc || rr ) && ((lanes_detected == 3) ||
 			 					   (lanes_detected == 7 && cc));
 
+			if (hit) {
+				double state_center = (state*STATE_WIDTH + (state+1)*STATE_WIDTH) / 2;
+				// el supuesto es que solo ve una linea: right or center
+				double dist_car_in_state = dist_sensado_rr < dist_sensado_cc ? dist_sensado_rr : dist_sensado_cc;
+
+	        	if ((position < state_center - dist_car_in_state - RADIO / 2 || 
+	        		position >  state_center - dist_car_in_state + RADIO / 2) && 
+	        		(position < state_center + dist_car_in_state - RADIO / 2 || 
+	        		position >  state_center + dist_car_in_state + RADIO / 2))
+					hit = !hit;
+			}
+
 			break;
 		case 4: //RC
 			// posibles combinaciones:
@@ -226,10 +320,44 @@ int det_hit (int position) {
 			// 2L carro entre C y R
 			// 3L carro entre C y R
 
-			if ( C > 0 )
+			if ( C > 0 ) {
 				hit = !(ll || cc || rr) && 
 					car_center > arr_center.cells[0].x && 
-					( lanes_detected == 3 || lanes_detected == 7 ) ;
+					( lanes_detected == 3 || lanes_detected == 7 );
+
+				
+				if (hit) {
+					double min_coord = state * STATE_WIDTH;
+					double max_coord = (state + 1) * STATE_WIDTH;
+					double temp;
+
+					// pt_c debe estar a la izquierda, en este caso se cumple
+					if (dist_sensado_cc > 0 && dist_sensado_cc < 1000) {
+						temp = min_coord + dist_sensado_cc - STATE_WIDTH / 2 - RADIO;
+						if (temp > min_coord) {
+							if (temp > max_coord - RADIO)
+								min_coord =  max_coord - RADIO;
+							else
+								min_coord = temp;
+						}
+					}
+
+					// pt_r debe estar a la derecha, en este caso se cumple
+					if (dist_sensado_rr > 0 && dist_sensado_rr < 1000) {
+						temp = max_coord + -dist_sensado_rr + STATE_WIDTH / 2 + RADIO;
+						if (temp < max_coord) {
+							if (temp < min_coord + RADIO)
+								max_coord = min_coord + RADIO;
+							else
+								max_coord = temp;
+						}
+					}
+
+					if (position < min_coord || position > max_coord)
+						hit = !hit;
+				}
+				
+			}
 
 			break;
 		case 5: //RR
@@ -242,6 +370,17 @@ int det_hit (int position) {
 			hit = rr && (lanes_detected == 1 || 
 						 lanes_detected == 3 || 
 						 lanes_detected == 7);
+
+			if (hit) {
+				if (hit) {
+					double state_center = (state * STATE_WIDTH + (state + 1) * STATE_WIDTH) / 2;
+					// el supuesto es que solo ve una linea: right or center
+					double dist_car_in_state = dist_sensado_rr;
+
+		        	if ((position < state_center - dist_car_in_state - RADIO / 2 || position >  state_center - dist_car_in_state + RADIO / 2) && (position < state_center + dist_car_in_state - RADIO / 2 || position >  state_center + dist_car_in_state + RADIO / 2))
+						hit = !hit;
+				}
+			}
 			
 			break;
 		case 6: //OR
@@ -264,6 +403,10 @@ int det_hit (int position) {
 }
 
 float* det_hits() {
+	// TODO: Hay una idea pendiente, la cual es que el sensado nos puede dar información de los estados 
+	// aunque no estemos en ese estado, si podemos saber que nos estamos acercado
+	// p.ej. estamos en RC y nos movemos a la izquierda sabemos que estamos en los limites de CC
+
 	lanes_detected = (L > 0);
 	lanes_detected = lanes_detected << 1;
 	lanes_detected = lanes_detected | C > 0;
@@ -298,8 +441,8 @@ float* det_hits() {
 	// based on sensing update probabilities
 	float* hits = new float[NUM_STATES*STATE_WIDTH];
 	for (int i = 0; i < NUM_STATES*STATE_WIDTH; ++i) {
-		int hit = det_hit(i);
-		hits[i]=(hit * p_hit + (1-hit) * p_miss);
+		unsigned int hit = det_hit(i);
+		hits[i] = (hit * p_hit + (1-hit) * p_miss);
 	}
 
 	return hits;
@@ -323,7 +466,7 @@ std_msgs::Float32MultiArray sense(std_msgs::Float32MultiArray p, float* hits) {
 }
 
 std_msgs::Float32MultiArray move(std_msgs::Float32MultiArray prob) {
-	//ctrl_action: radians in simulation
+	//steering_action: radians in simulation
 	// positive is left
 
 	// a que estado podria llegar basado en velocidad y steering
@@ -331,69 +474,97 @@ std_msgs::Float32MultiArray move(std_msgs::Float32MultiArray prob) {
 	// multiplied by 100 to convert meters to cm (last 60) 
 	// adjusted to 40 for better reflection of real motion
 	// TODO conversion from pixels to cm
-	double dist_x = speed * 60 * cos(PI/2 - ctrl_action); //*;
-	
-	int U=dist_x;
+
+	/* EQUATIONS with respect to car frame
+	R = ℓ / sin(α) (when steering angle is not 0)
+	φ = V * dt / R
+	dx = R * sin(φ)
+	dy = (R - R * cos(φ)) (for left turn)
+	dy = -(R - R * cos(φ)) (for right turn)
+	dθ = V / ℓ * sin(α) * dt
+	x = x + dx * cos(θ) - dy * sin(θ)
+	y = y + dx * sin(θ) + dy * cos(θ)
+	θ = θ + dθ
+	vx = dx / dt
+	vy = dy / dt
+	vθ = dθ / dt
+	*/
+
+	double l = 0.3;
+	double alpha = steering_action;
+	double dt = 1 / rate_hz;
+	double V = speed;
+
+	if (alpha != 0) {
+		double R = l / sin(alpha);
+		double phi = V * dt / R; // m/s 
+		double dx = (R * sin(phi));
+		double dy = alpha < 0 ? (R - R * cos(phi)) : -(R - R * cos(phi));
+		// double dy = alpha >= 0 ? (R - R * cos(phi)) : -(R - R * cos(phi));
+		// double dy = (R - R * cos(phi));
+		double dtheta = V / l * sin(alpha) * dt;
+		odom_x = odom_x + dx * cos(odom_theta) - dy * sin(odom_theta);
+		double odom_y_previo = odom_y;
+		odom_y = odom_y + dx * sin(odom_theta) + dy * cos(odom_theta);
+		odom_theta = odom_theta + dtheta;
+		double vx = dx / dt;
+		double vy = dy / dt;
+		double vtheta = dtheta / dt;
+		printf("\n odomx: %.2f, odomy: %.2f, odomtheta: %.2f", odom_x, odom_y, odom_theta);
+
+		// x con respecto al marco de referencia global, y con respecto al marco del carro
+		dist_x_steering = odom_y - odom_y_previo; //speed * sin(steering_action); // antes cos(car_orientation - steering_action)
+	} else {
+		dist_x_steering = 0;
+	}
+
+	pix_x_prob = dist_x_steering / 0.006879221;
+
+	int U = round(pix_x_prob);
 
 	std_msgs::Float32MultiArray q;
-	ROS_INFO_STREAM("Control: " << ctrl_action << ", U: " << U << ", dist_x: " << dist_x);
+	ROS_INFO_STREAM("Orientation: " << car_orientation << ", Control: " << steering_action << ", U: " << U << ", dist_x_steering: " << dist_x_steering);
 	for (int i = 0; i < NUM_STATES*STATE_WIDTH; i++) {
 
 		double s = 0.0;
 		
 		//HISTOGRAMA CICLICO
 		//EXACT
-		int mov = i+U;
-		int mod2 = mov;
-		
-		if (mov < 0)
-			mod2 = abs(mov);
-		if (mov > (NUM_STATES*STATE_WIDTH - 1))
-			mod2 = (NUM_STATES*STATE_WIDTH - 1) - (mov - (NUM_STATES*STATE_WIDTH - 1));
+		int mov = i + U;
+		int mod2 = (mov) % (NUM_STATES*STATE_WIDTH);
+		if (mod2<0) mod2 = NUM_STATES*STATE_WIDTH+mod2;
 		s = p_exact * prob.data[mod2];
 		
 		//HISTOGRAMA CICLICLO
 		//UNDERSHOOT
-		mov = i+U-1;
-		mod2 = mov;
-		
-		if (mov < 0)
-			mod2 = abs(mov);
-		if (mov > (NUM_STATES*STATE_WIDTH - 1))
-			mod2 = (NUM_STATES*STATE_WIDTH - 1) - (mov - (NUM_STATES*STATE_WIDTH - 1));
+		mov = i + U - 1;
+		mod2 = (mov) % (NUM_STATES*STATE_WIDTH);
+		if (mod2<0) mod2 = NUM_STATES*STATE_WIDTH+mod2;
 		s += p_undershoot * prob.data[mod2];
 
 		// UNDERSHOOT 2
-		mov = i+U-2;
-		mod2 = mov;
-		
-		if (mov < 0)
-			mod2 = abs(mov);
-		if (mov > (NUM_STATES*STATE_WIDTH - 1))
-			mod2 = (NUM_STATES*STATE_WIDTH - 1) - (mov - (NUM_STATES*STATE_WIDTH - 1));
+		/*
+		mov = i + U - 2;
+		mod2 = (mov) % (NUM_STATES*STATE_WIDTH);
+		if (mod2<0) mod2 = NUM_STATES*STATE_WIDTH+mod2;
 		s += p_undershoot_2 * prob.data[mod2];
-		
+		*/
+
 		//HISTOGRAMA CICLICLO
 		//OVERSHOOT
-		mov = i+U+1;
-		mod2 = mov;
-		
-		if (mov < 0)
-			mod2 = abs(mov);
-		if (mov > (NUM_STATES*STATE_WIDTH - 1))
-			mod2 = (NUM_STATES*STATE_WIDTH - 1) - (mov - (NUM_STATES*STATE_WIDTH - 1));
+		mov = i + U + 1;
+		mod2 = (mov) % (NUM_STATES*STATE_WIDTH);
+		if (mod2<0) mod2 = NUM_STATES*STATE_WIDTH+mod2;
 		s += p_overshoot * prob.data[mod2];
 
 		//OVERSHOOT 2
-		mov = i+U+1;
-		mod2 = mov;
-		
-		if (mov < 0)
-			mod2 = abs(mov);
-		if (mov > (NUM_STATES*STATE_WIDTH - 1))
-			mod2 = (NUM_STATES*STATE_WIDTH - 1) - (mov - (NUM_STATES*STATE_WIDTH - 1));
+		/*
+		mov = i + U + 1;
+		mod2 = (mov) % (NUM_STATES*STATE_WIDTH);
+		if (mod2<0) mod2 = NUM_STATES*STATE_WIDTH+mod2;
 		s += p_overshoot_2 * prob.data[mod2];
-		
+		*/
+
 		q.data.push_back(s);
 
 	}
@@ -431,8 +602,7 @@ void write_to_file(const char* type, std_msgs::Float32MultiArray p) {
 	FILE *f = fopen("/home/eduardo/TESIS/git/AutoNOMOS/src/histogramfilter.txt", "a");
 
 	fprintf(f, "%s", type);
-	for (int i = 0; i < NUM_STATES*STATE_WIDTH; ++i)
-	{
+	for (int i = 0; i < NUM_STATES*STATE_WIDTH; ++i) {
 		fprintf(f, "\t%.2f ", p.data[i]);
 	}
 	fprintf(f, "\n");
@@ -454,32 +624,87 @@ void write_to_file(const char* type, float* p, int values) {
 	fclose(f);
 }
 
+void write_to_file_headers() {
+	// debug behavior of probabilities using file
+	FILE *f = fopen("/home/eduardo/TESIS/git/AutoNOMOS/src/histogramfilter.txt", "w");
+
+	for (int i = 0; i < NUM_STATES * STATE_WIDTH; ++i) {
+		fprintf(f, "\tEst_%d ", i);
+	}
+
+
+	fprintf(f, "\t%s", "L"); // 0
+	fprintf(f, "\t%s", "C");
+	fprintf(f, "\t%s", "R");
+	fprintf(f, "\t%s", "d_ll");
+	fprintf(f, "\t%s", "d_cc");
+	fprintf(f, "\t%s", "d_rr");
+	fprintf(f, "\t%s", "speed");
+	fprintf(f, "\t%s", "ctrl"); // 7
+
+	fprintf(f, "\t%s", "odom_x");
+	fprintf(f, "\t%s", "odom_y"); // 9
+	fprintf(f, "\t%s", "odom_theta");
+
+	fprintf(f, "\t%s", "dist_x_prob");
+	fprintf(f, "\t%s", "pix_x_prob"); // 12
+	fprintf(f, "\t%s", "state");
+	fprintf(f, "\t%s", "ctrl_st");
+	fprintf(f, "\t%s", "car_or");
+	fprintf(f, "\t%s", "pose_x");
+	fprintf(f, "\t%s", "pose_y");
+	fprintf(f, "\t%s", "pose_yaw");
+	fprintf(f, "\t%s", "diff_x_real");
+	fprintf(f, "\t%s", "pix_x_real"); // 20
+
+
+	fprintf(f, "\n");
+	fclose(f);
+}
+
+void write_to_file(std_msgs::Float32MultiArray m_array, float* p, int values) {
+	// debug behavior of probabilities using file
+	FILE *f = fopen("/home/eduardo/TESIS/git/AutoNOMOS/src/histogramfilter.txt", "a");
+
+	for (int i = 0; i < NUM_STATES*STATE_WIDTH; ++i) {
+		fprintf(f, "\t%.2f ", m_array.data[i]);
+	}
+	for (int i = 0; i < values; ++i) {
+		fprintf(f, "\t%.5f ", p[i]);
+	}
+	
+	fprintf(f, "\n");
+
+	fclose(f);
+}
+
 void write_to_image( cv::Mat& imagen, float* hits, std_msgs::Float32MultiArray sense, std_msgs::Float32MultiArray move, int values, int borrarSenseImagen ) {
 	// debug behavior of probabilities using rqt
 	int hist_height = 100;
 	
-	for (int i = 0; i < values; ++i)
-	{
+	for (int i = 0; i < values; ++i) {
 		// SENSE
 		int y_height = 130;
 		if (borrarSenseImagen == 0 && i < values - 1)
 			cv::line(imagen, cv::Point(i, y_height), cv::Point(i + 1, y_height - hist_height), cv::Scalar(0, 0, 0), 1, CV_AA);
 		cv::line(imagen, cv::Point(i, y_height), cv::Point(i, y_height - sense.data[i] * hist_height), cv::Scalar(0, inc_color, 255 - inc_color), 1, CV_AA);
+		
 		// HITS
 		y_height = 150;
 		cv::line(imagen, cv::Point(i, y_height), cv::Point(i, y_height - hits[i] * 10), cv::Scalar(0, 100, 255), 1, CV_AA);
 		// borrar hit posicion i + 1 en imagen
 		if (i < values - 1)
 			cv::line(imagen, cv::Point(i + 1, y_height), cv::Point(i + 1, y_height - 10), cv::Scalar(0, 0, 0), 1, CV_AA);
+		
 		// MOVE
 		y_height = 250;
 		cv::line(imagen, cv::Point(i, y_height - sense.data[i] * hist_height), cv::Point(i, y_height - move.data[i] * hist_height), cv::Scalar(0, 200, 255), 1, CV_AA);
 		// borrar movimiento posicion i + 1 en imagen
 		if (i < values - 1)
-			cv::line(imagen, cv::Point(i + 1, y_height), cv::Point(i + 1, y_height - hist_height), cv::Scalar(0, 0, 0), 1, CV_AA);
+			cv::line(imagen, cv::Point(i + 1, y_height), cv::Point(i + 1, y_height - hist_height + 15), cv::Scalar(0, 0, 0), 1, CV_AA);
 	}
 
-	inc_color = (inc_color + 3) % 255;
+	inc_color = (inc_color + 7) % 255;
 }
 
 int main(int argc, char** argv){
@@ -504,23 +729,30 @@ int main(int argc, char** argv){
 		m.data.push_back((float)(1/(float)(NUM_STATES*STATE_WIDTH)));
 	}
 
+	write_to_file_headers();
 	// write_to_file("init", m);
 
 	pub_loc = nh.advertise<std_msgs::Float32MultiArray>("/localization_array", MY_ROS_QUEUE_SIZE);
-	pub_image = nh.advertise<sensor_msgs::Image>("/histogram_states", rate_hz);
+	pub_image = nh.advertise<sensor_msgs::Image>("/histogram_states", MY_ROS_QUEUE_SIZE);
+
 	ros::Subscriber sub_pts_left = nh.subscribe("/points/ransac_left", MY_ROS_QUEUE_SIZE, &get_pts_left);
 	ros::Subscriber sub_pts_center = nh.subscribe("/points/ransac_center", MY_ROS_QUEUE_SIZE, &get_pts_center);
 	ros::Subscriber sub_pts_right = nh.subscribe("/points/ransac_right", MY_ROS_QUEUE_SIZE, &get_pts_right);
 	ros::Subscriber sub_des_state = nh.subscribe("/desired_state", MY_ROS_QUEUE_SIZE, &get_ctrl_desired_state);
 	ros::Subscriber sub_mov = nh.subscribe("/standarized_vel_ste", MY_ROS_QUEUE_SIZE, &get_ctrl_action);
+	ros::Subscriber sub_orientation = nh.subscribe("/car_orientation", MY_ROS_QUEUE_SIZE, &get_car_orientation);
+
+	ros::Subscriber sub_robot_pos = nh.subscribe("/gazebo/model_states", MY_ROS_QUEUE_SIZE, &poseCallback); 
 	
-	loop_rate.sleep();
+	
 	int estadoEstimado;
 	float* hits;
-	float* datos = new float[10];
+	int num_datos = 21;
+	float* datos = new float[num_datos];
 
 	// publicar imagen con la distribucion de sense, hits y move para debug
 	#ifdef PUBLISH_DEBUG_OUTPUT
+	
 		cv::Mat img_hist(260, 160, CV_8UC3, cv::Scalar(0, 0, 0));
 		sensor_msgs::ImagePtr imgmsg;
 		
@@ -532,11 +764,12 @@ int main(int argc, char** argv){
 		cv::putText(img_hist, "hits", cv::Point(0, 160), 0, .35, cv::Scalar(0,221,237));
 		cv::putText(img_hist, "sense", cv::Point(0, 138), 0, .35, cv::Scalar(0,221,237));
 		cv::putText(img_hist, "move", cv::Point(0, 260), 0, .35, cv::Scalar(0,221,237));
+	
 	#endif
 
 	int borrarSenseImagen = 0;	
-	while(nh.ok())
-	{
+	bool bandera_primer = true;
+	while(nh.ok()) {
 	    ros::spinOnce();
 	    hits = det_hits();
 	    if(lanes_detected > 0) {
@@ -546,9 +779,35 @@ int main(int argc, char** argv){
 			// mantain previous probabilities if no lines detected
 			s = m; 
 		}
-	    // write_to_file("sense", s);
+	    
 	    pub_loc.publish(s);
 
+	    /*
+	    	fprintf(f, "\t%s", "L"); // 0
+			fprintf(f, "\t%s", "C");
+			fprintf(f, "\t%s", "R");
+			fprintf(f, "\t%s", "d_ll");
+			fprintf(f, "\t%s", "d_cc");
+			fprintf(f, "\t%s", "d_rr");
+			fprintf(f, "\t%s", "speed");
+			fprintf(f, "\t%s", "ctrl"); // 7
+		
+			fprintf(f, "\t%s" "odom_x");
+			fprintf(f, "\t%s" "odom_y"); // 9
+			fprintf(f, "\t%s" "odom_theta");
+		
+			fprintf(f, "\t%s", "dist_x_prob");
+			fprintf(f, "\t%s", "pix_x_prob"); // 12
+			fprintf(f, "\t%s", "state");
+			fprintf(f, "\t%s", "ctrl_st");
+			fprintf(f, "\t%s", "car_or");
+			fprintf(f, "\t%s", "pose_x");
+			fprintf(f, "\t%s", "pose_y");
+			fprintf(f, "\t%s", "pose_yaw");
+			fprintf(f, "\t%s", "diff_x_real");
+			fprintf(f, "\t%s", "pix_x_real"); // 20
+	    */
+	    
 	    int estadoEstimado = actual_state(s);
 	    datos[0] = (float)L;
 	    datos[1] = (float)C;
@@ -557,20 +816,45 @@ int main(int argc, char** argv){
 	    datos[4] = dist_sensado_cc;
 	    datos[5] = dist_sensado_rr;
 	    datos[6] = speed;
-	    datos[7] = ctrl_action;
+	    datos[7] = steering_action;
+	    
+	    datos[8] = odom_x;
+	    datos[9] = odom_y;
+	    datos[10] = odom_theta;
+	    
+	    datos[11] = dist_x_steering;
+	    datos[12] = pix_x_prob;
 	    if(estadoEstimado>=0) {
-	    	datos[8] = (float)estadoEstimado;
-			printf("%d, %d, %d, %d, %.2f, %.2f, %.2f, %.2f, %.2f, %s\n", 0, L, C, R, dist_sensado_ll, dist_sensado_cc, dist_sensado_rr, speed, ctrl_action, nombre_estado[estadoEstimado].c_str());
+	    	datos[13] = (float)estadoEstimado;
+			printf("%d, %d, %d, %d, %.2f, %.2f, %.2f, %.2f, %.2f, %s\n", 0, L, C, R, dist_sensado_ll, dist_sensado_cc, dist_sensado_rr, speed, steering_action, nombre_estado[estadoEstimado].c_str());
 	    } else {
-	    	datos[8] = -0.0f;
-			printf("%d, %d, %d, %d, %.2f, %.2f, %.2f, %.2f, %.2f, %s\n", 0, L, C, R, dist_sensado_ll, dist_sensado_cc, dist_sensado_rr, speed, ctrl_action, "?");
+	    	datos[13] = -0.0f;
+			printf("%d, %d, %d, %d, %.2f, %.2f, %.2f, %.2f, %.2f, %s\n", 0, L, C, R, dist_sensado_ll, dist_sensado_cc, dist_sensado_rr, speed, steering_action, "?");
 	    }
-	    datos[9] = ctrl_estado;
-	    // write_to_file("L C R d_ll d_cc d_rr speed ctrl state ctrl_estado", datos, 10);
+	    datos[14] = ctrl_estado;
+	    datos[15] = odom_theta; // direccion
+	    datos[18] = car_global_pose.angular.z;
+	    // magnitud de vector
+	    if ( !bandera_primer ) {
+	    	// magnitud
+	    	datos[19] = car_global_pose.linear.x - datos[16];
+	    	datos[20] = datos[19] / 0.006879221;
+	    } else {
+	    	datos[19] = 0;
+	    	datos[20] = 0;
+	    	bandera_primer = false;
+	    }
+	    
+	    datos[16] = car_global_pose.linear.x;
+	    datos[17] = car_global_pose.linear.y;
+	    
+	    write_to_file(s, datos, num_datos);
+	    
+	    // write_to_file("L C R d_ll d_cc d_rr speed ctrl state ctrl_estado orientation", datos, 11);
 	    m = move(s);
 	    #ifdef PUBLISH_DEBUG_OUTPUT
 	    	write_to_image(img_hist, hits, s, m, STATE_WIDTH * NUM_STATES, borrarSenseImagen);
-	    	borrarSenseImagen = borrarSenseImagen++ % STATE_WIDTH;
+	    	borrarSenseImagen = ++borrarSenseImagen % STATE_WIDTH;
 	    #endif
 	    printf (format, m.data[0*STATE_WIDTH],m.data[1*STATE_WIDTH],m.data[2*STATE_WIDTH],m.data[3*STATE_WIDTH],m.data[4*STATE_WIDTH],m.data[5*STATE_WIDTH],m.data[6*STATE_WIDTH]);
 	    loop_rate.sleep();
@@ -582,6 +866,7 @@ int main(int argc, char** argv){
 	    	imgmsg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", img_hist).toImageMsg();
 	 		pub_image.publish(imgmsg);  
 	 	#endif 
+	 	loop_rate.sleep();
 	}
 
 	free(hits);
