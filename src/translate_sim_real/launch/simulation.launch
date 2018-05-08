@@ -8,7 +8,10 @@
 	<!-- simulacion for simulation, anything else for real car -->
         <param name="seleccion_real_simulacion"    type="string" value="simulacion"/>
 
-
+	
+	<param name="topico_steering_sim_gary"          type="string" value="/AutoNOMOS_mini/manual_control/steering"/>
+        <param name="topico_velocidad_sim_gary"         type="string" value="/AutoNOMOS_mini/manual_control/velocity"/>	
+	
     </node> 
  
 </launch>

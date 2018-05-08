@@ -21,6 +21,8 @@
 #include "gazebo_msgs/LinkStates.h"
 #include "tf/tf.h"
 
+#include <sensor_msgs/Imu.h>
+
 static const uint32_t MY_ROS_QUEUE_SIZE = 1;
 #define NUM_STATES 7
 #define STATE_WIDTH 22
@@ -31,7 +33,7 @@ static const uint32_t MY_ROS_QUEUE_SIZE = 1;
 #define PUBLISH_DEBUG_OUTPUT 
 
 geometry_msgs::Twist destiny_position;
-double rate_hz = 15;
+double rate_hz = 5;
 ros::Publisher pub_loc;
 ros::Publisher pub_lidar;
 ros::Publisher pub_image;
@@ -58,7 +60,7 @@ float p_hit = 0.99;
 float p_miss = 0.01;
 
 int car_center = 80; //TODO
-float speed = 0;
+float actual_speed = 0;
 float car_orientation = 0;
 
 //int movement = 45;
@@ -68,7 +70,7 @@ int L = 0;
 int C = 0;
 int R = 0;
 int des_state = 5;
-float steering_action = 0;
+float actual_steering = 0;
 float ctrl_estado = 0;
 double dist_x_steering = 0;
 double pix_x_prob = 0;
@@ -84,11 +86,23 @@ float dist_sensado_rr;
 float dist_sensado_cc;
 float dist_sensado_ll;
 
+float linear_acc_x;
+float linear_acc_y;
+float linear_acc_z;
+
 bool rr;
 bool cc;
 bool ll;
 
 int inc_color = 0;
+
+// imu vars
+signed long accx[2], accy[2];
+signed long velocityx[2], velocityy[2];
+signed long positionx[2], positiony[2];
+// unsigned char near direction;
+
+unsigned int contador = 0;
 
 //gets the left points
 void get_pts_left(const nav_msgs::GridCells& array) {
@@ -123,13 +137,14 @@ void get_pts_right(const nav_msgs::GridCells& array) {
 	}
 }
 
-// reads speed and steering from standarized topic
+/* reads actual_speed and steering from standarized topic
 void get_ctrl_action(const geometry_msgs::Twist& val) {
-	// negative speed is forward
+	// negative actual_speed is forward
 	// it is not required to know if the car is moving forward or backward, positive for simplification
-	steering_action = val.angular.z;
-	speed = sqrt(val.linear.x * val.linear.x);
+	actual_steering = val.angular.z;
+	actual_speed = sqrt(val.linear.x * val.linear.x);
 }
+*/
 
 void get_ctrl_desired_state(const std_msgs::Float64& val) {
     ctrl_estado = val.data;
@@ -148,6 +163,28 @@ void poseCallback(const gazebo_msgs::LinkStates& msg){
 	car_global_pose.linear.y = msg.pose[2].position.y;
 	double yaw = tf::getYaw(msg.pose[2].orientation);
 	car_global_pose.angular.z = yaw;
+}
+
+void get_imu(const sensor_msgs::Imu& val){
+
+	/*
+	std_msgs/Header header
+	geometry_msgs/Quaternion orientation
+	float64[9] orientation_covariance
+	geometry_msgs/Vector3 angular_velocity
+	float64[9] angular_velocity_covariance
+	geometry_msgs/Vector3 linear_acceleration
+	float64[9] linear_acceleration_covariance
+	*/
+
+	// linear_acc_x = val.linear_acceleration.x;
+	// linear_acc_y = val.linear_acceleration.y;
+	// linear_acc_z = val.linear_acceleration.z;
+
+	accy[0] = accy[1];
+	accy[1] = val.linear_acceleration.y;
+
+	printf("\n contador imu %d \n", contador);
 }
 
 // Calculates the distance in pixels. NOTE: only using th x component because Y is asumed constant, 
@@ -466,11 +503,11 @@ std_msgs::Float32MultiArray sense(std_msgs::Float32MultiArray p, float* hits) {
 }
 
 std_msgs::Float32MultiArray move(std_msgs::Float32MultiArray prob) {
-	//steering_action: radians in simulation
+	//actual_steering: radians in simulation
 	// positive is left
 
 	// a que estado podria llegar basado en velocidad y steering
-	// double speed = 0.15; // m/s
+	// double actual_speed = 0.15; // m/s
 	// multiplied by 100 to convert meters to cm (last 60) 
 	// adjusted to 40 for better reflection of real motion
 	// TODO conversion from pixels to cm
@@ -490,10 +527,11 @@ std_msgs::Float32MultiArray move(std_msgs::Float32MultiArray prob) {
 	vθ = dθ / dt
 	*/
 
+	/*
 	double l = 0.3;
-	double alpha = steering_action;
+	double alpha = actual_steering;
 	double dt = 1 / rate_hz;
-	double V = speed;
+	double V = actual_speed;
 
 	if (alpha != 0) {
 		double R = l / sin(alpha);
@@ -513,17 +551,34 @@ std_msgs::Float32MultiArray move(std_msgs::Float32MultiArray prob) {
 		printf("\n odomx: %.2f, odomy: %.2f, odomtheta: %.2f", odom_x, odom_y, odom_theta);
 
 		// x con respecto al marco de referencia global, y con respecto al marco del carro
-		dist_x_steering = odom_y - odom_y_previo; //speed * sin(steering_action); // antes cos(car_orientation - steering_action)
+		dist_x_steering = odom_y - odom_y_previo; //actual_speed * sin(actual_steering); // antes cos(car_orientation - actual_steering)
 	} else {
 		dist_x_steering = 0;
 	}
 
 	pix_x_prob = dist_x_steering / 0.006879221;
+	*/
 
-	int U = round(pix_x_prob);
+	printf("\n contador move %d \n", ++contador);
+
+	float T = 1 / 10; // rate of imu topic
+    // first integration
+    // vel_x.append(vel_x[i - 1] + ( acc_x[i] + (acc_x[i] - acc_x[i - 1]) / 2 ) * T)
+    velocityy[0] = velocityy[1];
+	velocityy[1] = velocityy[0] + (accy[1] + (accy[1] - accy[0]) / 2) * T; 
+    // second integration
+	// pos_x.append(pos_x[i - 1] + ( vel_x[i] + (vel_x[i] - vel_x[i - 1]) / 2 ) * T) 
+    positiony[0] = positiony[1];
+    positiony[1] = positiony[0] + (velocityy[1] + (velocityy[1] - velocityy[0]) / 2) * T;
+    
+
+	// tamaño de celda en pixeles: 0.006879221
+    // negativo por la rotacion de cuadro de referencia con respecto al carro
+	float rate_pos = -(positiony[1] - positiony[0]) / 0.006879221;
+	int U = round( rate_pos );
 
 	std_msgs::Float32MultiArray q;
-	ROS_INFO_STREAM("Orientation: " << car_orientation << ", Control: " << steering_action << ", U: " << U << ", dist_x_steering: " << dist_x_steering);
+	// ROS_INFO_STREAM("Orientation: " << car_orientation << ", Control: " << actual_steering << ", U: " << U << ", dist_x_steering: " << dist_x_steering);
 	for (int i = 0; i < NUM_STATES*STATE_WIDTH; i++) {
 
 		double s = 0.0;
@@ -599,7 +654,7 @@ int actual_state(std_msgs::Float32MultiArray locArray) {
 
 void write_to_file(const char* type, std_msgs::Float32MultiArray p) {
 	// debug behavior of probabilities using file
-	FILE *f = fopen("/home/eduardo/TESIS/git/AutoNOMOS/src/histogramfilter.txt", "a");
+	FILE *f = fopen("~/git/AutoNOMOS/src/histogramfilter.txt", "a");
 
 	fprintf(f, "%s", type);
 	for (int i = 0; i < NUM_STATES*STATE_WIDTH; ++i) {
@@ -612,7 +667,7 @@ void write_to_file(const char* type, std_msgs::Float32MultiArray p) {
 
 void write_to_file(const char* type, float* p, int values) {
 	// debug behavior of probabilities using file
-	FILE *f = fopen("/home/eduardo/TESIS/git/AutoNOMOS/src/histogramfilter.txt", "a");
+	FILE *f = fopen("~/git/AutoNOMOS/src/histogramfilter.txt", "a");
 
 	fprintf(f, "%s", type);
 	for (int i = 0; i < values; ++i)
@@ -626,7 +681,7 @@ void write_to_file(const char* type, float* p, int values) {
 
 void write_to_file_headers() {
 	// debug behavior of probabilities using file
-	FILE *f = fopen("/home/eduardo/TESIS/git/AutoNOMOS/src/histogramfilter.txt", "w");
+	FILE *f = fopen("~/git/AutoNOMOS/src/histogramfilter.txt", "w");
 
 	for (int i = 0; i < NUM_STATES * STATE_WIDTH; ++i) {
 		fprintf(f, "\tEst_%d ", i);
@@ -639,7 +694,7 @@ void write_to_file_headers() {
 	fprintf(f, "\t%s", "d_ll");
 	fprintf(f, "\t%s", "d_cc");
 	fprintf(f, "\t%s", "d_rr");
-	fprintf(f, "\t%s", "speed");
+	fprintf(f, "\t%s", "actual_speed");
 	fprintf(f, "\t%s", "ctrl"); // 7
 
 	fprintf(f, "\t%s", "odom_x");
@@ -664,7 +719,7 @@ void write_to_file_headers() {
 
 void write_to_file(std_msgs::Float32MultiArray m_array, float* p, int values) {
 	// debug behavior of probabilities using file
-	FILE *f = fopen("/home/eduardo/TESIS/git/AutoNOMOS/src/histogramfilter.txt", "a");
+	FILE *f = fopen("~/git/AutoNOMOS/src/histogramfilter.txt", "a");
 
 	for (int i = 0; i < NUM_STATES*STATE_WIDTH; ++i) {
 		fprintf(f, "\t%.2f ", m_array.data[i]);
@@ -729,7 +784,7 @@ int main(int argc, char** argv){
 		m.data.push_back((float)(1/(float)(NUM_STATES*STATE_WIDTH)));
 	}
 
-	write_to_file_headers();
+	// write_to_file_headers();
 	// write_to_file("init", m);
 
 	pub_loc = nh.advertise<std_msgs::Float32MultiArray>("/localization_array", MY_ROS_QUEUE_SIZE);
@@ -739,7 +794,12 @@ int main(int argc, char** argv){
 	ros::Subscriber sub_pts_center = nh.subscribe("/points/ransac_center", MY_ROS_QUEUE_SIZE, &get_pts_center);
 	ros::Subscriber sub_pts_right = nh.subscribe("/points/ransac_right", MY_ROS_QUEUE_SIZE, &get_pts_right);
 	ros::Subscriber sub_des_state = nh.subscribe("/desired_state", MY_ROS_QUEUE_SIZE, &get_ctrl_desired_state);
-	ros::Subscriber sub_mov = nh.subscribe("/standarized_vel_ste", MY_ROS_QUEUE_SIZE, &get_ctrl_action);
+	
+	// no es confiable velocidad y steering
+	// ros::Subscriber sub_mov = nh.subscribe("/standarized_vel_ste", MY_ROS_QUEUE_SIZE, &get_ctrl_action);
+	// probar con imu
+	ros::Subscriber sub_imu = nh.subscribe("/AutoNOMOS_mini/imu", MY_ROS_QUEUE_SIZE, &get_imu);
+
 	ros::Subscriber sub_orientation = nh.subscribe("/car_orientation", MY_ROS_QUEUE_SIZE, &get_car_orientation);
 
 	ros::Subscriber sub_robot_pos = nh.subscribe("/gazebo/model_states", MY_ROS_QUEUE_SIZE, &poseCallback); 
@@ -769,8 +829,8 @@ int main(int argc, char** argv){
 
 	int borrarSenseImagen = 0;	
 	bool bandera_primer = true;
-	while(nh.ok()) {
-	    ros::spinOnce();
+	while(ros::ok()) {
+	    // ros::spinOnce();
 	    hits = det_hits();
 	    if(lanes_detected > 0) {
 	    	// write_to_file("hits", hits, NUM_STATES*STATE_WIDTH);
@@ -789,7 +849,7 @@ int main(int argc, char** argv){
 			fprintf(f, "\t%s", "d_ll");
 			fprintf(f, "\t%s", "d_cc");
 			fprintf(f, "\t%s", "d_rr");
-			fprintf(f, "\t%s", "speed");
+			fprintf(f, "\t%s", "actual_speed");
 			fprintf(f, "\t%s", "ctrl"); // 7
 		
 			fprintf(f, "\t%s" "odom_x");
@@ -809,14 +869,14 @@ int main(int argc, char** argv){
 	    */
 	    
 	    int estadoEstimado = actual_state(s);
-	    datos[0] = (float)L;
-	    datos[1] = (float)C;
-	    datos[2] = (float)R;
+	    datos[0] = (float) L;
+	    datos[1] = (float) C;
+	    datos[2] = (float) R;
 	    datos[3] = dist_sensado_ll;
 	    datos[4] = dist_sensado_cc;
 	    datos[5] = dist_sensado_rr;
-	    datos[6] = speed;
-	    datos[7] = steering_action;
+	    datos[6] = actual_speed;
+	    datos[7] = actual_steering;
 	    
 	    datos[8] = odom_x;
 	    datos[9] = odom_y;
@@ -826,10 +886,10 @@ int main(int argc, char** argv){
 	    datos[12] = pix_x_prob;
 	    if(estadoEstimado>=0) {
 	    	datos[13] = (float)estadoEstimado;
-			printf("%d, %d, %d, %d, %.2f, %.2f, %.2f, %.2f, %.2f, %s\n", 0, L, C, R, dist_sensado_ll, dist_sensado_cc, dist_sensado_rr, speed, steering_action, nombre_estado[estadoEstimado].c_str());
+			printf("%d, %d, %d, %d, %.2f, %.2f, %.2f, %.2f, %.2f, %s\n", 0, L, C, R, dist_sensado_ll, dist_sensado_cc, dist_sensado_rr, actual_speed, actual_steering, nombre_estado[estadoEstimado].c_str());
 	    } else {
 	    	datos[13] = -0.0f;
-			printf("%d, %d, %d, %d, %.2f, %.2f, %.2f, %.2f, %.2f, %s\n", 0, L, C, R, dist_sensado_ll, dist_sensado_cc, dist_sensado_rr, speed, steering_action, "?");
+			printf("%d, %d, %d, %d, %.2f, %.2f, %.2f, %.2f, %.2f, %s\n", 0, L, C, R, dist_sensado_ll, dist_sensado_cc, dist_sensado_rr, actual_speed, actual_steering, "?");
 	    }
 	    datos[14] = ctrl_estado;
 	    datos[15] = odom_theta; // direccion
@@ -848,9 +908,9 @@ int main(int argc, char** argv){
 	    datos[16] = car_global_pose.linear.x;
 	    datos[17] = car_global_pose.linear.y;
 	    
-	    write_to_file(s, datos, num_datos);
+	    // write_to_file(s, datos, num_datos);
 	    
-	    // write_to_file("L C R d_ll d_cc d_rr speed ctrl state ctrl_estado orientation", datos, 11);
+	    // write_to_file("L C R d_ll d_cc d_rr actual_speed ctrl state ctrl_estado orientation", datos, 11);
 	    m = move(s);
 	    #ifdef PUBLISH_DEBUG_OUTPUT
 	    	write_to_image(img_hist, hits, s, m, STATE_WIDTH * NUM_STATES, borrarSenseImagen);
@@ -866,6 +926,7 @@ int main(int argc, char** argv){
 	    	imgmsg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", img_hist).toImageMsg();
 	 		pub_image.publish(imgmsg);  
 	 	#endif 
+
 	 	loop_rate.sleep();
 	}
 

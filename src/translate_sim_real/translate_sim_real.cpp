@@ -5,7 +5,8 @@
 #include <std_msgs/Float64.h>
 #include <std_msgs/Int16.h>
 
-#define RATE_HZ 30
+#define RATE_HZ 5
+#define PI 3.14159265
 
 // This project standarizes how calls are made from every node in the proyect to the car
 // making transparent the selection if one looks to use simulation or the real car
@@ -38,6 +39,8 @@ private:
 
   std::string topico_steering_sim; // std_msgs::Float64
   std::string topico_velocidad_sim; // geometry_msgs::Twist
+  std::string topico_steering_sim_gary; // std_msgs::Float64
+  std::string topico_velocidad_sim_gary; // geometry_msgs::Twist
   std::string topico_steering_real; // std_msgs::Int16
   std::string topico_velocidad_real; // std_msgs::Int16
 
@@ -64,6 +67,9 @@ public:
     nh_.param<std::string>(node_name+"/topico_steering_sim", topico_steering_sim, "/autonomos/steer/steer_position_controller/command");
     nh_.param<std::string>(node_name+"/topico_velocidad_sim", topico_velocidad_sim, "/cmd_vel");
 
+    nh_.param<std::string>(node_name+"/topico_steering_sim_gary", topico_steering_sim_gary, "/AutoNOMOS_mini/manual_control/steering");
+    nh_.param<std::string>(node_name+"/topico_velocidad_sim_gary", topico_velocidad_sim_gary, "/AutoNOMOS_mini/manual_control/velocity");
+
     nh_.param<std::string>(node_name+"/topico_steering_real", topico_steering_real, "/manual_control/steering");
     nh_.param<std::string>(node_name+"/topico_velocidad_real", topico_velocidad_real, "/manual_control/speed");
 
@@ -76,7 +82,14 @@ public:
       steering_sub = nh_.subscribe(topico_steering_sim, MY_ROS_QUEUE_SIZE, &TranslationSimReal::get_steering_sim, this);
       _pub_velocity = nh_.advertise<geometry_msgs::Twist>(topico_velocidad_sim, MY_ROS_QUEUE_SIZE);
       _pub_steering = nh_.advertise<std_msgs::Float64>(topico_steering_sim, MY_ROS_QUEUE_SIZE);
-    } else {
+    } else if (seleccion_real_simulacion == "gary") {
+
+      // cmd_vel_sub = nh_.subscribe(topico_velocidad_sim_gary, MY_ROS_QUEUE_SIZE, &TranslationSimReal::get_velocity_gary, this);
+      // steering_sub = nh_.subscribe(topico_steering_sim_gary, MY_ROS_QUEUE_SIZE, &TranslationSimReal::get_steering_gary, this);
+
+      _pub_velocity = nh_.advertise<std_msgs::Int16>(topico_velocidad_sim_gary, MY_ROS_QUEUE_SIZE);
+      _pub_steering = nh_.advertise<std_msgs::Int16>(topico_steering_sim_gary, MY_ROS_QUEUE_SIZE);
+    } else {    
       /* TODO - real */
       cmd_vel_sub = nh_.subscribe(topico_velocidad_real, MY_ROS_QUEUE_SIZE, &TranslationSimReal::get_velocity_real, this);
       steering_sub = nh_.subscribe(topico_steering_real, MY_ROS_QUEUE_SIZE, &TranslationSimReal::get_steering_real, this);
@@ -132,10 +145,24 @@ public:
 
       if (value_steering_real.data != val.angular.z) {
         // transformar radianes de regreso a grados
-        value_steering_real.data = val.angular.z;
+        value_steering_real.data = val.angular.z * PI / 180;
         _pub_steering.publish(value_steering_real);
       }
     }
+  }
+
+  // SIM GARY
+  void get_steering_gary(const std_msgs::Int16& val)
+  {
+    // transformar grados a radianes internamente para estandarizar
+    standarized_values.angular.z = val.data; // REQUIERE conversion a radianes
+    _pub_actions_standarized.publish(standarized_values);
+  }
+
+  void get_velocity_gary(const std_msgs::Int16& val)
+  {
+    standarized_values.linear.x = val.data; // hace falta convertir a m/s
+    _pub_actions_standarized.publish(standarized_values);
   }
 
   // REAL CAR

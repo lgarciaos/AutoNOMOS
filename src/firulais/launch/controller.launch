@@ -1,7 +1,7 @@
 <launch>
     <node name="TrabajaConlaImagen" pkg="firulais" type="TrabajaConlaImagen" output="screen" /> 
     
-    <node name="lane_controller_sim_node" pkg="firulais" type="lane_controller_sim_node" output="screen" > 
+    <node name="lane_controller_sim_firulais_node" pkg="firulais" type="lane_controller_sim_firulais_node" output="screen" > 
 
     <param name="Kp"          type="double" value="2.0"/>
     <param name="Ki"          type="double" value="0.0"/>

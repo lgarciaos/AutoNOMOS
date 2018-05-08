@@ -51,9 +51,7 @@
       </axis>
       <pose>0.000000 0.060000 0.000000 0.000000 0.000000 0.000000</pose>
     </joint>
-  </gazebo>
   
-  <gazebo>
       <joint name='ackermann_right_bar_joint' type='revolute'>
       <parent>front_right_bar_link</parent>
       <child>ackermann_bar_link</child>
@@ -67,9 +65,9 @@
       </axis>
       <pose>0.000000 -0.060000 0.000000 0.000000 0.000000 0.000000</pose>
     </joint>
-  </gazebo>
+
 <!--
-  <gazebo reference="laser_link">
+  
       <sensor name="laser" type="ray">
         <pose>0.01 0 0.06 0 0 0</pose>
         <ray>
@@ -96,9 +94,9 @@
         <update_rate>1</update_rate>
         <visualize>true</visualize>
       </sensor>
-  </gazebo>
+  
 -->
-  <gazebo reference="camera_link">
+
      <sensor type="camera" name="camera1">
       <update_rate>30.0</update_rate>
       <camera name="head">
@@ -137,17 +135,43 @@
         <distortionT2>0.0</distortionT2>
       </plugin>
     </sensor>
-  </gazebo>
 
-  <!-- ros_control plugin -->
-  <gazebo>
+  <!-- ros_control plugin 
    <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
-    <robotNamespace>autonomos</robotNamespace>
+    <robotNamespace>/autonomos</robotNamespace>
    </plugin>
-  </gazebo>
+  -->
 
+  <!--
+  <plugin name="imu" filename="libhector_gazebo_ros_imu.so">
+      <robotNamespace>$(arg prefix)</robotNamespace>
+      <serviceName>$(arg prefix)/imu/calibrate</serviceName>
+      <updateRate>200.0</updateRate>
+      <bodyName>imu_link</bodyName>
+      <frameId>imu_link</frameId>
+      <topicName>imu/imu</topicName>
+      <rpyOffset>0 0 0</rpyOffset>
+      <xyzOffset>0 0 0</xyzOffset>
+      <gaussianNoise>0.00000001</gaussianNoise>
+      <accelDrift>0.00000001 0.00000001 0.00000001</accelDrift>
+      <accelDriftFrequency>0.00000001 0.00000001 0.00000001</accelDriftFrequency>
+      <accelGaussianNoise>0.00000001 0.00000001 0.00000001</accelGaussianNoise>
+      <rateDrift>0.0 0.0 0.0</rateDrift>
+      <rateDriftFrequency>0.0 0.0 0.0</rateDriftFrequency>
+      <rateGaussianNoise>0.0 0.0 0.0</rateGaussianNoise>
+      <headingDrift>0.0 0.0 0.0</headingDrift>
+      <headingDriftFrequency>0.0 0.0 0.0</headingDriftFrequency>
+      <headingGaussianNoise>0.0 0.0 0.0</headingGaussianNoise>
+  </plugin>
+  -->
+
+  <plugin name="test_control" filename="libautonomos_plugin.so">
+      <debug>True</debug>
+  </plugin>
   
-  <gazebo>
+
+<!--
+ 
    <plugin name="differential_drive_controller" filename="libgazebo_ros_diff_drive.so">
 	 <alwaysOn>true</alwaysOn>
 	 <updateRate>20</updateRate>
@@ -155,14 +179,13 @@
 	 <rightJoint>back_right_wheel_joint</rightJoint>
 	 <wheelSeparation>0.15</wheelSeparation>
 	 <wheelDiameter>0.04</wheelDiameter>
-	 <!-- no se que haga este parametro -->
 	 <torque>20.0</torque>
 	 <commandTopic>cmd_vel</commandTopic>
 	 <odometryTopic>odom</odometryTopic>
 	 <odometryFrame>base_link</odometryFrame>
 	 <robotBaseFrame>base_footprint</robotBaseFrame>
-	 <!-- <robotNamespace>autonomos</robotNamespace> -->
     </plugin>
-  </gazebo>
-
+  
+-->
+   </gazebo>
 </robot>

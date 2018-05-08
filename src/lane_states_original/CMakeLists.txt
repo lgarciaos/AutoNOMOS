@@ -26,7 +26,6 @@ include_directories(
 
 include_directories(include ${OpenCV_INCLUDE_DIRS})
 
-
 add_executable(lane_states_node lane_states_node.cpp)
 
 target_link_libraries(lane_states_node ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})

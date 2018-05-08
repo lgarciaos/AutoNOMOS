@@ -36,7 +36,7 @@ double distancia_librarobstaculomasmenos=0.1;
 double pendienteTrancazo =0.0;
 bool rebasando = false;
 
-double rate_hz = 15;
+double rate_hz = 5;
 
 double max;
 double min;
