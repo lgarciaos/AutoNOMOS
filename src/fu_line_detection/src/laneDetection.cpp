@@ -30,7 +30,7 @@ double polysAngle = 0;
 
 std::string topico_estandarizado;
 
-double actual_speed = 0;
+double actual_speed = 5;
 float actual_steering = 0;
 int car_center;
 
@@ -175,7 +175,7 @@ cLaneDetectionFu::cLaneDetectionFu(ros::NodeHandle nh)
     sub_localization = nh.subscribe("/localization_array", MY_ROS_QUEUE_SIZE, &cLaneDetectionFu::get_localization, this);
     sub_des_state = nh.subscribe("/desired_state", MY_ROS_QUEUE_SIZE, &cLaneDetectionFu::get_ctrl_desired_state, this);
     // planningxy = nh.subscribe("/planningxy", MY_ROS_QUEUE_SIZE, &cLaneDetectionFu::ProcessPlanningXY,this);
-    sub_vel = nh.subscribe(topico_estandarizado, MY_ROS_QUEUE_SIZE, &cLaneDetectionFu::get_ctrl_action, this);
+    // sub_vel = nh.subscribe(topico_estandarizado, MY_ROS_QUEUE_SIZE, &cLaneDetectionFu::get_ctrl_action, this);
     
     publish_angle = nh.advertise<std_msgs::Float32>("/lane_model/angle", MY_ROS_QUEUE_SIZE);
     pub_right = nh.advertise<nav_msgs::GridCells>("/points/right", MY_ROS_QUEUE_SIZE);
@@ -187,7 +187,9 @@ cLaneDetectionFu::cLaneDetectionFu(ros::NodeHandle nh)
     pub_ransac_left = nh.advertise<nav_msgs::GridCells>("/points/ransac_left", MY_ROS_QUEUE_SIZE);
     pub_lane_model = nh.advertise<nav_msgs::GridCells>("/points/lane_model", MY_ROS_QUEUE_SIZE);
     pub_ransac_horizontal = nh.advertise<nav_msgs::GridCells>("/points/ransac_horizontal", MY_ROS_QUEUE_SIZE);
-    pub_speed = nh.advertise<geometry_msgs::Twist>("/target_pose", MY_ROS_QUEUE_SIZE);
+    pub_speed = nh.advertise<geometry_msgs::Twist>(topico_estandarizado, MY_ROS_QUEUE_SIZE);
+
+
 
     pub_orientation = nh.advertise<std_msgs::Float32>("/car_orientation", MY_ROS_QUEUE_SIZE);
 
@@ -902,8 +904,10 @@ void cLaneDetectionFu::ackerman_control(cv::Mat& imagePaint, NewtonPolynomial& p
             
             geometry_msgs::Twist vel;
             vel.angular.z = steering_rounded;
+            vel.linear.x = actual_speed;
             // speed is constant
 
+            // falta PID
             pub_speed.publish(vel);
         }
     }

@@ -245,7 +245,7 @@ cv::Mat puntoAMoverse(cv::Mat& entrada){
 	 cv::Canny(dilate_dst,contours,50,350);
 	 cv::Mat contoursInv;
 	 int houghVote;
-	 cv::vector<cv::Vec4i> lines;
+	 std::vector<cv::Vec4i> lines;
 
 
 	 cv::HoughLinesP(contours, lines, 1, CV_PI/180, 10, 5, 3 );
