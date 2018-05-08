@@ -34,7 +34,7 @@
     <param name="maxAngleDiff"                  type="int"    value="999"/>
 
     <param name="camera_name"           type="string"   value="app/camera/rgb/image_raw"/>      
-    <param name="cam_deg"               type="double"   value="4"/> <!-- 8 default. Modificado a .09 rad = 5 grados -->
+    <param name="cam_deg"               type="double"   value="8"/> <!-- 8 default. Modificado a .09 rad = 5 grados -->
     <param name="cam_height"            type="double"   value="18"/>
 
 
@@ -55,6 +55,7 @@
     <param name="kalpha"                type="double"   value="1.0"/>
     <param name="kbeta"                 type="double"   value="0.5"/>
     <param name="car_center"            type="int"      value="87" />
+    <!-- vertical distance to group points -->
     <param name="dbscan_epsilon"        type="int"      value="45" />
 
   </node>

@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <launch>
 
-  <rosparam file="$(find autonomos_gazebo_control)/config/autonomos_gazebo_control.yaml" command="load"/>
+  <rosparam file="$(find autonomos_gazebo)/config/autonomos_gazebo_control.yaml" command="load"/>
 
   <!-- load every controller in the yaml -->
   <node name="spawner" pkg="controller_manager" type="spawner"

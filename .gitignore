@@ -6,3 +6,4 @@ install/
 logs/
 .catkin_tools/
 devel/
+.catkin_workspace/

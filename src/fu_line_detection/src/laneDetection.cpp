@@ -7,7 +7,7 @@ using namespace std;
 static const uint32_t MY_ROS_QUEUE_SIZE = 1;
 #define PI 3.14159265
 
-#define RATE_HZ 15
+#define RATE_HZ 5
 
 #define NUM_STATES 7
 #define STATE_WIDTH 22
@@ -30,7 +30,7 @@ double polysAngle = 0;
 
 std::string topico_estandarizado;
 
-double actual_speed = 0;
+double actual_speed = 5;
 float actual_steering = 0;
 int car_center;
 
@@ -175,8 +175,12 @@ cLaneDetectionFu::cLaneDetectionFu(ros::NodeHandle nh)
     sub_localization = nh.subscribe("/localization_array", MY_ROS_QUEUE_SIZE, &cLaneDetectionFu::get_localization, this);
     sub_des_state = nh.subscribe("/desired_state", MY_ROS_QUEUE_SIZE, &cLaneDetectionFu::get_ctrl_desired_state, this);
     // planningxy = nh.subscribe("/planningxy", MY_ROS_QUEUE_SIZE, &cLaneDetectionFu::ProcessPlanningXY,this);
-    sub_vel = nh.subscribe(topico_estandarizado, MY_ROS_QUEUE_SIZE, &cLaneDetectionFu::get_ctrl_action, this);
     
+    // no es muy recomendable leer velocidad y steering ya que pueden tener mucho error
+    // sub_vel = nh.subscribe(topico_estandarizado, MY_ROS_QUEUE_SIZE, &cLaneDetectionFu::get_ctrl_action, this);
+    // probar con imu
+
+
     publish_angle = nh.advertise<std_msgs::Float32>("/lane_model/angle", MY_ROS_QUEUE_SIZE);
     pub_right = nh.advertise<nav_msgs::GridCells>("/points/right", MY_ROS_QUEUE_SIZE);
     pub_center = nh.advertise<nav_msgs::GridCells>("/points/center", MY_ROS_QUEUE_SIZE);
@@ -288,7 +292,7 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
             for(int j=0; j < edges[i].size(); j++) {
                 FuPoint<int> edge = edges[i][j].getImgPos();
                 cv::Point edgeLoc = cv::Point(edge.getX(), edge.getY());
-                cv::circle(transformedImagePaintable, edgeLoc, 1, cv::Scalar(0, 0, edges[i][j].getValue()), -1);    
+                cv::circle(transformedImagePaintable, edgeLoc, 2, cv::Scalar(100, 0, edges[i][j].getValue()), -1);    
             }            
         }
 
@@ -306,7 +310,7 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
 	        
         //cv::imshow("ROI, scanlines and edges", transformedImagePaintable);
 
-		//cv::imshow("ROI, edgesHorizontal", transformedImagePaintableHorizontal);
+		cv::imshow("ROI, edgesHorizontal", transformedImagePaintableHorizontal);
         //cv::waitKey(1);
     #endif
     #endif
@@ -343,8 +347,8 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
 
     //---------------------- DEBUG OUTPUT LANE MARKINGS ---------------------------------//
     #ifdef PUBLISH_DEBUG_OUTPUT
-        transformedImagePaintable = transformedImage.clone();
-        cv::cvtColor(transformedImagePaintable, transformedImagePaintable, CV_GRAY2BGR);
+        // transformedImagePaintable = transformedImage.clone();
+        // cv::cvtColor(transformedImagePaintable, transformedImagePaintable, CV_GRAY2BGR);
         
         for(int i = 0; i < num_points; i++)
         {
@@ -383,6 +387,8 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
     // buildLaneMarkingsListsHorizontal(laneMarkingsH);
     int detected_polys;
     try {
+        printf("\n Num points: %d", num_points);
+        printf("\n Num clusters: %d", num_clusters);
         detected_polys = buildLaneMarkingsLists(points, num_points, num_clusters);
     } catch (...) {
         printf("buildLaneMarkings Exception");
@@ -799,8 +805,11 @@ void cLaneDetectionFu::ackerman_control(cv::Mat& imagePaint, NewtonPolynomial& p
     // car location (position bottom to up with respect to next points, to compute angle)
     cv::Point ptCar = cv::Point(car_center, 170);
     cv::circle(imagePaint, ptCar, 2, cv::Scalar(0,255,255), -1);
+    actual_steering = 0;
 
     // calcular siguiente punto sobre eje Y (X con respecto al carro) de acuerdo a velocidad y steering actual
+    // aqui obtener velocidad de IMU y orientacion el carro
+    // TODO IMU
     double dist_y = actual_speed * 5 * sin(PI/2 - actual_steering); //*; 
     
     double dist_yPoly = 40 * abs(estado_deseado - estado_actual);
@@ -1185,12 +1194,14 @@ void cLaneDetectionFu::get_localization(const std_msgs::Float32MultiArray& locAr
         estado_actual = -1; // no se pudo determinar el estado, ya que hay mas de uno posible
 }
 
+/*
 void cLaneDetectionFu::get_ctrl_action(const geometry_msgs::Twist& val) {
     // negative is forward
     actual_speed = sqrt(val.linear.x * val.linear.x);
     actual_steering = val.angular.z; //steering
     // printf("\n vel: %.2f ", speed);
 }
+*/
 
 void cLaneDetectionFu::get_ctrl_desired_state(const std_msgs::Float64& val) {
     // ctrl_estado = val.data;
