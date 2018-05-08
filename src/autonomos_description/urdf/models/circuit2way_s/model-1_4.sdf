@@ -1,0 +1,36 @@
+<?xml version="1.0" ?>
+<sdf version="1.4">
+  <model name="asphalt_plane">
+    <static>true</static>
+    <link name="link">
+      <collision name="collision">
+	<pose>4.5 9 0 0 0 0</pose>
+        <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>12 20</size>
+            </plane>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>100</mu>
+                <mu2>50</mu2>
+              </ode>
+            </friction>
+            <bounce/>
+            <contact>
+              <ode/>
+            </contact>
+          </surface>
+      </collision>
+      <visual name="visual">
+        <geometry>
+          <mesh>
+            <uri>model://urdf/meshes/circuit_s.dae</uri>
+         </mesh>
+        </geometry>
+      </visual>
+    </link>
+  </model>
+</sdf>

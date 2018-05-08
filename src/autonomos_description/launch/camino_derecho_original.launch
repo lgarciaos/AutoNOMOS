@@ -1,0 +1,22 @@
+<launch>
+ 
+
+  <!-- We resume the logic in empty_world.launch, changing only the name of the world to be launched -->
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="$(find autonomos_description)/worlds/camino_derecho.world"/>
+    <!-- more default parameters can be changed here -->
+
+  </include>
+
+   <param name="robot_description" textfile="$(find autonomos_description)/urdf/autonomos.urdf" />
+
+
+  <!-- load the controllers -->
+  <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" ns="/autonomos" args="joint_state_controller
+    steer_position_controller"/>
+
+  <!-- convert joint states to TF transforms for rviz, etc -->
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" respawn="false" output="screen">
+    <remap from="/joint_states" to="/autonomos/joint_states" />
+  </node>
+</launch>

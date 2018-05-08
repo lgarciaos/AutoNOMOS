@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sdf version='1.4'>
+  <world name='default'>
+    <include>
+      <uri>model://ground_plane</uri>
+    </include>
+
+    <!-- Global light source -->
+    <include>
+      <uri>model://sun</uri>
+    </include>
+    
+
+    <include>
+        <uri>model://autonomos_gazebo/models/circuit2way_oval</uri>
+        <pose>0 0 0.006 0 0 0</pose>
+    </include>
+
+<!--
+    <include>
+        <uri>model://AutoNOMOS_mini_camara</uri>
+        <pose>0 -15.16 0.069 0 0 0</pose>
+    </include>    
+-->
+
+    <gui fullscreen='0'>
+      <camera name='user_camera'>
+        <pose>-28.4637 -25.6886 32.5304 3.85803e-17 0.767823 0.506704</pose>
+        <view_controller>orbit</view_controller>
+      </camera>
+    </gui>
+  </world>
+</sdf>
