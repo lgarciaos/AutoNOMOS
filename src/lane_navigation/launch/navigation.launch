@@ -14,7 +14,7 @@
   </node> 
 
 
-  <node name="line_detection_fu_node" pkg="line_detection_fu_mod" type="line_detection_fu_node"  >
+  <node name="line_detection_fu_node" pkg="line_detection_fu_mod" type="line_detection_fu_node" >
 
     <param name="cam_w"                         type="int"    value="640"/>  
     <param name="cam_h"                         type="int"    value="480"/> <!--we will use only bottom half of this...-->  
@@ -70,7 +70,7 @@
     <param name="topico_estandarizado"           type="string"   value="/standarized_vel_ste" />
     <param name="kalpha"                type="double"   value="1.0"/>
     <param name="kbeta"                 type="double"   value="0.5"/>
-    <param name="car_center"            type="int"      value="87" />
+    <param name="car_center"            type="int"      value="80" />
     <!-- vertical distance to group points -->
     <param name="dbscan_epsilon"        type="int"      value="30" />
     
@@ -78,26 +78,22 @@
 
   
   <node name="lane_states_node" pkg="lane_states_original" type="lane_states_node" output="screen" >
-        <param name="car_center"           type="int" value="90" />
+        <param name="car_center"           type="int" value="80" />
   </node>
 
-  
+  <!--
   <node name="lane_controller_sim_node" pkg="lane_controller_sim" type="lane_controller_sim_node" output="screen" > 
         <param name="Kp"                   type="double" value="1.5"/>
         <param name="Ki"                   type="double" value="0.02"/>
         <param name="Kd"                   type="double" value="0.0"/>
         <param name="dt"                   type="double" value="1.0"/>
-        
-        <!--
-        <param name="pE"                   type="double" value="320.0"/>
-        -->
 
         <param name="min"                  type="double" value="-0.7"/>
         <param name="max"                  type="double" value="0.7"/>
         <param name="velocity"             type="double" value="5.0"/>
         <param name="altura"               type="double" value="70.0"/>
 	    <param name="topico_estandarizado" type="string" value="/standarized_vel_ste"/>
-   </node> 
-   
+  </node> 
+  -->   
 
 </launch>

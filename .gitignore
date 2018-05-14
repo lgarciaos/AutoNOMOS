@@ -5,6 +5,5 @@ build/
 install/
 logs/
 .catkin_tools/
-.catkin_workspace/
 devel/
 .catkin_workspace/

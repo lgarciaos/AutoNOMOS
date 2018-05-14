@@ -144,8 +144,8 @@ public:
       }
 
       if (value_steering_real.data != val.angular.z) {
-        // transformar radianes de regreso a grados
-        value_steering_real.data = val.angular.z * PI / 180;
+        // transformar radianes a grados
+        value_steering_real.data = val.angular.z * 180 / PI;
         _pub_steering.publish(value_steering_real);
       }
     }

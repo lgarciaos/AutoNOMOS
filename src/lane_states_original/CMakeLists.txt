@@ -7,7 +7,13 @@ project(lane_states_original)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED roscpp std_msgs cv_bridge sensor_msgs)
+find_package(
+	catkin REQUIRED 
+	roscpp 
+	std_msgs 
+	cv_bridge 
+	sensor_msgs)
+
 find_package(OpenCV REQUIRED)
 
 set(ROS_LINK_FLAGS "-lopencv_core -lopencv_highgui -lopencv_legacy -lopencv_imgproc -lopencv_features2d")
@@ -22,9 +28,8 @@ catkin_package(
 include_directories(
 # include
   ${catkin_INCLUDE_DIRS}
+  ${OpenCV_INCLUDE_DIRS}
 )
-
-include_directories(include ${OpenCV_INCLUDE_DIRS})
 
 add_executable(lane_states_node lane_states_node.cpp)
 
