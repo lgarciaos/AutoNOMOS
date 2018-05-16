@@ -25,12 +25,16 @@ catkin_package(
 #  DEPENDS system_lib
 )
 
-include_directories(
+include_directories (
 # include
   ${catkin_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS}
 )
 
-add_executable(lane_states_node lane_states_node.cpp)
+add_library (ackerman   
+  tools/ackerman.cpp
+)
 
-target_link_libraries(lane_states_node ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
+add_executable (lane_states_node lane_states_node.cpp)
+
+target_link_libraries (lane_states_node ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} ackerman)

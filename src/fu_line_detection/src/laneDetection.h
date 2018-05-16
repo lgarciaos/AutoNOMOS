@@ -140,6 +140,11 @@ class cLaneDetectionFu
 
         int estado;
         int dbscan_epsilon;
+        int dbscan_min_points;
+
+        double kp;
+        double ki;
+        double kd;
         
 
         /**
@@ -396,7 +401,7 @@ class cLaneDetectionFu
         void ackerman_control(cv::Mat& imagePaint, NewtonPolynomial& polyLeft, NewtonPolynomial& polyCenter,
     NewtonPolynomial& polyRight);
 
-        double PID(double pActual, double pDestino, double dt, double Kp, double Kd, double Ki);
+        double PID(double error, double dt, double Kp, double Ki, double Kd);
 };
 
 #endif 
