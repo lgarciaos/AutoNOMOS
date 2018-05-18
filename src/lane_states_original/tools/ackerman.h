@@ -5,33 +5,33 @@
 #include <math.h>
 #define PI 3.14159265
 
+struct state_car {
+    double x;
+    double y;
+    double theta;
+    state_car(): x(0), y(0), theta(0) {}
+};
+
 class ackerman
 {
 
 private:
-    double wheelBase;
-    double wheelRadius;
-    double v_x;
-    double v_y;
-    double v_theta;
+    double wheel_base;
+    double wheel_radius;
 
-    double v_x_old;
-    double v_y_old;
-    double v_theta_old;
+    state_car vel;
+    state_car vel_old;
 
 public:
-    double pos_dx;
-    double pos_dy;
-    double pos_dtheta;
 
-    double pos_x;
-    double pos_y;
-    double pos_theta;
+    state_car pos_odom;
+    state_car pos_predict;
 
-    ackerman(float wheelBase, float wheelRadius);
+    ackerman(float wheel_base, float wheel_radius);
 
-    void UpdateParameters(float vel_rad, float steering, float delta_time);
+    state_car update_odometry(float vel_rad, float steering, float delta_time);
 
+    state_car predict_deltas(float vel_rad, float steering, float delta_time);
 };
 
 #endif // ACKERMAN_H

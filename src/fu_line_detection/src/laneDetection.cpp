@@ -1,18 +1,17 @@
 #include "laneDetection.h"
 using namespace std;
 
-// #define PAINT_OUTPUT 
+// #define PAINT_OUTPUT
 #define PUBLISH_DEBUG_OUTPUT 
 
 static const uint32_t MY_ROS_QUEUE_SIZE = 100;
 #define PI 3.14159265
 
-#define RATE_HZ 5
-
 #define NUM_STATES 7
 #define STATE_WIDTH 20
 
-#define STATE_WIDTH_PIX 13
+const int RATE_HZ = 5;
+const double STATE_WIDTH_PIX = 13.0;
 
 image_transport::CameraPublisher image_publisher_dbscan;
 image_transport::CameraPublisher image_publisher;
@@ -53,7 +52,6 @@ int estado_deseado = 4; //iniciar con estado RC
 // PID kernel
 double prevErrorPID = 0.0;
 double integralPID = 0.0;
-double dist_y_nextPoint = 0.0;
 
 // obtener orientacion del carro con respecto a polylineas
 double theta_carro = 1.5707;
@@ -182,7 +180,7 @@ cLaneDetectionFu::cLaneDetectionFu(ros::NodeHandle nh)
 
     head_time_stamp = ros::Time::now();
     
-    read_images_ = nh.subscribe(nh_.resolveName(camera_name), MY_ROS_QUEUE_SIZE, &cLaneDetectionFu::ProcessInput,this);
+    read_images_ = nh.subscribe(nh_.resolveName(camera_name), MY_ROS_QUEUE_SIZE, &cLaneDetectionFu::ProcessInput, this);
 
     // sub_planning = nh.subscribe("/planning", MY_ROS_QUEUE_SIZE, &cLaneDetectionFu::ProcessPlanning,this);
     sub_localization = nh.subscribe("/localization_array", MY_ROS_QUEUE_SIZE, &cLaneDetectionFu::get_localization, this);
@@ -758,6 +756,7 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
 
 /* compute based on distance y_next_dist the points in pixels that the car needs to head to */
 bool cLaneDetectionFu::ackerman_control_next_points(double y_next_dist, cv::Point& pt_car, cv::Point& y_next_pt, cv::Point& y_next_pt2) {
+
     int next_move_y = maxYRoi-y_next_dist; // sin el 2* funcionaba bien, checar fuera de limite para polylinea
     int next_move2_y = maxYRoi-y_next_dist-10;
 
@@ -765,21 +764,46 @@ bool cLaneDetectionFu::ackerman_control_next_points(double y_next_dist, cv::Poin
     double x_right = 0.0;
     bool center_closer = false;
 
-    // TODO: next_pt and next_pt_2 perpendicular with respect to poly
+    double angle;
+    double hip;
 
     // calcular los puntos a moverse de acuerdo al estado actual y una distancia next_move_y
     // para entender un poco mas por que se utiliza esa linea, checar el mismo switch en det_hit en lane_states_node
     switch(estado_actual) {
         case 0: // OL
             if (polyDetectedLeft && pt_car.x < polyCenter.at(next_move_y)) {
-                y_next_pt = cv::Point(polyLeft.at(next_move_y) - STATE_WIDTH_PIX, next_move_y);
-                y_next_pt2 = cv::Point(polyLeft.at(next_move2_y) - STATE_WIDTH_PIX, next_move2_y);
+
+                cv::Point pt_next = cv::Point(polyLeft.at(next_move_y), next_move_y);
+                cv::Point pt_next_2 = cv::Point(polyLeft.at(next_move2_y), next_move2_y);
+                angle = atan2(pt_next.y - pt_next_2.y, pt_next.x - pt_next_2.x);
+                hip = STATE_WIDTH_PIX / sin(angle); // co = ca * tan (theta)
+
+                printf("\n 2. angulo %.2f, co: %.2f", angle, hip);
+
+                y_next_pt = cv::Point(polyLeft.at(next_move_y) - hip, next_move_y);
+                y_next_pt2 = cv::Point(polyLeft.at(next_move2_y) - hip, next_move2_y);
             } else if (polyDetectedCenter && pt_car.x < polyRight.at(next_move_y)) {
-                y_next_pt = cv::Point(polyCenter.at(next_move_y) - STATE_WIDTH_PIX, next_move_y);
-                y_next_pt2 = cv::Point(polyCenter.at(next_move2_y) - STATE_WIDTH_PIX, next_move2_y);
+
+                cv::Point pt_next = cv::Point(polyCenter.at(next_move_y), next_move_y);
+                cv::Point pt_next_2 = cv::Point(polyCenter.at(next_move2_y), next_move2_y);
+                angle = atan2(pt_next.y - pt_next_2.y, pt_next.x - pt_next_2.x);
+                hip = STATE_WIDTH_PIX / sin(angle); // co = ca * tan (theta)
+
+                printf("\n 3. angulo %.2f, co: %.2f", angle, hip);
+
+                y_next_pt = cv::Point(polyCenter.at(next_move_y) - hip, next_move_y);
+                y_next_pt2 = cv::Point(polyCenter.at(next_move2_y) - hip, next_move2_y);
             } else if (polyDetectedRight) {
-                y_next_pt = cv::Point(polyRight.at(next_move_y) - STATE_WIDTH_PIX, next_move_y);
-                y_next_pt2 = cv::Point(polyRight.at(next_move2_y) - STATE_WIDTH_PIX, next_move2_y);
+
+                cv::Point pt_next = cv::Point(polyRight.at(next_move_y), next_move_y);
+                cv::Point pt_next_2 = cv::Point(polyRight.at(next_move2_y), next_move2_y);
+                angle = atan2(pt_next.y - pt_next_2.y, pt_next.x - pt_next_2.x);
+                hip = STATE_WIDTH_PIX / sin(angle); // co = ca * tan (theta)
+
+                printf("\n 4. angulo %.2f, co: %.2f", angle, hip);
+
+                y_next_pt = cv::Point(polyRight.at(next_move_y) - hip, next_move_y);
+                y_next_pt2 = cv::Point(polyRight.at(next_move2_y) - hip, next_move2_y);
             }
             else {
             	return false;
@@ -813,41 +837,59 @@ bool cLaneDetectionFu::ackerman_control_next_points(double y_next_dist, cv::Poin
             }
             break;
         case 3: // CC
-        	if (polyDetectedCenter && polyDetectedRight) {
-    	        x_center = polyCenter.at(next_move_y);
-            	x_right = polyRight.at(next_move_y);
-        	    center_closer = abs(pt_car.x - x_center) <= abs(pt_car.x - x_right);
-    	        y_next_pt = cv::Point(center_closer ? x_center : x_right, next_move_y);
-	            y_next_pt2 = cv::Point(center_closer ? polyCenter.at(next_move2_y) : polyRight.at(next_move2_y), next_move2_y);
+            if (polyDetectedCenter && polyDetectedRight) {
+                x_center = polyCenter.at(next_move_y);
+                x_right = polyRight.at(next_move_y);
+                center_closer = abs(pt_car.x - x_center) <= abs(pt_car.x - x_right);
+                y_next_pt = cv::Point(center_closer ? x_center : x_right, next_move_y);
+                y_next_pt2 = cv::Point(center_closer ? polyCenter.at(next_move2_y) : polyRight.at(next_move2_y), next_move2_y);
             } else {
-	        	return false;
-	        }
+                return false;
+            }
             break;
         case 4: // RC
-        	if (polyDetectedCenter && polyDetectedRight) {
-                    if (car_center > polyRight.at(next_move_y)) {
-                        y_next_pt = cv::Point(polyRight.at(next_move_y) + STATE_WIDTH_PIX, next_move_y);
-                        y_next_pt2 = cv::Point(polyRight.at(next_move2_y) + STATE_WIDTH_PIX, next_move2_y);
-                    } else {
-                        y_next_pt = cv::Point((polyCenter.at(next_move_y) + polyRight.at(next_move_y))/2, next_move_y);
-                        y_next_pt2 = cv::Point((polyCenter.at(next_move2_y) + polyRight.at(next_move2_y))/2, next_move2_y);
-                    }
+            if (polyDetectedCenter && polyDetectedRight) {
+                if (car_center > polyRight.at(next_move_y)) {
+
+                    cv::Point pt_next = cv::Point(polyRight.at(next_move_y), next_move_y);
+                    cv::Point pt_next_2 = cv::Point(polyRight.at(next_move2_y), next_move2_y);
+                    angle = atan2(pt_next.y - pt_next_2.y, pt_next.x - pt_next_2.x);
+                    hip = STATE_WIDTH_PIX / sin(angle); // co = ca * tan (theta)
+
+                    printf("\n 5. angulo %.2f, co: %.2f", angle, hip);
+
+                    y_next_pt = cv::Point(polyRight.at(next_move_y) + hip, next_move_y);
+                    y_next_pt2 = cv::Point(polyRight.at(next_move2_y) + hip, next_move2_y);
+
+                } else {
+
+                    y_next_pt = cv::Point((polyCenter.at(next_move_y) + polyRight.at(next_move_y))/2, next_move_y);
+                    y_next_pt2 = cv::Point((polyCenter.at(next_move2_y) + polyRight.at(next_move2_y))/2, next_move2_y);
+
+                }
             } else {
 	        	return false;
 	        }
             break;
         case 5: // RR
-        	if (polyDetectedRight) {
-            	y_next_pt = cv::Point(polyRight.at(next_move_y), next_move_y);
-	            y_next_pt2 = cv::Point(polyRight.at(next_move2_y), next_move2_y);
-	        } else {
-	        	return false;
-	        }
+            if (polyDetectedRight) {
+                y_next_pt = cv::Point(polyRight.at(next_move_y), next_move_y);
+                y_next_pt2 = cv::Point(polyRight.at(next_move2_y), next_move2_y);
+            } else {
+                return false;
+            }
             break;
         case 6: // OR
-        	if (polyDetectedRight) {
-                y_next_pt = cv::Point(polyRight.at(next_move_y) + STATE_WIDTH_PIX, next_move_y);
-                y_next_pt2 = cv::Point(polyRight.at(next_move2_y) + STATE_WIDTH_PIX, next_move2_y);
+            if (polyDetectedRight) {
+                cv::Point pt_next = cv::Point(polyRight.at(next_move_y), next_move_y);
+                cv::Point pt_next_2 = cv::Point(polyRight.at(next_move2_y), next_move2_y);
+                angle = atan2(pt_next.y - pt_next_2.y, pt_next.x - pt_next_2.x);
+                hip = STATE_WIDTH_PIX / sin(angle); // co = ca * tan (theta)
+
+                printf("\n 6. angulo %.2f, co: %.2f", angle, hip);
+
+                y_next_pt = cv::Point(polyRight.at(next_move_y) + hip, next_move_y);
+                y_next_pt2 = cv::Point(polyRight.at(next_move2_y) + hip, next_move2_y);
             } else {
             	return false;
             }
@@ -873,40 +915,45 @@ void cLaneDetectionFu::ackerman_control(cv::Mat& imagePaint, NewtonPolynomial& p
     // car location (position bottom to up with respect to next points, to compute angle)
     cv::Point ptCar = cv::Point(car_center, maxYRoi);
     cv::circle(imagePaint, ptCar, 2, cv::Scalar(0,255,255), -1);
-    actual_steering = 0;
 
     // calcular siguiente punto sobre eje Y (X con respecto al carro) de acuerdo a velocidad y steering actual
     // aqui obtener velocidad de IMU y orientacion el carro
     // TODO IMU
-    dist_y_nextPoint = 2; // actual_speed * 5 * sin(PI/2 - actual_steering); //*;
+    double dist_y_nextPoint = 2; // actual_speed * 5 * sin(PI/2 - actual_steering); //*;
     
     double dist_yPoly = 40 * abs(estado_deseado - estado_actual);
 
     cv::Point nextPoint, nextPoint2, pointSlope;
     
     // siguente punto en el estado en que se encuentra
-    bool puntosValidos;
     // primera opcion para TRAYECTORIA
     // if (estado_actual != estado_deseado) 
     //     puntosValidos = ackerman_control_next_points(dist_yPoly, ptCar, nextPoint, nextPoint2);
     // else
-    puntosValidos = ackerman_control_next_points(dist_y_nextPoint, ptCar, nextPoint, nextPoint2);
+    bool puntosValidos = ackerman_control_next_points(dist_y_nextPoint, ptCar, nextPoint, nextPoint2);
 
     if (puntosValidos) {
         // Cambio de estado, puede haber una forma mas suave
         if (estado_actual >= 0) {
+
+            double angulo = atan2(nextPoint.y - nextPoint2.y, nextPoint.x - nextPoint2.x);
+            double hipo = STATE_WIDTH_PIX / sin(angulo); // co = ca * tan (theta)
+
+            printf("\n 1. pix: %.2f, angulo %.2f, co: %.2f, hip: %.2f, cos: %.2f", STATE_WIDTH_PIX, angulo,  hipo, STATE_WIDTH_PIX / sin(angulo), sin(angulo));
+
             if (estado_actual < estado_deseado) {
 
-                nextPoint.x = nextPoint.x + STATE_WIDTH_PIX * (estado_deseado - estado_actual);
-                nextPoint2.x = nextPoint2.x + STATE_WIDTH_PIX * (estado_deseado - estado_actual);
+                nextPoint.x = nextPoint.x + hipo * (estado_deseado - estado_actual);
+                nextPoint2.x = nextPoint2.x + hipo * (estado_deseado - estado_actual);
 
             } else if (estado_actual > estado_deseado) {
 
-                nextPoint.x = nextPoint.x - STATE_WIDTH_PIX * (estado_actual - estado_deseado);
-                nextPoint2.x = nextPoint2.x - STATE_WIDTH_PIX * (estado_actual - estado_deseado);
+                nextPoint.x = nextPoint.x - hipo * (estado_actual - estado_deseado);
+                nextPoint2.x = nextPoint2.x - hipo * (estado_actual - estado_deseado);
 
             }
         }
+
         /* SMOOTH MOVE 
         // almacenar diferencia en x, para mantener posteriormente
         double diff_x = nextPoint2.x - nextPoint.x;

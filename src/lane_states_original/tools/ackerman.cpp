@@ -1,38 +1,62 @@
 #include "ackerman.h"
 
-ackerman::ackerman(float wheelBase, float wheelRadius) {
-    this->wheelBase = wheelBase;
-    this->wheelRadius = wheelRadius;
-    this->v_x = 0.0;
-    this->v_y = 0.0;
-    this->v_theta = 0.0;
-    this->pos_dx = 0.0;
-    this->pos_dy = 0.0;
-    this->pos_dtheta = 0.0;
+ackerman::ackerman(float wheel_base, float wheel_radius) {
+
+    this->wheel_base = wheel_base;
+    this->wheel_radius = wheel_radius;
+
 }
 
-void ackerman::UpdateParameters(float vel_rad, float steering, float delta_time) {
-    double vel_mts_seg = vel_rad * this->wheelRadius; // rad / s * Perimeter / 2 * PI * rad
+// odometry from velocities with respect to global frame (using global theta)
+state_car ackerman::update_odometry(float vel_rad, float steering, float delta_time) {
 
-    this->v_x_old = this->v_x;
-    this->v_y_old = this->v_y;
-    this->v_theta_old = this->v_theta;
+    state_car delta;
 
-    this->v_x = vel_mts_seg * cos(this->pos_theta);
-    this->v_y = vel_mts_seg * sin(this->pos_theta);
-    this->v_theta = (vel_mts_seg / this->wheelBase) * tan(steering);
+    double vel_mts_seg = vel_rad * wheel_radius; // rad / s * Perimeter / 2 * PI * rad
 
-    // integracion trapezoidal
-    // velocityy [1] = velocityy [0] + (accy [1] + (accy [1] - accy [0]) / 2) * T_imu;
-    // para estimacion global sumar posicion anterior
-    // pos_x = (v_x + (v_x - v_x_old) / 2) * delta_time;
+    vel_old.x = vel.x;
+    vel_old.y = vel.y;
+    vel_old.theta = vel.theta;
 
-    // integracion rectangular
-    this->pos_dx = (this->v_x + (this->v_x - this->v_x_old) / 2.0) * delta_time;
-    this->pos_dy = (this->v_y + (this->v_y - this->v_y_old) / 2.0) * delta_time;
-    this->pos_dtheta = (this->v_theta + (this->v_theta - this->v_theta_old) / 2.0) * delta_time;
+    vel.x = vel_mts_seg * cos(pos_odom.theta);
+    vel.y = vel_mts_seg * sin(pos_odom.theta);
+    vel.theta = (vel_mts_seg / wheel_base) * tan(steering); // 0 a 2PI
 
-    this->pos_x += this->pos_dx;
-    this->pos_y += this->pos_dy;
-    this->pos_theta += this->pos_dtheta;
+    // calculate deltas
+    delta.x = vel.x * delta_time; // (vel.x + (vel.x - vel_old.x) / 2.0) * delta_time;
+    delta.y = vel.y * delta_time; // (vel.y + (vel.y - vel_old.y) / 2.0) * delta_time;
+    delta.theta = vel.theta * delta_time;
+
+    // update odometry based on global deltas
+    pos_odom.x += delta.x;
+    pos_odom.y += delta.y;
+    pos_odom.theta += delta.theta;
+
+    return delta;
+}
+
+// odometry from velocities with respect to local frame (using local theta)
+state_car ackerman::predict_deltas(float vel_rad, float steering, float delta_time) {
+
+    double vel_mts_seg = vel_rad * wheel_radius; // (rad / s) * (Perimeter / 2 * PI * rad)
+
+    state_car delta;
+
+    double vel_theta = (vel_mts_seg / wheel_base) * tan(steering); // 0 a 2PI
+    delta.theta = vel_theta * delta_time;
+
+    double vel_x = vel_mts_seg * cos(delta.theta);
+    double vel_y = vel_mts_seg * sin(delta.theta);
+
+    delta.x = vel_x * delta_time;
+    delta.y = vel_y * delta_time;
+
+    // update odometry based on local deltas
+    double motion_magnitude = sqrt(pow(delta.x,2) + pow(delta.y, 2));
+    pos_predict.x += delta.x * cos(pos_predict.theta) - delta.y * tan(pos_predict.theta) * cos(pos_predict.theta);
+    pos_predict.y += motion_magnitude * sin(pos_predict.theta + atan2(delta.y, delta.x));
+    pos_predict.theta += delta.theta;
+
+    return delta;
+
 }
