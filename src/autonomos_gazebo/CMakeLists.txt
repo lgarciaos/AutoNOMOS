@@ -7,8 +7,8 @@ project(autonomos_gazebo)
 
 find_package(catkin REQUIRED COMPONENTS
   autonomos_description
-  gazebo_plugins
-  gazebo_ros
+#  gazebo_plugins
+#  gazebo_ros
 #  gazebo_ros_control
 )
 
