@@ -145,7 +145,7 @@ public:
 
       if (value_steering_real.data != val.angular.z) {
         // transformar radianes a grados
-        value_steering_real.data = val.angular.z * 180 / PI;
+        value_steering_real.data = (val.angular.z * 180 / PI) + 45; // corrección en carro real y simulador. 45 grados es derecho, 0 derecha. 90 izquierda.
         _pub_steering.publish(value_steering_real);
       }
     }

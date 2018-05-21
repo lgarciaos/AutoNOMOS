@@ -1029,14 +1029,14 @@ void cLaneDetectionFu::ackerman_control(cv::Mat& imagePaint, NewtonPolynomial& p
         double y = ptCar.x - nextPoint.x;
         double error = atan2(y, 20);
         printf ("\n PID: car: %.2f, next: %.2f", ptCar.x, nextPoint.x);
-        double steering = PID(error, 0.2, kp, ki, kd);
+        double steering = PID(error, 0.2, kp, ki, kd); // regresa 45 a -45. Izquierda a Derecha.
 
         // utilizando grados
         // double steering = PID(steering_cont, 0.2, 0.5, 0.001, 0.0);
 
         // -------------- FINISH ACKERMAN CONTROL -----------
         if (!std::isnan(steering)) {
-            float steering_rounded = roundf(steering * 100) / 100;
+            float steering_rounded = round(steering * 100) / 100;
 
             printf("\n steering: %+04.2f", steering_rounded);
 
