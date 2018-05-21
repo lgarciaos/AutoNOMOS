@@ -34,6 +34,7 @@ std::string topico_estandarizado;
 double actual_speed = 5;
 float actual_steering = 0;
 int car_center = 0;
+int car_speed = 0;
 int car_text_position = 150;
 
 //msgs head
@@ -118,6 +119,8 @@ cLaneDetectionFu::cLaneDetectionFu(ros::NodeHandle nh)
     priv_nh_.param<double>(node_name+"/kbeta", kbeta, 1); 
 
     priv_nh_.param<int>(node_name+"/car_center", car_center, 15);
+    priv_nh_.param<int>(node_name+"/car_speed", car_speed, 5);
+    
     priv_nh_.param<int>(node_name+"/dbscan_epsilon", dbscan_epsilon, 30);
     priv_nh_.param<int>(node_name+"/dbscan_min_points", dbscan_min_points, 5);
 
@@ -1051,7 +1054,7 @@ void cLaneDetectionFu::ackerman_control(cv::Mat& imagePaint, NewtonPolynomial& p
             
             geometry_msgs::Twist vel;
             vel.angular.z = steering_rounded;
-            vel.linear.x = actual_speed;
+            vel.linear.x = car_speed;
             // speed is constant
 
             // falta PID
