@@ -41,7 +41,7 @@ clane_states::clane_states(ros::NodeHandle nh)
     // probar con imu
     sub_imu = nh_.subscribe("/AutoNOMOS_mini/imu", MY_ROS_QUEUE_SIZE, &clane_states::get_imu, this);
     // ros::Subscriber sub_orientation = nh_.subscribe("/car_orientation", MY_ROS_QUEUE_SIZE, &get_car_orientation);
-    sub_robot_pos = nh_.subscribe("/gazebo/model_states", MY_ROS_QUEUE_SIZE, &clane_states::poseCallback, this);
+    // sub_robot_pos = nh_.subscribe("/gazebo/model_states", MY_ROS_QUEUE_SIZE, &clane_states::poseCallback, this);
 
     // publicar imagen con la distribucion de sense, hits y move para debug
 #ifdef PAINT_OUTPUT
@@ -136,7 +136,8 @@ void clane_states::get_car_orientation(const std_msgs::Float32& val) {
     car_orientation = val.data;
 }
 
-// get global pose of car
+// get global pose of car, Gazebo ONLY
+/*
 void clane_states::poseCallback(const gazebo_msgs::LinkStates& msg){
     // msg.name
     // TODO search by car name
@@ -145,17 +146,11 @@ void clane_states::poseCallback(const gazebo_msgs::LinkStates& msg){
     double yaw = tf::getYaw(msg.pose[1].orientation);
     car_global_pose.angular.z = yaw;
 
-    /*
-    for(int i = HISTORY_POS; i > 0; i--){
-        global_position_x [i] = global_position_x [i - 1];
-        global_position_y [i] = global_position_y [i - 1];
-        global_orientation [i] = global_orientation [i - 1];
-    }
-    */
     global_position_x [0] = car_global_pose.linear.x;
     global_position_y [0] = car_global_pose.linear.y;
     global_orientation [0] = car_global_pose.angular.z;
 }
+*/
 
 // TODO: Dead reckogning
 void clane_states::get_imu(const sensor_msgs::Imu& val){

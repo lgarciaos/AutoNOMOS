@@ -18,7 +18,7 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/core.hpp>
 
-#include "gazebo_msgs/LinkStates.h"
+// #include "gazebo_msgs/LinkStates.h"
 #include "tf/tf.h"
 
 #include <sensor_msgs/Imu.h>
@@ -58,7 +58,7 @@ private:
     // probar con imu
     ros::Subscriber sub_imu ;
     // ros::Subscriber sub_orientation = nh.subscribe("/car_orientation", MY_ROS_QUEUE_SIZE, &get_car_orientation);
-    ros::Subscriber sub_robot_pos ;
+    // ros::Subscriber sub_robot_pos ;
 
 
 
@@ -111,7 +111,7 @@ private:
 
     void get_car_orientation(const std_msgs::Float32& val);
 
-    void poseCallback(const gazebo_msgs::LinkStates& msg);
+//     void poseCallback(const gazebo_msgs::LinkStates& msg);
 
     void get_imu(const sensor_msgs::Imu& val);
 
