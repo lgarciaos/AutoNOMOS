@@ -85,6 +85,7 @@ local_planner::local_planner(ros::NodeHandle nh)
 //gets the left points
 void local_planner::get_pts_left(const nav_msgs::GridCells& array) {
     arr_left.cells = array.cells;
+    arr_left.cell_width = array.cell_width;
     if (array.cell_width > 5 && array.cells[0].x > 0) {
             L = array.cell_width;
     }
@@ -96,6 +97,7 @@ void local_planner::get_pts_left(const nav_msgs::GridCells& array) {
 //gets the center points
 void local_planner::get_pts_center(const nav_msgs::GridCells& array) {
     arr_center.cells = array.cells;
+    arr_center.cell_width = array.cell_width;
     if (array.cell_width > 5 && array.cells[0].x > 0) {
             C = array.cell_width;
     }
@@ -107,6 +109,7 @@ void local_planner::get_pts_center(const nav_msgs::GridCells& array) {
 //gets the right points
 void local_planner::get_pts_right(const nav_msgs::GridCells& array) {
     arr_right.cells = array.cells;
+    arr_right.cell_width = array.cell_width;
     if (array.cell_width > 5 && array.cells[0].x > 0) {
             R = array.cell_width;
     }
@@ -227,8 +230,8 @@ bool local_planner::ackerman_control_next_points(double y_next_dist, cv::Point& 
                 // cv::Point pt_next = cv::Point(polyLeft.at(next_move_y), next_move_y);
                 // cv::Point pt_next_2 = cv::Point(polyLeft.at(next_move2_y), next_move2_y);
                 // points
-                cv::Point pt_next = cv::Point(arr_left.cells[next_move_y].x, next_move_y + num_suma);
-                cv::Point pt_next_2 = cv::Point(arr_left.cells[next_move2_y].x, next_move2_y + num_suma);
+                cv::Point pt_next = cv::Point(arr_left.cells[next_move_y].x, next_move_y - num_suma);
+                cv::Point pt_next_2 = cv::Point(arr_left.cells[next_move2_y].x, next_move2_y - num_suma);
                 angle = atan2(pt_next.y - pt_next_2.y, pt_next.x - pt_next_2.x);
                 hip = state_width_pix / sin(angle); // co = ca * tan (theta)
 
@@ -238,8 +241,8 @@ bool local_planner::ackerman_control_next_points(double y_next_dist, cv::Point& 
                 // y_next_pt = cv::Point(polyLeft.at(next_move_y) - hip, next_move_y);
                 // y_next_pt2 = cv::Point(polyLeft.at(next_move2_y) - hip, next_move2_y);
                 // points
-                y_next_pt = cv::Point(arr_left.cells[next_move_y].x - hip, next_move_y + num_suma);
-                y_next_pt2 = cv::Point(arr_left.cells[next_move2_y].x - hip, next_move2_y + num_suma);
+                y_next_pt = cv::Point(arr_left.cells[next_move_y].x - hip, image_height - next_move_y - num_suma);
+                y_next_pt2 = cv::Point(arr_left.cells[next_move2_y].x - hip, image_height - next_move2_y - num_suma);
             } else if (C > 0 && pt_car.x < arr_right.cells[next_move_y].x) {
                 // ransac
                 // cv::Point pt_next = cv::Point(polyCenter.at(next_move_y), next_move_y);
@@ -255,8 +258,8 @@ bool local_planner::ackerman_control_next_points(double y_next_dist, cv::Point& 
                 // y_next_pt = cv::Point(polyCenter.at(next_move_y) - hip, next_move_y);
                 // y_next_pt2 = cv::Point(polyCenter.at(next_move2_y) - hip, next_move2_y);
                 // points
-                y_next_pt = cv::Point(arr_center.cells[next_move_y].x - hip, next_move_y + num_suma);
-                y_next_pt2 = cv::Point(arr_center.cells[next_move2_y].x - hip, next_move2_y + num_suma);
+                y_next_pt = cv::Point(arr_center.cells[next_move_y].x - hip, image_height - next_move_y - num_suma);
+                y_next_pt2 = cv::Point(arr_center.cells[next_move2_y].x - hip, image_height - next_move2_y - num_suma);
             } else if (R > 0) {
                 // ransac
                 // cv::Point pt_next = cv::Point(polyRight.at(next_move_y), next_move_y);
@@ -273,8 +276,8 @@ bool local_planner::ackerman_control_next_points(double y_next_dist, cv::Point& 
                 // y_next_pt = cv::Point(polyRight.at(next_move_y) - hip, next_move_y);
                 // y_next_pt2 = cv::Point(polyRight.at(next_move2_y) - hip, next_move2_y);
                 // points
-                y_next_pt = cv::Point(arr_right.cells[next_move_y].x - hip, next_move_y + num_suma);
-                y_next_pt2 = cv::Point(arr_right.cells[next_move2_y].x - hip, next_move2_y + num_suma);
+                y_next_pt = cv::Point(arr_right.cells[next_move_y].x - hip, image_height - next_move_y - num_suma);
+                y_next_pt2 = cv::Point(arr_right.cells[next_move2_y].x - hip, image_height - next_move2_y - num_suma);
             }
             else {
                 return false;
@@ -289,21 +292,21 @@ bool local_planner::ackerman_control_next_points(double y_next_dist, cv::Point& 
                 // y_next_pt = cv::Point(polyLeft.at(next_move_y), next_move_y);
                 // y_next_pt2 = cv::Point(polyLeft.at(next_move2_y), next_move2_y);
                 // points
-                y_next_pt = cv::Point(arr_left.cells[next_move_y].x - hip, next_move_y + num_suma);
-                y_next_pt2 = cv::Point(arr_left.cells[next_move2_y].x - hip, next_move2_y + num_suma);
+                y_next_pt = cv::Point(arr_left.cells[next_move_y].x - hip, image_height - next_move_y - num_suma);
+                y_next_pt2 = cv::Point(arr_left.cells[next_move2_y].x - hip, image_height - next_move2_y - num_suma);
             } else if (C > 0 && pt_car.x < arr_right.cells[next_move_y].x) {
                 // ransac
                 // y_next_pt = cv::Point(polyCenter.at(next_move_y), next_move_y);
                 // y_next_pt2 = cv::Point(polyCenter.at(next_move2_y), next_move2_y);
                 // points
-                y_next_pt = cv::Point(arr_center.cells[next_move_y].x - hip, next_move_y + num_suma);
-                y_next_pt2 = cv::Point(arr_center.cells[next_move2_y].x - hip, next_move2_y + num_suma);
+                y_next_pt = cv::Point(arr_center.cells[next_move_y].x - hip, image_height - next_move_y - num_suma);
+                y_next_pt2 = cv::Point(arr_center.cells[next_move2_y].x - hip, image_height - next_move2_y - num_suma);
             } else if (R > 0) {
                 // y_next_pt = cv::Point(polyRight.at(next_move_y), next_move_y);
                 // y_next_pt2 = cv::Point(polyRight.at(next_move2_y), next_move2_y);
                 // points
-                y_next_pt = cv::Point(arr_right.cells[next_move_y].x - hip, next_move_y + num_suma);
-                y_next_pt2 = cv::Point(arr_right.cells[next_move2_y].x - hip, next_move2_y + num_suma);
+                y_next_pt = cv::Point(arr_right.cells[next_move_y].x - hip, image_height - next_move_y - num_suma);
+                y_next_pt2 = cv::Point(arr_right.cells[next_move2_y].x - hip, image_height - next_move2_y - num_suma);
             }
             else {
                 return false;
@@ -322,55 +325,54 @@ bool local_planner::ackerman_control_next_points(double y_next_dist, cv::Point& 
             */
             // points
             if (C > 0 && L > 0 && pt_car.x < arr_center.cells[next_move_y].x) {
-                y_next_pt = cv::Point((arr_center.cells[next_move_y].x + arr_left.cells[next_move_y].x)/2, next_move_y  + num_suma);
-                y_next_pt2 = cv::Point((arr_center.cells[next_move2_y].x + arr_left.cells[next_move2_y].x)/2, next_move2_y + num_suma);
+                y_next_pt = cv::Point((arr_center.cells[next_move_y].x + arr_left.cells[next_move_y].x)/2, image_height - next_move_y  - num_suma);
+                y_next_pt2 = cv::Point((arr_center.cells[next_move2_y].x + arr_left.cells[next_move2_y].x)/2, image_height - next_move2_y - num_suma);
             } else if (C > 0 && R > 0) {
-                y_next_pt = cv::Point((arr_center.cells[next_move_y].x + arr_right.cells[next_move_y].x)/2, next_move_y + num_suma);
-                y_next_pt2 = cv::Point((arr_center.cells[next_move2_y].x + arr_right.cells[next_move2_y].x)/2, next_move2_y + num_suma);
+                y_next_pt = cv::Point((arr_center.cells[next_move_y].x + arr_right.cells[next_move_y].x)/2, image_height - next_move_y - num_suma);
+                y_next_pt2 = cv::Point((arr_center.cells[next_move2_y].x + arr_right.cells[next_move2_y].x)/2, image_height - next_move2_y - num_suma);
             }
             else {
                 return false;
             }
             break;
         case 3: // CC
-        // ransac
-        /*
-        if (polyDetectedLeft && polyDetectedCenter && polyDetectedRight) {
-            // si veo todas las lineas
-            x_center = polyCenter.at(next_move_y);
+            // ransac
+            /*
+            if (polyDetectedLeft && polyDetectedCenter && polyDetectedRight) {
+                // si veo todas las lineas
+                x_center = polyCenter.at(next_move_y);
 
-            y_next_pt = cv::Point( x_center , next_move_y);
-            y_next_pt2 = cv::Point( polyCenter.at(next_move2_y) , next_move2_y);
-        }
-        else if (polyDetectedCenter && polyDetectedRight) {
-            // veo dos lineas
-            x_center = polyCenter.at(next_move_y);
-            x_right = polyRight.at(next_move_y);
-            center_closer = abs(pt_car.x - x_center) < abs(pt_car.x - x_right);
-            y_next_pt = cv::Point(center_closer ? x_center : x_right, next_move_y);
-            y_next_pt2 = cv::Point(center_closer ? polyCenter.at(next_move2_y) : polyRight.at(next_move2_y), next_move2_y);
+                y_next_pt = cv::Point( x_center , next_move_y);
+                y_next_pt2 = cv::Point( polyCenter.at(next_move2_y) , next_move2_y);
+            }
+            else if (polyDetectedCenter && polyDetectedRight) {
+                // veo dos lineas
+                x_center = polyCenter.at(next_move_y);
+                x_right = polyRight.at(next_move_y);
+                center_closer = abs(pt_car.x - x_center) < abs(pt_car.x - x_right);
+                y_next_pt = cv::Point(center_closer ? x_center : x_right, next_move_y);
+                y_next_pt2 = cv::Point(center_closer ? polyCenter.at(next_move2_y) : polyRight.at(next_move2_y), next_move2_y);
 
-        }   */
-        if (L > 0 && C > 0 && R > 0) {
-            // si veo todas las lineas
-            x_center = arr_center.cells[next_move_y].x;
+            }   */
+            if (L > 0 && C > 0 && R > 0) {
+                // si veo todas las lineas
 
-            y_next_pt = cv::Point( x_center , next_move_y + num_suma);
-            y_next_pt2 = cv::Point( arr_center.cells[next_move2_y].x , next_move2_y + num_suma);
-        }
-        else if (C > 0 && R > 0) {
-            // veo dos lineas
-            x_center = arr_center.cells[next_move_y].x;
-            x_right = arr_right.cells[next_move_y].x;
-            center_closer = abs(pt_car.x - x_center) < abs(pt_car.x - x_right);
-            y_next_pt = cv::Point(center_closer ? x_center : x_right, next_move_y + num_suma);
-            y_next_pt2 = cv::Point(center_closer ? arr_center.cells[next_move2_y].x : arr_right.cells[next_move2_y].x, next_move2_y + num_suma);
+                y_next_pt = cv::Point( arr_center.cells[next_move_y].x , image_height - next_move_y - num_suma);
+                y_next_pt2 = cv::Point( arr_center.cells[next_move2_y].x , image_height - next_move2_y - num_suma);
+            }
+            else if (C > 0 && R > 0) {
+                // veo dos lineas
+                x_center = arr_center.cells[next_move_y].x;
+                x_right = arr_right.cells[next_move_y].x;
+                center_closer = abs(pt_car.x - x_center) < abs(pt_car.x - x_right);
+                y_next_pt = cv::Point(center_closer ? x_center : x_right, image_height - next_move_y - num_suma);
+                y_next_pt2 = cv::Point(center_closer ? arr_center.cells[next_move2_y].x : arr_right.cells[next_move2_y].x, image_height - next_move2_y - num_suma);
 
-        }
-        else {
-            return false;
-        }
-        break;
+            }
+            else {
+                return false;
+            }
+            break;
         case 4: // RC
             // ransac
             /*
@@ -405,16 +407,16 @@ bool local_planner::ackerman_control_next_points(double y_next_dist, cv::Point& 
 
                     printf("\n 5. angulo %.2f, co: %.2f", angle, hip);
 
-                    y_next_pt = cv::Point(arr_right.cells[next_move_y].x + hip, next_move_y + num_suma);
-                    y_next_pt2 = cv::Point(arr_right.cells[next_move2_y].x + hip, next_move2_y + num_suma);
+                    y_next_pt = cv::Point(arr_right.cells[next_move_y].x + hip, image_height - next_move_y - num_suma);
+                    y_next_pt2 = cv::Point(arr_right.cells[next_move2_y].x + hip, image_height - next_move2_y - num_suma);
 
                 } else {
                     // ransac
                     // y_next_pt = cv::Point((polyCenter.at(next_move_y) + polyRight.at(next_move_y))/2, next_move_y);
                     // y_next_pt2 = cv::Point((polyCenter.at(next_move2_y) + polyRight.at(next_move2_y))/2, next_move2_y);
                     // points
-                    y_next_pt = cv::Point((arr_center.cells[next_move_y].x + arr_right.cells[next_move_y].x)/2, next_move_y + num_suma);
-                    y_next_pt2 = cv::Point((arr_center.cells[next_move2_y].x + arr_right.cells[next_move2_y].x)/2, next_move2_y + num_suma);
+                    y_next_pt = cv::Point((arr_center.cells[next_move_y].x + arr_right.cells[next_move_y].x)/2, image_height - next_move_y - num_suma);
+                    y_next_pt2 = cv::Point((arr_center.cells[next_move2_y].x + arr_right.cells[next_move2_y].x)/2, image_height - next_move2_y - num_suma);
                 }
             }
             else {
@@ -423,8 +425,8 @@ bool local_planner::ackerman_control_next_points(double y_next_dist, cv::Point& 
             break;
         case 5: // RR
             if (R > 0) {
-                y_next_pt = cv::Point(arr_right.cells[next_move_y].x, next_move_y + num_suma);
-                y_next_pt2 = cv::Point(arr_right.cells[next_move2_y].x, next_move2_y + num_suma);
+                y_next_pt = cv::Point(arr_right.cells[next_move_y].x, image_height - next_move_y - num_suma);
+                y_next_pt2 = cv::Point(arr_right.cells[next_move2_y].x, image_height - next_move2_y - num_suma);
             } else {
                 return false;
             }
@@ -438,8 +440,8 @@ bool local_planner::ackerman_control_next_points(double y_next_dist, cv::Point& 
 
                 printf("\n 6. angulo %.2f, co: %.2f", angle, hip);
 
-                y_next_pt = cv::Point(arr_right.cells[next_move_y].x + hip, next_move_y + num_suma);
-                y_next_pt2 = cv::Point(arr_right.cells[next_move2_y].x + hip, next_move2_y + num_suma);
+                y_next_pt = cv::Point(arr_right.cells[next_move_y].x + hip, image_height - next_move_y - num_suma);
+                y_next_pt2 = cv::Point(arr_right.cells[next_move2_y].x + hip, image_height - next_move2_y - num_suma);
             } else {
                 return false;
             }
@@ -466,7 +468,7 @@ void local_planner::ackerman_control(cv::Mat& imagePaint) {
     // ransac
     // cv::Point ptCar = cv::Point(car_center, image_height);
     // points
-    cv::Point ptCar = cv::Point(car_center, 0);
+    cv::Point ptCar = cv::Point(car_center, image_height);
     cv::circle(imagePaint, ptCar, 2, cv::Scalar(0,255,255), -1);
 
     // calcular siguiente punto sobre eje Y (X con respecto al carro) de acuerdo a velocidad y steering actual
@@ -496,7 +498,7 @@ void local_planner::ackerman_control(cv::Mat& imagePaint) {
             double angulo = atan2(nextPoint.y - nextPoint2.y, nextPoint.x - nextPoint2.x);
             double hipo = state_width_pix / sin(angulo); // co = ca * tan (theta)
 
-            printf("\n actual: %d, deseado: %d \n x_actual: %d, x_deseado_1: %d, x_deseado_2: %d \n hipotenusa: %.2f", estado_actual, estado_deseado, car_center, nextPoint.x, nextPoint2.x, hipo);
+            // printf("\n actual: %d, deseado: %d \n x_actual: %d, x_deseado_1: %d, x_deseado_2: %d \n hipotenusa: %.2f", estado_actual, estado_deseado, car_center, nextPoint.x, nextPoint2.x, hipo);
 
             // printf("\n 1. pix: %d, angulo %.2f, co: %.2f, hip: %.2f, cos: %.2f", state_width_pix, angulo,  hipo, state_width_pix / sin(angulo), sin(angulo));
 
@@ -690,24 +692,30 @@ void local_planner::plot_polinomials(cv::Mat& image) {
         }
 //    }
 
-    printf("\n planner %d %d %d", L, C, R);
+    // printf("\n planner %d %d %d", L, C, R);
 
 
     if (L > 0) {
-        for(int i = 0; i < arr_left.cell_width; i++) {
-            pointLoc = cv::Point(arr_left.cells[i].x, arr_left.cells[i].y);
+        // printf("\n left L: %d, width: %d", L, (int) arr_left.cell_width);
+        for(int i = 0; i < (int) arr_left.cell_width ; i++) {
+            // printf("\n right pt %d (%d, %d) ", i, (int) arr_left.cells[i].x, (int) arr_left.cells[i].y);
+            pointLoc = cv::Point( (int) arr_left.cells[i].x, (int) arr_left.cells[i].y);
             cv::circle(image, pointLoc, 1, cv::Scalar(0,0,100), -1);
         }
     }
     if (C > 0) {
-        for(int i = 0; i < arr_center.cell_width; i++) {
-            pointLoc = cv::Point(arr_center.cells[i].x, arr_center.cells[i].y);
+        // printf("\n center C: %d, width: %d", C, (int) arr_center.cell_width);
+        for(int i = 0; i < (int) arr_center.cell_width; i++) {
+            // printf("\n right pt %d (%d, %d) ", i, (int) arr_center.cells[i].x, (int) arr_center.cells[i].y);
+            pointLoc = cv::Point( (int) arr_center.cells[i].x, (int) arr_center.cells[i].y);
             cv::circle(image, pointLoc, 1, cv::Scalar(0,100,0), -1);
         }
     }
     if (R > 0) {
-        for(int i = 0; i < arr_right.cell_width; i++) {
-            pointLoc = cv::Point(arr_right.cells[i].x, arr_right.cells[i].y);
+        // printf("\n right R: %d, width: %d", R, (int) arr_right.cell_width);
+        for(int i = 0; i < (int) arr_right.cell_width; i++) {
+            // printf("\n right pt %d (%d, %d) ", i, (int) arr_right.cells[i].x, (int) arr_right.cells[i].y);
+            pointLoc = cv::Point( (int) arr_right.cells[i].x, (int) arr_right.cells[i].y);
             cv::circle(image, pointLoc, 1, cv::Scalar(100,0,0), -1);
         }
     }

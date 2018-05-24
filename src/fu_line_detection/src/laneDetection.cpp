@@ -435,6 +435,13 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
 
 
 
+
+
+        array_left.cells.clear();
+        array_center.cells.clear();
+        array_right.cells.clear();
+        array_horizontal.cells.clear();
+
         array_left.cell_width = (int) laneMarkingsLeft.size() ;
         array_left.cell_height = 1;
         array_center.cell_width = (int) laneMarkingsCenter.size() ;
@@ -444,11 +451,6 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
 
         array_horizontal.cell_width = (int) laneMarkingsHorizontal.size() ;
         array_horizontal.cell_height = 1;
-
-        array_left.cells.clear();
-        array_center.cells.clear();
-        array_right.cells.clear();
-        array_horizontal.cells.clear();
         
 
         for(int i = (int) laneMarkingsLeft.size() - 1; i >= 0 ; i--)
