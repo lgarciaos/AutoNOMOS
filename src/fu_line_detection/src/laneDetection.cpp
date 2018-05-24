@@ -7,11 +7,12 @@ using namespace std;
 static const uint32_t MY_ROS_QUEUE_SIZE = 100;
 #define PI 3.14159265
 
-#define NUM_STATES 7
-#define STATE_WIDTH 20
+// #define NUM_STATES 7
+// #define STATE_WIDTH 20
 
-const int RATE_HZ = 5;
-const double STATE_WIDTH_PIX = 13.0;
+const int RATE_HZ = 30;
+// const int STATE_WIDTH_PIX = 13; // sim gary
+// const int STATE_WIDTH_PIX = 22; // sim automodel
 
 image_transport::CameraPublisher image_publisher_dbscan;
 image_transport::CameraPublisher image_publisher;
@@ -26,16 +27,16 @@ double cam_deg;
 double cam_height;
 
 // ackerman model params
-double kalpha, kbeta;
+// double kalpha, kbeta;
 double polysAngle = 0;
 
-std::string topico_estandarizado;
+// std::string topico_estandarizado;
 
-double actual_speed = 5;
-float actual_steering = 0;
-int car_center = 0;
-int car_speed = 0;
-int car_text_position = 150;
+// double actual_speed = 5;
+// float actual_steering = 0;
+// int car_center = 0;
+// int car_speed = 0;
+// int car_text_position = 150;
 
 //msgs head
 unsigned int head_sequence_id = 0;
@@ -46,16 +47,16 @@ sensor_msgs::CameraInfoPtr rgb_camera_info;
 // try kernel width 5 for now
 const static int g_kernel1DWidth = 5;
 dbscan::point_t *points;
-std::string nombre_estado [NUM_STATES] = { "OL",   "LL",   "LC",   "CC",   "RC",   "RR",   "OR"};
-int estado_actual = -1;
-int estado_deseado = 4; //iniciar con estado RC
+// std::string nombre_estado [NUM_STATES] = { "OL",   "LL",   "LC",   "CC",   "RC",   "RR",   "OR"};
+// int estado_actual = -1;
+// int estado_deseado = 4; //iniciar con estado RC
 
 // PID kernel
-double prevErrorPID = 0.0;
-double integralPID = 0.0;
+// double prevErrorPID = 0.0;
+//double integralPID = 0.0;
 
 // obtener orientacion del carro con respecto a polylineas
-double theta_carro = 1.5707;
+// double theta_carro = 1.5707;
 
 cLaneDetectionFu::cLaneDetectionFu(ros::NodeHandle nh)
     : nh_(nh), priv_nh_("~")
@@ -114,19 +115,10 @@ cLaneDetectionFu::cLaneDetectionFu(ros::NodeHandle nh)
     priv_nh_.param<double>(node_name+"/cam_deg", cam_deg, 27); 
     priv_nh_.param<double>(node_name+"/cam_height", cam_height, 18);
 
-    priv_nh_.param<std::string>(node_name+"/topico_estandarizado", topico_estandarizado, "/standarized_vel_ste");
-    priv_nh_.param<double>(node_name+"/kalpha", kalpha, 1); 
-    priv_nh_.param<double>(node_name+"/kbeta", kbeta, 1); 
-
-    priv_nh_.param<int>(node_name+"/car_center", car_center, 15);
-    priv_nh_.param<int>(node_name+"/car_speed", car_speed, 5);
-    
     priv_nh_.param<int>(node_name+"/dbscan_epsilon", dbscan_epsilon, 30);
     priv_nh_.param<int>(node_name+"/dbscan_min_points", dbscan_min_points, 5);
 
-    priv_nh_.param<double>(node_name+"/kp", kp, 0.5);
-    priv_nh_.param<double>(node_name+"/ki", ki, 0.001);
-    priv_nh_.param<double>(node_name+"/kd", kd, 0.0);
+    priv_nh_.param<int>(node_name+"/car_center", car_center, 80);
 
     ipMapper = IPMapper(cam_w, cam_h_half, f_u, f_v, c_u, c_v, cam_deg, cam_height);
     
@@ -162,6 +154,8 @@ cLaneDetectionFu::cLaneDetectionFu(ros::NodeHandle nh)
 
     supportersHorizontal      = std::vector<FuPoint<int>>();
 
+    pointsRansacLeft = std::vector<geometry_msgs::Point>();
+
     prevPolyLeft         = NewtonPolynomial();
     prevPolyCenter       = NewtonPolynomial();
     prevPolyRight        = NewtonPolynomial();
@@ -186,33 +180,31 @@ cLaneDetectionFu::cLaneDetectionFu(ros::NodeHandle nh)
     read_images_ = nh.subscribe(nh_.resolveName(camera_name), MY_ROS_QUEUE_SIZE, &cLaneDetectionFu::ProcessInput, this);
 
     // sub_planning = nh.subscribe("/planning", MY_ROS_QUEUE_SIZE, &cLaneDetectionFu::ProcessPlanning,this);
-    sub_localization = nh.subscribe("/localization_array", MY_ROS_QUEUE_SIZE, &cLaneDetectionFu::get_localization, this);
-    sub_des_state = nh.subscribe("/desired_state", MY_ROS_QUEUE_SIZE, &cLaneDetectionFu::get_ctrl_desired_state, this);
     // planningxy = nh.subscribe("/planningxy", MY_ROS_QUEUE_SIZE, &cLaneDetectionFu::ProcessPlanningXY,this);
-
     // sub_vel = nh.subscribe(topico_estandarizado, MY_ROS_QUEUE_SIZE, &cLaneDetectionFu::get_ctrl_action, this);
-
     
     // no es muy recomendable leer velocidad y steering ya que pueden tener mucho error
     // sub_vel = nh.subscribe(topico_estandarizado, MY_ROS_QUEUE_SIZE, &cLaneDetectionFu::get_ctrl_action, this);
     // probar con imu
 
-
     publish_angle = nh.advertise<std_msgs::Float32>("/lane_model/angle", MY_ROS_QUEUE_SIZE);
+
     pub_right = nh.advertise<nav_msgs::GridCells>("/points/right", MY_ROS_QUEUE_SIZE);
     pub_center = nh.advertise<nav_msgs::GridCells>("/points/center", MY_ROS_QUEUE_SIZE);
     pub_left = nh.advertise<nav_msgs::GridCells>("/points/left", MY_ROS_QUEUE_SIZE);
+
     pub_horizontal = nh.advertise<nav_msgs::GridCells>("/points/horizontal", MY_ROS_QUEUE_SIZE);
+
     pub_ransac_right = nh.advertise<nav_msgs::GridCells>("/points/ransac_right", MY_ROS_QUEUE_SIZE);
     pub_ransac_center = nh.advertise<nav_msgs::GridCells>("/points/ransac_center", MY_ROS_QUEUE_SIZE);
     pub_ransac_left = nh.advertise<nav_msgs::GridCells>("/points/ransac_left", MY_ROS_QUEUE_SIZE);
+
     pub_lane_model = nh.advertise<nav_msgs::GridCells>("/points/lane_model", MY_ROS_QUEUE_SIZE);
     pub_ransac_horizontal = nh.advertise<nav_msgs::GridCells>("/points/ransac_horizontal", MY_ROS_QUEUE_SIZE);
-    pub_speed = nh.advertise<geometry_msgs::Twist>(topico_estandarizado, MY_ROS_QUEUE_SIZE);
 
+    // pub_speed = nh.advertise<geometry_msgs::Twist>(topico_estandarizado, MY_ROS_QUEUE_SIZE);
 
-
-    pub_orientation = nh.advertise<std_msgs::Float32>("/car_orientation", MY_ROS_QUEUE_SIZE);
+    // pub_orientation = nh.advertise<std_msgs::Float32>("/car_orientation", MY_ROS_QUEUE_SIZE);
 
     image_transport::ImageTransport image_transport(nh);
     image_publisher = image_transport.advertiseCamera("/lane_model/lane_model_image", MY_ROS_QUEUE_SIZE);
@@ -244,6 +236,7 @@ cLaneDetectionFu::~cLaneDetectionFu()
 
 void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
 {
+    printf("\n imagen 1");
     // clear some stuff from the last cycle
     bestPolyLeft = std::make_pair(NewtonPolynomial(), 0);
     bestPolyCenter = std::make_pair(NewtonPolynomial(), 0);
@@ -325,6 +318,7 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
         //        cv::circle(transformedImagePaintableHorizontal,edgeLoc,1,cv::Scalar(0, 0, edgesHorizontal[i][j].getValue()), -1);
         //    }
         // }
+
     #ifdef PAINT_OUTPUT    
 	        
         //cv::imshow("ROI, scanlines and edges", transformedImagePaintable);
@@ -358,7 +352,7 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
               points[p_i].cluster_id = -1;
               p_i++;
         }
-        num_clusters = dbscan::dbscan(points, num_points, epsilon, minpts, dbscan::euclidean_dist);
+        num_clusters = dbscan::dbscan(points, num_points, epsilon, minpts, dbscan::euclidean_dist_vert); // euclidean_dist
     }
     catch(...) {
         printf("\n Excepcion dbscan");
@@ -366,6 +360,7 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
 
     //---------------------- DEBUG OUTPUT LANE MARKINGS ---------------------------------//
     #ifdef PUBLISH_DEBUG_OUTPUT
+
         // clona nuevamente para no ver edges detectados 
         // transformedImagePaintable = transformedImage.clone();
         // cv::cvtColor(transformedImagePaintable, transformedImagePaintable, CV_GRAY2BGR);
@@ -374,7 +369,7 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
         {
             if (points[i].cluster_id >= 0 && points[i].cluster_id < num_clusters) {
                 cv::Point markingLoc = cv::Point(points[i].x, points[i].y);
-                cv::circle(transformedImagePaintable, markingLoc, 1, cv::Scalar(points[i].cluster_id * 60, points[i].cluster_id * 60, 100), -1);
+                cv::circle(transformedImagePaintable, markingLoc, 1, cv::Scalar((points[i].cluster_id * 80) % 255, (points[i].cluster_id * 60) % 255, (points[i].cluster_id * 20) % 255), -1);
             }
             else {
                 cv::Point markingLoc = cv::Point(points[i].x, points[i].y);
@@ -406,6 +401,7 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
     // start actual execution: Repartir puntos en left center right, pero ahora se hará con clusters
     // buildLaneMarkingsLists(laneMarkings);
     // buildLaneMarkingsListsHorizontal(laneMarkingsH);
+
     int detected_polys;
     try {
         printf("\n Num points: %d", num_points);
@@ -419,6 +415,7 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
     //---------------------- DEBUG OUTPUT GROUPED LANE MARKINGS ---------------------------------//
     geometry_msgs::Point pt;
     #ifdef PUBLISH_DEBUG_OUTPUT
+
         // transformedImagePaintable = transformedImage.clone();
         // cv::cvtColor(transformedImagePaintable,transformedImagePaintable,CV_GRAY2BGR);
 
@@ -436,6 +433,8 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
             cv::putText(transformedImagePaintable,std::to_string(i),markingLoc,6,.15,cv::Scalar(0,237,221));
         }
 
+
+
         array_left.cell_width = (int) laneMarkingsLeft.size() ;
         array_left.cell_height = 1;
         array_center.cell_width = (int) laneMarkingsCenter.size() ;
@@ -451,7 +450,8 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
         array_right.cells.clear();
         array_horizontal.cells.clear();
         
-        for(int i = 0; i < (int)laneMarkingsLeft.size(); i++)
+
+        for(int i = (int) laneMarkingsLeft.size() - 1; i >= 0 ; i--)
         {         
             FuPoint<int> marking = laneMarkingsLeft[i];
             cv::Point markingLoc = cv::Point(marking.getX(), marking.getY());
@@ -460,26 +460,33 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
             pt.x = marking.getX();
             pt.y = marking.getY();
             pt.z = 0;
+
             array_left.cells.push_back(pt);
         }
-        for(int i = 0; i < (int)laneMarkingsCenter.size(); i++)
+        // center
+        for(int i = (int) laneMarkingsCenter.size() - 1; i >= 0 ; i--)
         {         
             FuPoint<int> marking = laneMarkingsCenter[i];
             cv::Point markingLoc = cv::Point(marking.getX(), marking.getY());
             cv::circle(transformedImagePaintable,markingLoc, 0, cv::Scalar(0,100,0), -1);
+
             pt.x = marking.getX();
             pt.y = marking.getY();
             pt.z = 0;
+
             array_center.cells.push_back(pt);
         }
-        for(int i = 0; i < (int)laneMarkingsRight.size(); i++)
+        // right
+        for(int i = (int) laneMarkingsRight.size() - 1; i >= 0 ; i--)
         {         
             FuPoint<int> marking = laneMarkingsRight[i];
             cv::Point markingLoc = cv::Point(marking.getX(), marking.getY());
             cv::circle(transformedImagePaintable,markingLoc, 0, cv::Scalar(139,0,0), -1);
+
             pt.x = marking.getX();
             pt.y = marking.getY();
             pt.z = 0;
+
             array_right.cells.push_back(pt);      
         }
 
@@ -495,6 +502,9 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
             array_horizontal.cells.push_back(pt);      
         }
         */
+
+
+
         
         //ROI
         cv::Point2d p1(proj_image_w_half-(roi_bottom_w/2), maxYRoi-1);
@@ -506,10 +516,14 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
         cv::line(transformedImagePaintable, p3, p4, cv::Scalar(0,200,0));
         cv::line(transformedImagePaintable, p4, p1, cv::Scalar(0,200,0));
 
+        // posicion del carro
+        cv::Point pointLocRight = cv::Point(car_center, maxYRoi-1);
+        cv::circle(transformedImagePaintable, pointLocRight, 2, cv::Scalar(200,200,200), -1);
+
         pub_left.publish(array_left);
         pub_center.publish(array_center);
         pub_right.publish(array_right);
-        pub_horizontal.publish(array_horizontal);
+        // pub_horizontal.publish(array_horizontal);
 
         pubRGBImageMsg(transformedImagePaintable, image_publisher_lane_markings);
 
@@ -546,72 +560,89 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
         array_ransac_right.cells.clear();
         array_ransac_horizontal.cells.clear();
 
-        array_ransac_left.cell_width = polyDetectedLeft ? maxYRoi - minYPolyRoi : 0;
+        array_ransac_left.cell_width = (int) pointsLeft.size(); // polyDetectedLeft ? maxYRoi - minYPolyRoi : 0;
         array_ransac_left.cell_height = 1;
-        array_ransac_center.cell_width = polyDetectedCenter ? maxYRoi - minYPolyRoi : 0;
+        array_ransac_center.cell_width = (int) pointsCenter.size();
         array_ransac_center.cell_height = 1;
-        array_ransac_right.cell_width = polyDetectedRight ? maxYRoi - minYPolyRoi : 0;
+        array_ransac_right.cell_width = (int) pointsRight.size();
         array_ransac_right.cell_height = 1;
 
         array_ransac_horizontal.cell_width = 160 - 0;
         array_ransac_horizontal.cell_height = 1;
+
+//        printf("\n pts left size: %d", (int) pointsLeft.size());
+//        printf("\n pts center size: %d", (int) pointsCenter.size());
+//        printf("\n pts right size: %d", (int) pointsRight.size());
+
+
+        for (FuPoint<int> m : pointsLeft) {
+            pt.x = m.getX();
+            pt.y = m.getY();
+            pt.z = 0;
+            array_ransac_left.cells.push_back(pt);
+//            printf("\n left (%.2f, %.2f) ", pt.x,  pt.y);
+        }
+
+        for (FuPoint<int> m : pointsCenter) {
+            pt.x = m.getX();
+            pt.y = m.getY();
+            pt.z = 0;
+            array_ransac_center.cells.push_back(pt);
+        }
+
+        for (FuPoint<int> m : pointsRight) {
+            pt.x = m.getX();
+            pt.y = m.getY();
+            pt.z = 0;
+            array_ransac_right.cells.push_back(pt);
+        }
 
         for(int i = maxYRoi; i >  minYPolyRoi; i--)
         {
             if (polyDetectedLeft) {
                 cv::Point pointLocLeft = cv::Point(polyLeft.at(i), i);
                 cv::circle(transformedImagePaintable, pointLocLeft, 0, cv::Scalar(0,0,200), -1);
+                /*
                 pt.x = pointLocLeft.x;
                 pt.y = pointLocLeft.y;
                 pt.z = 0;
                 array_ransac_left.cells.push_back(pt);
+                */
             }
             if (polyDetectedCenter) {
                 cv::Point pointLocCenter = cv::Point(polyCenter.at(i), i);
                 cv::circle(transformedImagePaintable, pointLocCenter, 0, cv::Scalar(0,200,0), -1);
+                /*
                 pt.x = pointLocCenter.x;
                 pt.y = pointLocCenter.y;
                 pt.z = 0;
                 array_ransac_center.cells.push_back(pt);
+                */
             }
             if (polyDetectedRight) {
                 cv::Point pointLocRight = cv::Point(polyRight.at(i), i);
                 cv::circle(transformedImagePaintable, pointLocRight, 0, cv::Scalar(200,0,0), -1);
+                /*
                 pt.x = pointLocRight.x;
                 pt.y = pointLocRight.y;
                 pt.z = 0;
                 array_ransac_right.cells.push_back(pt);
+                */
             }
         }
 
-        if (estado_actual >= 0 && (polyDetectedLeft || polyDetectedCenter || polyDetectedRight)) {
-        	if (polyDetectedLeft) 
-        		printf("\n OK left X: %.2f, LMsize: %d", polyLeft.at(car_text_position), (int) laneMarkingsLeft.size() );
-        	if (polyDetectedCenter)
-        		printf("\n OK center X: %.2f, LMsize: %d", polyCenter.at(car_text_position), (int) laneMarkingsCenter.size() );
-        	if (polyDetectedRight)
-        		printf("\n OK right X: %.2f, LMsize: %d", polyRight.at(car_text_position), (int) laneMarkingsRight.size() );
-        	printf("\n Creating ackerman points ");
-            ackerman_control(transformedImagePaintable, polyLeft, polyCenter, polyRight);
-        }
 
-        // get state width aprox
+
+
+
+        /* get state width aprox
         if (polyDetectedLeft && polyDetectedCenter && polyDetectedRight)
         	printf("\n width state LC: %.2f CR: %.2f \n", 
         		polyCenter.at(car_text_position) - polyLeft.at(car_text_position),
         		polyRight.at(car_text_position) - polyCenter.at(car_text_position) );
-
+        */
 		
-        // muestra en el estado en que me encuentro
-        cv::Point pointTextEstado = cv::Point(car_center - 10, car_text_position);
-        if (estado_actual >= 0)
-            cv::putText(transformedImagePaintable, nombre_estado[estado_actual], pointTextEstado, FONT_HERSHEY_SIMPLEX,.2,cv::Scalar(200,221,0));
-        else
-            cv::putText(transformedImagePaintable, "?", pointTextEstado, FONT_HERSHEY_SIMPLEX, .2, cv::Scalar(200,221,0));
 
-        // muestra el estado al que me quiero desplazar
-        pointTextEstado = cv::Point(car_center + 10, car_text_position);
-        cv::putText(transformedImagePaintable, nombre_estado[estado_deseado], pointTextEstado, FONT_HERSHEY_SIMPLEX,.2,cv::Scalar(200,221,0));
         
         /* mostrar puntos HORIZONTALES
         if(polyDetectedHorizontal){
@@ -627,13 +658,16 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
             }
         }
 		*/
-
+    /*
         pub_ransac_left.publish(array_ransac_left);
         pub_ransac_center.publish(array_ransac_center);
         pub_ransac_right.publish(array_ransac_right);
         pub_ransac_horizontal.publish(array_ransac_right);
-
-        
+    */
+        // try to publish newton polynomial
+        pub_ransac_left.publish(array_ransac_left);
+        pub_ransac_center.publish(array_ransac_center);
+        pub_ransac_right.publish(array_ransac_right);
 
     #ifdef PAINT_OUTPUT
         cv::imshow("RANSAC results", transformedImagePaintable);
@@ -654,7 +688,11 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
         // tamaño de grid en pixeles para obtener orientacion del carro con respecto a polilineas
         
         printf("\n Detected polys %d", detected_polys);
-        if (detected_polys > 0) {
+
+        // if (detected_polys > 0) {
+            /*
+             * CODIGO QUE MUESTRA LA ORIENTACION DEL CARRO OBTENIDAL DE LOS POLINOMIOS
+             *
             // check gradient function for polys
 
             // Algoritmo pose carro
@@ -744,10 +782,11 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
             cv::line(transformedImagePaintable, pt_ax_y1, pt_ax_y2, cv::Scalar(255,255,255));
             cv::line(transformedImagePaintable, pt_neg, pt_pos, cv::Scalar(0,200,0));
             
+            */
             
             pubRGBImageMsg(transformedImagePaintable, image_publisher_ransac);
 
-        }
+        // }
         #ifdef PAINT_OUTPUT
             cv::imshow("Lane polynomial", transformedImageOrientation);
             cv::waitKey(1);
@@ -757,335 +796,7 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
 }
 
 
-/* compute based on distance y_next_dist the points in pixels that the car needs to head to */
-bool cLaneDetectionFu::ackerman_control_next_points(double y_next_dist, cv::Point& pt_car, cv::Point& y_next_pt, cv::Point& y_next_pt2) {
 
-    int next_move_y = maxYRoi-y_next_dist; // sin el 2* funcionaba bien, checar fuera de limite para polylinea
-    int next_move2_y = maxYRoi-y_next_dist-10;
-
-    double x_center = 0.0;
-    double x_right = 0.0;
-    bool center_closer = false;
-
-    double angle;
-    double hip;
-
-    // calcular los puntos a moverse de acuerdo al estado actual y una distancia next_move_y
-    // para entender un poco mas por que se utiliza esa linea, checar el mismo switch en det_hit en lane_states_node
-    switch(estado_actual) {
-        case 0: // OL
-            if (polyDetectedLeft && pt_car.x < polyCenter.at(next_move_y)) {
-
-                cv::Point pt_next = cv::Point(polyLeft.at(next_move_y), next_move_y);
-                cv::Point pt_next_2 = cv::Point(polyLeft.at(next_move2_y), next_move2_y);
-                angle = atan2(pt_next.y - pt_next_2.y, pt_next.x - pt_next_2.x);
-                hip = STATE_WIDTH_PIX / sin(angle); // co = ca * tan (theta)
-
-                printf("\n 2. angulo %.2f, co: %.2f", angle, hip);
-
-                y_next_pt = cv::Point(polyLeft.at(next_move_y) - hip, next_move_y);
-                y_next_pt2 = cv::Point(polyLeft.at(next_move2_y) - hip, next_move2_y);
-            } else if (polyDetectedCenter && pt_car.x < polyRight.at(next_move_y)) {
-
-                cv::Point pt_next = cv::Point(polyCenter.at(next_move_y), next_move_y);
-                cv::Point pt_next_2 = cv::Point(polyCenter.at(next_move2_y), next_move2_y);
-                angle = atan2(pt_next.y - pt_next_2.y, pt_next.x - pt_next_2.x);
-                hip = STATE_WIDTH_PIX / sin(angle); // co = ca * tan (theta)
-
-                printf("\n 3. angulo %.2f, co: %.2f", angle, hip);
-
-                y_next_pt = cv::Point(polyCenter.at(next_move_y) - hip, next_move_y);
-                y_next_pt2 = cv::Point(polyCenter.at(next_move2_y) - hip, next_move2_y);
-            } else if (polyDetectedRight) {
-
-                cv::Point pt_next = cv::Point(polyRight.at(next_move_y), next_move_y);
-                cv::Point pt_next_2 = cv::Point(polyRight.at(next_move2_y), next_move2_y);
-                angle = atan2(pt_next.y - pt_next_2.y, pt_next.x - pt_next_2.x);
-                hip = STATE_WIDTH_PIX / sin(angle); // co = ca * tan (theta)
-
-                printf("\n 4. angulo %.2f, co: %.2f", angle, hip);
-
-                y_next_pt = cv::Point(polyRight.at(next_move_y) - hip, next_move_y);
-                y_next_pt2 = cv::Point(polyRight.at(next_move2_y) - hip, next_move2_y);
-            }
-            else {
-            	return false;
-            }
-            break;
-        case 1: // LL
-            if (polyDetectedLeft && pt_car.x < polyCenter.at(next_move_y)) {
-                y_next_pt = cv::Point(polyLeft.at(next_move_y), next_move_y);
-                y_next_pt2 = cv::Point(polyLeft.at(next_move2_y), next_move2_y);
-            } else if (polyDetectedCenter && pt_car.x < polyRight.at(next_move_y)) {
-                y_next_pt = cv::Point(polyCenter.at(next_move_y), next_move_y);
-                y_next_pt2 = cv::Point(polyCenter.at(next_move2_y), next_move2_y);
-            } else if (polyDetectedRight) {
-                y_next_pt = cv::Point(polyRight.at(next_move_y), next_move_y);
-                y_next_pt2 = cv::Point(polyRight.at(next_move2_y), next_move2_y);
-            }
-            else {
-            	return false;
-            }
-            break;
-        case 2: // LC
-            if (polyDetectedCenter && polyDetectedLeft && pt_car.x < polyCenter.at(next_move_y)) {
-                y_next_pt = cv::Point((polyCenter.at(next_move_y) + polyLeft.at(next_move_y))/2, next_move_y);
-                y_next_pt2 = cv::Point((polyCenter.at(next_move2_y) + polyLeft.at(next_move2_y))/2, next_move2_y);
-            } else if (polyDetectedCenter && polyDetectedRight) {
-                y_next_pt = cv::Point((polyCenter.at(next_move_y) + polyRight.at(next_move_y))/2, next_move_y);
-                y_next_pt2 = cv::Point((polyCenter.at(next_move2_y) + polyRight.at(next_move2_y))/2, next_move2_y);
-            }
-            else {
-            	return false;
-            }
-            break;
-        case 3: // CC
-            if (polyDetectedCenter && polyDetectedRight) {
-                x_center = polyCenter.at(next_move_y);
-                x_right = polyRight.at(next_move_y);
-                center_closer = abs(pt_car.x - x_center) <= abs(pt_car.x - x_right);
-                y_next_pt = cv::Point(center_closer ? x_center : x_right, next_move_y);
-                y_next_pt2 = cv::Point(center_closer ? polyCenter.at(next_move2_y) : polyRight.at(next_move2_y), next_move2_y);
-            } else {
-                return false;
-            }
-            break;
-        case 4: // RC
-            if (polyDetectedCenter && polyDetectedRight) {
-                if (car_center > polyRight.at(next_move_y)) {
-
-                    cv::Point pt_next = cv::Point(polyRight.at(next_move_y), next_move_y);
-                    cv::Point pt_next_2 = cv::Point(polyRight.at(next_move2_y), next_move2_y);
-                    angle = atan2(pt_next.y - pt_next_2.y, pt_next.x - pt_next_2.x);
-                    hip = STATE_WIDTH_PIX / sin(angle); // co = ca * tan (theta)
-
-                    printf("\n 5. angulo %.2f, co: %.2f", angle, hip);
-
-                    y_next_pt = cv::Point(polyRight.at(next_move_y) + hip, next_move_y);
-                    y_next_pt2 = cv::Point(polyRight.at(next_move2_y) + hip, next_move2_y);
-
-                } else {
-
-                    y_next_pt = cv::Point((polyCenter.at(next_move_y) + polyRight.at(next_move_y))/2, next_move_y);
-                    y_next_pt2 = cv::Point((polyCenter.at(next_move2_y) + polyRight.at(next_move2_y))/2, next_move2_y);
-
-                }
-            } else {
-	        	return false;
-	        }
-            break;
-        case 5: // RR
-            if (polyDetectedRight) {
-                y_next_pt = cv::Point(polyRight.at(next_move_y), next_move_y);
-                y_next_pt2 = cv::Point(polyRight.at(next_move2_y), next_move2_y);
-            } else {
-                return false;
-            }
-            break;
-        case 6: // OR
-            if (polyDetectedRight) {
-                cv::Point pt_next = cv::Point(polyRight.at(next_move_y), next_move_y);
-                cv::Point pt_next_2 = cv::Point(polyRight.at(next_move2_y), next_move2_y);
-                angle = atan2(pt_next.y - pt_next_2.y, pt_next.x - pt_next_2.x);
-                hip = STATE_WIDTH_PIX / sin(angle); // co = ca * tan (theta)
-
-                printf("\n 6. angulo %.2f, co: %.2f", angle, hip);
-
-                y_next_pt = cv::Point(polyRight.at(next_move_y) + hip, next_move_y);
-                y_next_pt2 = cv::Point(polyRight.at(next_move2_y) + hip, next_move2_y);
-            } else {
-            	return false;
-            }
-            break;
-    }
-
-    return true;
-}
-
-void cLaneDetectionFu::ackerman_control(cv::Mat& imagePaint, NewtonPolynomial& polyLeft, NewtonPolynomial& polyCenter,
-    NewtonPolynomial& polyRight) {
-
-    //
-    // SI estado actual es DIFERENTE a estado requerido
-    // 1.- Steering requerido para cambiar de estado
-    //      (positivo o negativo dependiendo del estado actual)
-    // 2.- Ciertos pixeles en eje y (marco carro) por ejemplo 10 para hacer un cambio suave
-    //      con base a y, calcular steering de acuerdo a velocidad
-    // 3.- El 10 es positivo o negativo de acuerdo a si nuevo estado es mayor o menor
-    // 4.- Enviar este steering como accion de control
-    //
-
-    // car location (position bottom to up with respect to next points, to compute angle)
-    cv::Point ptCar = cv::Point(car_center, maxYRoi);
-    cv::circle(imagePaint, ptCar, 2, cv::Scalar(0,255,255), -1);
-
-    // calcular siguiente punto sobre eje Y (X con respecto al carro) de acuerdo a velocidad y steering actual
-    // aqui obtener velocidad de IMU y orientacion el carro
-    // TODO IMU
-    double dist_y_nextPoint = 2; // actual_speed * 5 * sin(PI/2 - actual_steering); //*;
-    
-    double dist_yPoly = 40 * abs(estado_deseado - estado_actual);
-
-    cv::Point nextPoint, nextPoint2, pointSlope;
-    
-    // siguente punto en el estado en que se encuentra
-    // primera opcion para TRAYECTORIA
-    // if (estado_actual != estado_deseado) 
-    //     puntosValidos = ackerman_control_next_points(dist_yPoly, ptCar, nextPoint, nextPoint2);
-    // else
-    bool puntosValidos = ackerman_control_next_points(dist_y_nextPoint, ptCar, nextPoint, nextPoint2);
-
-    if (puntosValidos) {
-        // Cambio de estado, puede haber una forma mas suave
-        if (estado_actual >= 0) {
-
-            double angulo = atan2(nextPoint.y - nextPoint2.y, nextPoint.x - nextPoint2.x);
-            double hipo = STATE_WIDTH_PIX / sin(angulo); // co = ca * tan (theta)
-
-            printf("\n 1. pix: %.2f, angulo %.2f, co: %.2f, hip: %.2f, cos: %.2f", STATE_WIDTH_PIX, angulo,  hipo, STATE_WIDTH_PIX / sin(angulo), sin(angulo));
-
-            if (estado_actual < estado_deseado) {
-
-                nextPoint.x = nextPoint.x + hipo * (estado_deseado - estado_actual);
-                nextPoint2.x = nextPoint2.x + hipo * (estado_deseado - estado_actual);
-
-            } else if (estado_actual > estado_deseado) {
-
-                nextPoint.x = nextPoint.x - hipo * (estado_actual - estado_deseado);
-                nextPoint2.x = nextPoint2.x - hipo * (estado_actual - estado_deseado);
-
-            }
-        }
-
-        /* SMOOTH MOVE 
-        // almacenar diferencia en x, para mantener posteriormente
-        double diff_x = nextPoint2.x - nextPoint.x;
-        
-        // TRAYECTORIA, Hay (x,y) origen (car_center), faltan puntos intermedios para alcanzar objetivo (x, dist_y)
-        if (estado_actual != estado_deseado) {
-            // SMOOTH MOVE 
-            NewtonPolynomial poly = NewtonPolynomial();
-            double p1X = ptCar.x;
-            double p1Y = ptCar.y;
-            double p2X = nextPoint.x;
-            double p2Y = nextPoint.y;
-            poly.addData(p1X, p1Y);
-            poly.addData(p2X, p2Y);
-
-            for (int i = p1Y; i > p2Y; i--) {
-                cv::Point pt = cv::Point(poly.at(i), i);
-                cv::circle(imagePaint, pt, 0, cv::Scalar(255, 255, 255), -1);
-            }
-
-            nextPoint = cv::Point(poly.at(maxYRoi - dist_y), maxYRoi - dist_y);
-            nextPoint2 = cv::Point(poly.at(maxYRoi - dist_y) + diff_x, maxYRoi - dist_y - 10);
-        }
-        */
-
-        // -- visualize points ---------
-        cv::circle(imagePaint, nextPoint, 2, cv::Scalar(0, 100, 255), -1);
-        cv::circle(imagePaint, nextPoint2, 2, cv::Scalar(0 ,100, 255), -1);
-
-
-        cv::circle(imagePaint, pointSlope, 2, cv::Scalar(245,245,0), -1);
-
-
-        // ------------- ACKERMAN CONTROL -------------------
-        // TODO falta considerar THETA_CARRO
-        // ---angles
-        // intercambio de coordenadas por frame rotado
-
-
-        double G_x_cord = -nextPoint.y - -ptCar.y;
-        double G_y_cord = ptCar.x - nextPoint.x;
-        // alpha, angel between car and GOAL in radians
-        double alpha = atan2(G_y_cord, G_x_cord);
-
-        /*
-        // intercambio de coordenadas de punto 2
-        double G_sup_x = -nextPoint2.y - -ptCar.y;
-        double G_sup_y = ptCar.x - nextPoint2.x;
-
-        // law of cosines to compute beta, the angle of the goal with respect to alpha
-        double a = sqrt(pow(G_x_cord, 2) + pow(G_y_cord, 2));
-        double b = sqrt(pow(G_x_cord - G_sup_x, 2) + pow(G_y_cord - G_sup_y, 2));
-        double c = sqrt(pow(-G_sup_x, 2) + pow(-G_sup_y,2));
-        double beta = acos((pow(a, 2) + pow(b, 2) - pow(c, 2)) / (2 * a * b));
-        beta = PI - beta;
-        printf("\n alpha: %+010.2f, beta: %+010.2f", alpha, beta);	
-        double steering_cont = kalpha * alpha + kbeta * beta;
-        */
-
-        /*
-
-        double theta = yaw;
-        double beta = - theta - alpha;
-        double steering = kalpha * alpha + kbeta * beta;
-        printf("\n alpha: %+010.2f, beta: %+010.2f", alpha, beta);
-
-        */
-
-
-
-        //-----PUBLISH ------
-        // utilizando pixeles
-        double y = ptCar.x - nextPoint.x;
-        double error = atan2(y, 20);
-        printf ("\n PID: car: %.2f, next: %.2f", ptCar.x, nextPoint.x);
-        double steering = PID(error, 0.2, kp, ki, kd); // regresa 45 a -45. Izquierda a Derecha.
-
-        // utilizando grados
-        // double steering = PID(steering_cont, 0.2, 0.5, 0.001, 0.0);
-
-        // -------------- FINISH ACKERMAN CONTROL -----------
-        if (!std::isnan(steering)) {
-            float steering_rounded = round(steering * 100) / 100;
-
-            printf("\n steering: %+04.2f", steering_rounded);
-
-            // intercambio de coordenadas de punto 2
-            // double G_x_above = -pointSlope.y - -ptCar.y;
-            // double G_y_above = ptCar.x - pointSlope.x;
-
-            // compute angle of point1 vs point2 to tilt lines to detect polys
-            // used above
-            // polysAngle = atan2(G_y_above - G_y_cord, G_x_above - G_x_cord);
-            // cv::putText(imagePaint,std::to_string(polysAngle),markingLoc,6,.15,cv::Scalar(0,237,221));
-            
-            geometry_msgs::Twist vel;
-            vel.angular.z = steering_rounded;
-            vel.linear.x = car_speed;
-            // speed is constant
-
-            // falta PID
-            pub_speed.publish(vel);
-        }
-    }
-}
-
-double cLaneDetectionFu::PID(double error, double dt, double Kp, double Ki, double Kd){
-	// ROS_INFO_STREAM("PID time");
-
-
-	double pOut = Kp * error;
-	integralPID += error * dt;
-	double iOut = Ki * integralPID;
-	double derivative = (error - prevErrorPID) / dt;
-	double dOut = Kd * derivative;
-	double output = pOut + iOut + dOut;
-	prevErrorPID = error;
-
-	// Restriction
-	double out_restringido = output;
-	if( output > .7 )
-		out_restringido = .7;
-	else if( output <= -0.7 )
-		out_restringido = -0.7;
-
-	printf("\n Error theta: %+010.4f, Res PID: %+010.4f, Senal Servo: %+010.4f, p: %.2f i: %.2f d: %.2f", error, output, out_restringido, pOut, iOut, dOut );
-
-	return out_restringido;
-}
 
 /* EdgeDetector methods */
 
@@ -1335,33 +1046,7 @@ vector<vector<EdgePoint>> cLaneDetectionFu::scanImage(cv::Mat image, ePosition p
     return edgePoints;
 }
 
-void cLaneDetectionFu::get_localization(const std_msgs::Float32MultiArray& locArray) {
-    int estadoPrevio = estado_actual;
 
-    float max=0;
-    for(int i = 0; i < NUM_STATES * STATE_WIDTH; i++) {
-        if(locArray.data[i]>max) {
-            max=locArray.data[i];
-        }
-    }
-
-    int countStates=0;
-    int state = -1;
-    for(int i = NUM_STATES * STATE_WIDTH - 1; i >= 0; i--) {
-        if(locArray.data[i]==max) {
-            int temp_state = (int)floor(i / STATE_WIDTH);
-            if (temp_state != state){
-                state = temp_state;
-                countStates++;
-            }
-        }
-    }
-
-    if (countStates==1)
-        estado_actual = state;
-    else
-        estado_actual = -1; // no se pudo determinar el estado, ya que hay mas de uno posible
-}
 
 /*
 void cLaneDetectionFu::get_ctrl_action(const geometry_msgs::Twist& val) {
@@ -1372,16 +1057,7 @@ void cLaneDetectionFu::get_ctrl_action(const geometry_msgs::Twist& val) {
 }
 */
 
-void cLaneDetectionFu::get_ctrl_desired_state(const std_msgs::Int16& val) {
-    // ctrl_estado = val.data;
-    // prevenir un estado deseado fuera de limites
-    if (estado_deseado + val.data < 0)
-        estado_deseado = 0;
-    else if (estado_deseado + val.data > NUM_STATES)
-        estado_deseado = NUM_STATES;
-    else
-        estado_deseado += val.data;
-}
+
 
 /* LaneMarkingDetector methods */
 
@@ -2607,6 +2283,7 @@ void cLaneDetectionFu::config_callback(line_detection_fu::LaneDetectionConfig &c
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "cLaneDetectionFu");
+    ROS_INFO_STREAM("lane_detection initialized");
     ros::NodeHandle nh;
     ros::Rate loop_rate(RATE_HZ);
 

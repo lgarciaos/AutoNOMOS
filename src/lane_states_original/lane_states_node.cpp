@@ -9,6 +9,9 @@ clane_states::clane_states(ros::NodeHandle nh)
 
     std::string node_name = ros::this_node::getName();
     priv_nh_.param<int>(node_name+"/car_center", car_center, 80);
+    priv_nh_.param<int>(node_name+"/image_height", image_height, 160);
+    priv_nh_.param<int>(node_name+"/state_width_pixels", state_width_pix, 16);
+    priv_nh_.param<int>(node_name+"/model_num_gazebo", model_num_gazebo, 7);
 
     const char * format = "P(x)=[%.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f]\n";
 
@@ -32,16 +35,25 @@ clane_states::clane_states(ros::NodeHandle nh)
     pub_loc = nh_.advertise<std_msgs::Float32MultiArray>("/localization_array", MY_ROS_QUEUE_SIZE);
     pub_image = nh_.advertise<sensor_msgs::Image>("/histogram_states", MY_ROS_QUEUE_SIZE);
 
-    sub_pts_left = nh_.subscribe("/points/ransac_left", MY_ROS_QUEUE_SIZE, &clane_states::get_pts_left, this);
-    sub_pts_center = nh_.subscribe("/points/ransac_center", MY_ROS_QUEUE_SIZE, &clane_states::get_pts_center, this);
-    sub_pts_right = nh_.subscribe("/points/ransac_right", MY_ROS_QUEUE_SIZE, &clane_states::get_pts_right, this);
+    sub_ransac_left = nh_.subscribe("/points/ransac_left", MY_ROS_QUEUE_SIZE, &clane_states::get_ransac_left, this);
+    sub_ransac_center = nh_.subscribe("/points/ransac_center", MY_ROS_QUEUE_SIZE, &clane_states::get_ransac_center, this);
+    sub_ransac_right = nh_.subscribe("/points/ransac_right", MY_ROS_QUEUE_SIZE, &clane_states::get_ransac_right, this);
+
+    sub_pts_left = nh_.subscribe("/points/left", MY_ROS_QUEUE_SIZE, &clane_states::get_pts_left, this);
+    sub_pts_center = nh_.subscribe("/points/center", MY_ROS_QUEUE_SIZE, &clane_states::get_pts_center, this);
+    sub_pts_right = nh_.subscribe("/points/right", MY_ROS_QUEUE_SIZE, &clane_states::get_pts_right, this);
+
     sub_des_state = nh_.subscribe("/desired_state", MY_ROS_QUEUE_SIZE, &clane_states::get_ctrl_desired_state, this);
     // no es confiable velocidad y steering
     sub_mov = nh_.subscribe("/standarized_vel_ste", MY_ROS_QUEUE_SIZE, &clane_states::get_ctrl_action, this);
     // probar con imu
     sub_imu = nh_.subscribe("/AutoNOMOS_mini/imu", MY_ROS_QUEUE_SIZE, &clane_states::get_imu, this);
     // ros::Subscriber sub_orientation = nh_.subscribe("/car_orientation", MY_ROS_QUEUE_SIZE, &get_car_orientation);
-    // sub_robot_pos = nh_.subscribe("/gazebo/model_states", MY_ROS_QUEUE_SIZE, &clane_states::poseCallback, this);
+
+#ifdef GLOBAL_POSE_GAZEBO
+    sub_robot_pos = nh_.subscribe("/gazebo/model_states", MY_ROS_QUEUE_SIZE, &clane_states::poseCallback, this);
+#endif
+
 
     // publicar imagen con la distribucion de sense, hits y move para debug
 #ifdef PAINT_OUTPUT
@@ -78,12 +90,13 @@ clane_states::clane_states(ros::NodeHandle nh)
 
     odom_pos_y_old = 0;
 
-    actual_speed = 0;
+    actual_speed_rpm = 0;
     actual_steering = 0;
 
     R = 0;
     C = 0;
     L = 0;
+
 }
 
 //gets the left points
@@ -119,12 +132,63 @@ void clane_states::get_pts_right(const nav_msgs::GridCells& array) {
     }
 }
 
+//gets the left points
+// 3 because that's the supporters for a newton polynomial
+void clane_states::get_ransac_left(const nav_msgs::GridCells& poly) {
+    poly_left.clear();
+    if (poly.cell_width == 3 && poly.cells[0].x > 0) {
+        polyDetectedLeft = true;
+        for(int i = 0; i < poly.cell_width; i++) {
+            poly_left.addData(poly.cells[i].x, poly.cells[i].y);
+        }
+        // printf("left detectado");
+    }
+    else {
+        // printf("\n left no detectado, cells: %.2f", poly.cell_width);
+        polyDetectedLeft = false;
+    }
+}
+
+//gets the center points
+// 3 because that's the supporters for a newton polynomial
+void clane_states::get_ransac_center(const nav_msgs::GridCells& poly) {
+    poly_center.clear();
+    if (poly.cell_width == 3 && poly.cells[0].x > 0) {
+        polyDetectedCenter = true;
+        for(int i = 0; i < poly.cell_width; i++) {
+            poly_center.addData(poly.cells[i].x, poly.cells[i].y);
+        }
+        // printf("center detectado");
+    }
+    else {
+        // printf("\n center no detectado, cells: %.2f", poly.cell_width);
+        polyDetectedCenter = false;
+    }
+}
+
+//gets the right points
+// 3 because that's the supporters for a newton polynomial
+void clane_states::get_ransac_right(const nav_msgs::GridCells& poly) {
+    poly_right.clear();
+    if (poly.cell_width == 3 && poly.cells[0].x > 0) {
+        polyDetectedRight = true;
+        for(int i = 0; i < poly.cell_width; i++) {
+            poly_right.addData(poly.cells[i].x, poly.cells[i].y);
+        }
+        // printf("right detectado");
+    }
+    else {
+        // printf("\n right no detectado, cells: %.2f", poly.cell_width);
+        polyDetectedRight = false;
+    }
+}
+
 /* reads actual_speed and steering from standarized topic */
 void clane_states::get_ctrl_action(const geometry_msgs::Twist& val) {
     // negative actual_speed is forward
     // it is not required to know if the car is moving forward or backward, positive for simplification
     actual_steering = val.angular.z;
-    actual_speed = sqrt(val.linear.x * val.linear.x);
+    actual_speed_rpm = sqrt(val.linear.x * val.linear.x);
 }
 
 void clane_states::get_ctrl_desired_state(const std_msgs::Int16& val) {
@@ -137,20 +201,22 @@ void clane_states::get_car_orientation(const std_msgs::Float32& val) {
 }
 
 // get global pose of car, Gazebo ONLY
-/*
+#ifdef GLOBAL_POSE_GAZEBO
 void clane_states::poseCallback(const gazebo_msgs::LinkStates& msg){
     // msg.name
     // TODO search by car name
-    car_global_pose.linear.x = msg.pose[1].position.x;
-    car_global_pose.linear.y = msg.pose[1].position.y;
-    double yaw = tf::getYaw(msg.pose[1].orientation);
+
+    //
+    car_global_pose.linear.x = msg.pose[model_num_gazebo].position.x;
+    car_global_pose.linear.y = msg.pose[model_num_gazebo].position.y;
+    double yaw = tf::getYaw(msg.pose[model_num_gazebo].orientation);
     car_global_pose.angular.z = yaw;
 
     global_position_x [0] = car_global_pose.linear.x;
     global_position_y [0] = car_global_pose.linear.y;
     global_orientation [0] = car_global_pose.angular.z;
 }
-*/
+#endif
 
 // TODO: Dead reckogning
 void clane_states::get_imu(const sensor_msgs::Imu& val){
@@ -249,12 +315,12 @@ int clane_states::det_hit (int position, int lanes_detected, bool ll, bool cc, b
                 // 2L y el carro está a la izquierda de C
                 // 3L y el carro está a la izquierda de L
 
-
-                if (R > 0 || C > 0 || R > 0)
-                        hit = !(ll || cc || rr ) && ((lanes_detected == 1 && car_center < arr_right.cells[0].x) ||
+            if (L > 0  || C > 0 || R > 0)
+                hit = !(ll || cc || rr ) && ((lanes_detected == 1 && car_center < arr_right.cells[0].x) ||
                                                                          (lanes_detected == 3 && car_center < arr_center.cells[0].x) ||
-                                                                         (lanes_detected == 7 && car_center < arr_left.cells[0].x) );
-                break;
+                                                                         (lanes_detected == 7 && car_center < arr_left.cells[0].x ));
+
+            break;
         case 1: // LL
                 // posibles combinaciones:
                 // cerca de L C ó R
@@ -263,8 +329,8 @@ int clane_states::det_hit (int position, int lanes_detected, bool ll, bool cc, b
                 // 3L carro sobre L
 
                 hit = (ll || cc || rr ) && ((lanes_detected == 1 && rr) ||
-                                                                        (lanes_detected == 3 && cc) ||
-                                                                        (lanes_detected == 7 && ll));
+                                            (lanes_detected == 3 && cc) ||
+                                            (lanes_detected == 7 && ll));
 
                 if (hit) {
                     double state_center = (state * STATE_WIDTH + (state+1) * STATE_WIDTH) / 2;
@@ -287,9 +353,9 @@ int clane_states::det_hit (int position, int lanes_detected, bool ll, bool cc, b
                 // 3L carro entre L y C
 
                 // hit = !(rr || cc ) && (lanes_detected == 3);
-                if (R > 0 || C > 0 || R > 0) {
-                        hit = !(ll || cc || rr) && ((lanes_detected == 3 && car_center > arr_center.cells[0].x) ||
-                                                                                (lanes_detected == 7 && car_center < arr_center.cells[0].x));
+                if (L > 0 || C > 0 || R > 0) {
+                     hit = !(ll || cc || rr) && ((lanes_detected == 3 && car_center > arr_center.cells[0].x) ||
+                                                    (lanes_detected == 7 && car_center < arr_center.cells[0].x));
 
                     if (hit) {
                         double min_coord = state * STATE_WIDTH;
@@ -328,7 +394,6 @@ int clane_states::det_hit (int position, int lanes_detected, bool ll, bool cc, b
                         if (position < min_coord || position > max_coord)
                                 hit = !hit;
                     }
-
                 }
 
                 break;
@@ -337,9 +402,8 @@ int clane_states::det_hit (int position, int lanes_detected, bool ll, bool cc, b
                 // cerca de C R
                 // 2L carro sobre C o R
                 // 3L carro sobre C
-
                 hit = ( cc || rr ) && ((lanes_detected == 3) ||
-                                                           (lanes_detected == 7 && cc));
+                                       (lanes_detected == 7 && cc));
 
                 if (hit) {
                     double state_center = (state*STATE_WIDTH + (state+1)*STATE_WIDTH) / 2;
@@ -472,12 +536,12 @@ float* clane_states::det_hits(float *dist_sensado_ll, float *dist_sensado_cc, fl
     // if there are points in the lines, get the distance between the car and the closest point if not, assign a BIG number
     *dist_sensado_rr = R > 0 ? horizontal_dist(pt_r, pt_car) / px_sobre_cm : 1000;
     *dist_sensado_cc = C > 0 ? horizontal_dist(pt_c, pt_car) / px_sobre_cm : 1000;
-    *dist_sensado_ll = L > 0 ? horizontal_dist(pt_l, pt_car) / px_sobre_cm : 1000;
+    *dist_sensado_ll = L > 0 ? horizontal_dist(pt_l, pt_car) / px_sobre_cm : 1000; // / px_sobre_cm
 
     // define if each distance is smaller than dist_lines
-    bool sense_rr = *dist_sensado_rr <= STATE_WIDTH / 2;
-    bool sense_cc = *dist_sensado_cc <= STATE_WIDTH / 2;
-    bool sense_ll = *dist_sensado_ll <= STATE_WIDTH / 2;
+    bool sense_rr = *dist_sensado_rr < STATE_WIDTH / 2;
+    bool sense_cc = *dist_sensado_cc < STATE_WIDTH / 2;
+    bool sense_ll = *dist_sensado_ll < STATE_WIDTH / 2;
 
     // based on sensing update probabilities
     float* hits = new float[NUM_STATES*STATE_WIDTH];
@@ -521,7 +585,7 @@ std_msgs::Float32MultiArray clane_states::move(std_msgs::Float32MultiArray prob,
         // dist_x_steering = (global_position_x[1] - global_position_x[0]); // cuantos pixeles se desplaza por m/s
         // utilizando posicion derivada de modelo de ackerman
 
-    double cm_x_prob = -delta_pos_y * 100; // para cambiar de metros a centimetros
+    double cm_x_prob = -delta_pos_y; // * 100; // para cambiar de metros a centimetros
 
     // int
     *U = round( cm_x_prob ); // pixels
@@ -600,6 +664,53 @@ int clane_states::actual_state(std_msgs::Float32MultiArray locArray) {
     	return -1; // no se pudo determinar el estado, ya que hay mas de uno posible
 }
 
+
+
+void clane_states::write_to_file(std_msgs::Float32MultiArray m_array, float* p, int values) {
+    // debug behavior of probabilities using file
+    // FILE *f = fopen("~/git/AutoNOMOS/src/histogramfilter.txt", "a");
+
+    for (int i = 0; i < NUM_STATES*STATE_WIDTH; ++i) {
+            printf("\t%.2f ", m_array.data[i]);
+    }
+    for (int i = 0; i < values; ++i) {
+            printf("\t%.5f ", p[i]);
+    }
+
+    printf("\n");
+
+    // fclose(f);
+}
+
+void clane_states::write_to_image( cv::Mat& imagen, float* hits, std_msgs::Float32MultiArray sense, std_msgs::Float32MultiArray move, int values, int borrarSenseImagen, int *inc_color ) {
+    // debug behavior of probabilities using rqt
+    int hist_height = 100;
+
+    for (int i = 0; i < values; ++i) {
+            // SENSE
+            int y_height = 130;
+            if (borrarSenseImagen == 0 && i < values - 1)
+                    cv::line(imagen, cv::Point(i, y_height), cv::Point(i + 1, y_height - hist_height), cv::Scalar(0, 0, 0), 1, CV_AA);
+            cv::line(imagen, cv::Point(i, y_height), cv::Point(i, y_height - sense.data[i] * hist_height), cv::Scalar(0, *inc_color, 255 - *inc_color), 1, CV_AA);
+
+            // HITS
+            y_height = 150;
+            cv::line(imagen, cv::Point(i, y_height), cv::Point(i, y_height - hits[i] * 10), cv::Scalar(0, 100, 255), 1, CV_AA);
+            // borrar hit posicion i + 1 en imagen
+            if (i < values - 1)
+                    cv::line(imagen, cv::Point(i + 1, y_height), cv::Point(i + 1, y_height - 10), cv::Scalar(0, 0, 0), 1, CV_AA);
+
+            // MOVE
+            y_height = 250;
+            cv::line(imagen, cv::Point(i, y_height - sense.data[i] * hist_height), cv::Point(i, y_height - move.data[i] * hist_height), cv::Scalar(0, 200, 255), 1, CV_AA);
+            // borrar movimiento posicion i + 1 en imagen
+            if (i < values - 1)
+                    cv::line(imagen, cv::Point(i + 1, y_height), cv::Point(i + 1, y_height - hist_height + 15), cv::Scalar(0, 0, 0), 1, CV_AA);
+    }
+
+    *inc_color = (*inc_color + 7) % 255;
+}
+
 void clane_states::write_to_file_headers() {
     // debug behavior of probabilities using file
     // FILE *f = fopen("~/git/AutoNOMOS/images/histogramfilter.txt", "w");
@@ -650,52 +761,6 @@ void clane_states::write_to_file_headers() {
     // fclose(f);
 }
 
-void clane_states::write_to_file(std_msgs::Float32MultiArray m_array, float* p, int values) {
-    // debug behavior of probabilities using file
-    // FILE *f = fopen("~/git/AutoNOMOS/src/histogramfilter.txt", "a");
-
-    for (int i = 0; i < NUM_STATES*STATE_WIDTH; ++i) {
-            printf("\t%.2f ", m_array.data[i]);
-    }
-    for (int i = 0; i < values; ++i) {
-            printf("\t%.5f ", p[i]);
-    }
-
-    printf("\n");
-
-    // fclose(f);
-}
-
-void clane_states::write_to_image( cv::Mat& imagen, float* hits, std_msgs::Float32MultiArray sense, std_msgs::Float32MultiArray move, int values, int borrarSenseImagen, int *inc_color ) {
-    // debug behavior of probabilities using rqt
-    int hist_height = 100;
-
-    for (int i = 0; i < values; ++i) {
-            // SENSE
-            int y_height = 130;
-            if (borrarSenseImagen == 0 && i < values - 1)
-                    cv::line(imagen, cv::Point(i, y_height), cv::Point(i + 1, y_height - hist_height), cv::Scalar(0, 0, 0), 1, CV_AA);
-            cv::line(imagen, cv::Point(i, y_height), cv::Point(i, y_height - sense.data[i] * hist_height), cv::Scalar(0, *inc_color, 255 - *inc_color), 1, CV_AA);
-
-            // HITS
-            y_height = 150;
-            cv::line(imagen, cv::Point(i, y_height), cv::Point(i, y_height - hits[i] * 10), cv::Scalar(0, 100, 255), 1, CV_AA);
-            // borrar hit posicion i + 1 en imagen
-            if (i < values - 1)
-                    cv::line(imagen, cv::Point(i + 1, y_height), cv::Point(i + 1, y_height - 10), cv::Scalar(0, 0, 0), 1, CV_AA);
-
-            // MOVE
-            y_height = 250;
-            cv::line(imagen, cv::Point(i, y_height - sense.data[i] * hist_height), cv::Point(i, y_height - move.data[i] * hist_height), cv::Scalar(0, 200, 255), 1, CV_AA);
-            // borrar movimiento posicion i + 1 en imagen
-            if (i < values - 1)
-                    cv::line(imagen, cv::Point(i + 1, y_height), cv::Point(i + 1, y_height - hist_height + 15), cv::Scalar(0, 0, 0), 1, CV_AA);
-    }
-
-    *inc_color = (*inc_color + 7) % 255;
-}
-
-
 float* clane_states::datosParaDebug(int* num_datos, std_msgs::Float32MultiArray locArray, float dist_sensado_ll, float dist_sensado_cc, float dist_sensado_rr, int U, state_car delta_odom, state_car delta_predict, state_car pos_odom, state_car pos_predict, double delta_t, bool bandera_primer) {
 
     int estadoEstimado = actual_state(locArray);
@@ -703,13 +768,13 @@ float* clane_states::datosParaDebug(int* num_datos, std_msgs::Float32MultiArray 
     *num_datos = 26;
     float *datos = new float[*num_datos];
 
-    datos[0] = (float) L;
-    datos[1] = (float) C;
-    datos[2] = (float) R;
+    datos[0] = (float) polyDetectedLeft;
+    datos[1] = (float) polyDetectedCenter;
+    datos[2] = (float) polyDetectedRight;
     datos[3] = dist_sensado_ll;
     datos[4] = dist_sensado_cc;
     datos[5] = dist_sensado_rr;
-    datos[6] = actual_speed;
+    datos[6] = actual_speed_rpm;
     datos[7] = actual_steering;
 
     datos[8] = (float) estadoEstimado;
@@ -743,7 +808,7 @@ float* clane_states::datosParaDebug(int* num_datos, std_msgs::Float32MultiArray 
 int main(int argc, char** argv){
 
     ros::init(argc, argv, "lane_states_node");
-    // ROS_INFO_STREAM("lane_states_node initialized");
+    ROS_INFO_STREAM("lane_states_node initialized");
     ros::NodeHandle nh;
     ros::Rate loop_rate(RATE_HZ);
 
@@ -768,7 +833,7 @@ int main(int argc, char** argv){
     bool bandera_primer = true;
 
     clane_states node = clane_states(nh);
-    ackerman model_ref = ackerman(0.32, 0.02);
+    ackerman model_ref = ackerman(0.32, 0.025);
 
     std_msgs::Float32MultiArray m;
     std_msgs::Float32MultiArray s;
@@ -790,8 +855,9 @@ int main(int argc, char** argv){
             delta_t_ = ros::Time::now().toSec() - prev_;
         prev_ = ros::Time::now().toSec();
 
-        delta_odom = model_ref.update_odometry(node.actual_speed, node.actual_steering, delta_t_);
-        delta_predict = model_ref.predict_deltas(node.actual_speed, node.actual_steering, delta_t_);
+        double vel_rad_seg = node.actual_speed_rpm  * (PI / 30);  // 1 revolution/ min = 2π / 60 seconds = π/ 30  radians per sec
+        delta_odom = model_ref.update_odometry(vel_rad_seg, node.actual_steering, delta_t_);
+        delta_predict = model_ref.predict_deltas(vel_rad_seg, node.actual_steering, delta_t_);
 
         hits = node.det_hits(&dist_sensado_ll, &dist_sensado_cc, &dist_sensado_rr, &lanes_detected);
 

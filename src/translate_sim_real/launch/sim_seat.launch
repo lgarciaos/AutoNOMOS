@@ -1,0 +1,17 @@
+<launch>
+
+    <node name="translate_sim_real_node" pkg="translate_sim_real" type="translate_sim_real_node" output="screen" > 
+
+        <param name="topico_steering_sim"          type="string" value="/autonomos/steer/steer_position_controller/command"/>
+        <param name="topico_velocidad_sim"         type="string" value="/cmd_vel"/>
+        <param name="topico_estandarizado"         type="string" value="/standarized_vel_ste"/>
+	<!-- simulacion for simulation, anything else for real car -->
+        <param name="seleccion_real_simulacion"    type="string" value="gary"/>
+
+	
+	<param name="topico_steering_sim_gary"          type="string" value="/steering"/>
+        <param name="topico_velocidad_sim_gary"         type="string" value="/speed"/>	
+	
+    </node> 
+ 
+</launch>

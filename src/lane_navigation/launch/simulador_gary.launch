@@ -56,14 +56,27 @@
       <param name="dbscan_epsilon"      type="int"      value="15" />
       <param name="dbscan_min_points"   type="int"      value="5" />
 
+      <param name="car_center"        type="int" value="80" />
     </node>
 
-    <node name="lane_states_node" pkg="lane_states_original" type="lane_states_node" output="screen" >
+
+    <node name="lane_states_node" pkg="lane_states_original" type="lane_states_node"  >
 
         <param name="car_center"        type="int" value="80" />
         <param name="image_height"      type="int" value="160" />
 
+        <param name="state_width_pixels"  type="int" value="16" />
+
+        <param name="model_num_gazebo"  type="int" value="1" />
+
     </node>
+
+
+<!-- value is added to angle offset of topico estandarizado -->
+<!--
+<param name="kalpha"            type="double"   value="1.0"/>
+<param name="kbeta"             type="double"   value="0.5"/>
+-->
 
     <node name="local_planner_node" pkg="local_planner" type="local_planner_node" output="screen" >
 
@@ -72,22 +85,26 @@
         <param name="Kd"                type="double"   value="0.0" />
 
         <param name="car_center"        type="int"      value="80" />
-        <param name="car_speed" 	type="int" 	value="5" />
+        <param name="car_speed" 	type="int" 	value="-150" />
 
-        <!-- value is added to angle offset of topico estandarizado -->
+
         <param name="min_steering"      type="double" value="-0.7" />
         <param name="max_steering"      type="double" value="0.7" />
 
         <param name="topico_estandarizado"           type="string"   value="/standarized_vel_ste" />
 
-        <!--
-        <param name="kalpha"            type="double"   value="1.0"/>
-        <param name="kbeta"             type="double"   value="0.5"/>
-        -->
+
 
         <param name="image_height"      type="int" value="160" />
 
+        <param name="estado_deseado"      type="int" value="4" />
+
+        <param name="state_width_pixels"  type="int" value="16" />
+
     </node>
+
+
+<!-- simulacion for simulation, anything else for real car -->
 
     <node name="translate_sim_real_node" pkg="translate_sim_real" type="translate_sim_real_node" >
 
@@ -98,11 +115,12 @@
 
         <param name="topico_estandarizado"         type="string" value="/standarized_vel_ste"/>
 
-        <!-- simulacion for simulation, anything else for real car -->
+
         <param name="seleccion_real_simulacion"    type="string" value="gary"/>
 
         <param name="offset_angle"	type="int"	value="45" />
 
     </node>
+
 
 </launch>

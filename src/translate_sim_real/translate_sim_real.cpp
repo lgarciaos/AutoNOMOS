@@ -54,6 +54,8 @@ private:
   std_msgs::Int16 value_steering_real;
   std_msgs::Int16 value_velocity_real;
 
+  int offset_angle;
+
 public:
   //! ROS node initialization
   TranslationSimReal(ros::NodeHandle &nh)
@@ -75,6 +77,8 @@ public:
 
     nh_.param<std::string>(node_name+"/topico_estandarizado", topico_estandarizado, "/standarized_vel_ste");
     nh_.param<std::string>(node_name+"/seleccion_real_simulacion", seleccion_real_simulacion, "simulacion");
+
+    nh_.param<int>(node_name+"/offset_angle", offset_angle, 0);
 
     
     if (seleccion_real_simulacion == "simulacion") {
@@ -137,6 +141,17 @@ public:
         value_steering_sim.data = val.angular.z;
         _pub_steering.publish(value_steering_sim);
       }
+    } else if (seleccion_real_simulacion == "gary") {
+        if (value_velocity_real.data != val.linear.x) {
+          value_velocity_real.data = val.linear.x;
+          _pub_velocity.publish(value_velocity_real);
+        }
+
+        if (value_steering_real.data != val.angular.z) {
+          // transformar radianes a grados
+          value_steering_real.data = (val.angular.z * 180 / PI) + offset_angle; // corrección en carro real y simulador. 45 grados es derecho, 0 derecha. 90 izquierda.
+          _pub_steering.publish(value_steering_real);
+        }
     } else {
       if (value_velocity_real.data != val.linear.x) {
         value_velocity_real.data = val.linear.x;
@@ -145,7 +160,7 @@ public:
 
       if (value_steering_real.data != val.angular.z) {
         // transformar radianes a grados
-        value_steering_real.data = (val.angular.z * 180 / PI) + 45; // corrección en carro real y simulador. 45 grados es derecho, 0 derecha. 90 izquierda.
+        value_steering_real.data = -(val.angular.z * 180 / PI) + offset_angle; // corrección en carro real y simulador. 45 grados es derecho, 0 derecha. 90 izquierda.
         _pub_steering.publish(value_steering_real);
       }
     }

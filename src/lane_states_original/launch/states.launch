@@ -1,11 +1,6 @@
 <launch>
   <node name="lane_states_node" pkg="lane_states_original" type="lane_states_node" output="screen" >
-    <param name="car_center"     type="int" value="87" />
-    <!-- esta debe ser la distancia en pixeles para lineas estados sobre linea -->
-    
-    <!-- 
-    <param name="rate"             type="double" value="10.0"/>
-    <param name="pixeles_cambio_estado" type="int" value="16"/>
-    -->
+    <param name="car_center"     type="int" value="80" />
+    <param name="image_height"     type="int" value="160" />
   </node>
 </launch>

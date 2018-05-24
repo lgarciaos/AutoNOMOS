@@ -1,0 +1,28 @@
+<launch>
+
+  <node name="local_planner_node" pkg="local_planner" type="local_planner_node" output="screen" >
+
+    <param name="Kp"                type="double"   value="1.0"/>
+    <param name="Ki"                type="double"   value="0.01"/>
+    <param name="Kd"                type="double"   value="0.0" />
+	
+    <param name="car_center"            type="int"      value="80" />
+    <param name="car_speed" 		type="int" 	value="100" />
+
+    <!-- value is added to angle offset of topico estandarizado -->
+    <param name="min_steering"     type="double" value="-1.5707" />
+    <param name="max_steering"     type="double" value="1.5707" />
+
+    <param name="topico_estandarizado"           type="string"   value="/standarized_vel_ste" />
+    
+    <!--
+    <param name="kalpha"                type="double"   value="1.0"/>
+    <param name="kbeta"                 type="double"   value="0.5"/>
+    -->
+
+    <param name="image_height"     type="int" value="160" />
+
+  </node>
+
+</launch>
+
