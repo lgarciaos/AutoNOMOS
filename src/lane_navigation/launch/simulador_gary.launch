@@ -36,8 +36,8 @@
 
       <!-- <param name="camera_name"           type="string"   value="/camera_name_ir/camera_name/depth/image_raw"/>    -->
       <param name="camera_name"         type="string"   value="app/camera/rgb/image_raw"/>
-      <param name="cam_deg"             type="double"   value="8"/>
-      <param name="cam_height"          type="double"   value="18"/>
+      <param name="cam_deg"             type="double"   value="5"/>
+      <param name="cam_height"          type="double"   value="14"/>
 
       <!-- jack 13 720p calibration: -->
       <!--param name="f_u"              type="double"   value="927.054138"/>
@@ -105,13 +105,13 @@
 
 
 <!-- simulacion for simulation, anything else for real car -->
-<!-- -->
+<!-- 
     <node name="translate_sim_real_node" pkg="translate_sim_real" type="translate_sim_real_node" >
 
         <param name="topico_steering_sim"          type="string" value="/AutoNOMOS_mini/manual_control/steering"/>
         <param name="topico_velocidad_sim"         type="string" value="/AutoNOMOS_mini/manual_control/velocity"/>
         <param name="topico_steering_sim_gary"         type="string" value="/AutoNOMOS_mini/manual_control/steering"/>
-        <param name="topico_velocidad_sim_gary"         type="string" value="/AutoNOMOS_mini/manual_control/velocity"/>
+        <param name="topico_velocidad_sim_gary"         type="string" value="/AutoNOMOS_mini/manual_control/speed"/>
 
         <param name="topico_estandarizado"         type="string" value="/standarized_vel_ste"/>
 
@@ -121,6 +121,6 @@
         <param name="offset_angle"	type="int"	value="90" />
 
     </node>
-
+-->
 
 </launch>
