@@ -1,4 +1,4 @@
-#define GLOBAL_POSE_GAZEBO
+// #define GLOBAL_POSE_GAZEBO
 
 #include <ros/ros.h>
 #include <geometry_msgs/Twist.h>

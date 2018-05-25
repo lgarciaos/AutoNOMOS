@@ -1,18 +1,4 @@
 <launch>
-    <node name="translate_sim_real_node" pkg="translate_sim_real" type="translate_sim_real_node" >
-        <param name="topico_steering_sim"          type="string" value="/AutoNOMOS_mini/manual_control/steering"/>
-        <param name="topico_velocidad_sim"         type="string" value="/AutoNOMOS_mini/manual_control/velocity"/>
-
-        <param name="topico_steering_sim_gary"         type="string" value="/AutoNOMOS_mini/manual_control/steering"/>
-        <param name="topico_velocidad_sim_gary"         type="string" value="/AutoNOMOS_mini/manual_control/velocity"/>
-
-	<param name="topico_steering_real" type="string" value="/manual_control/steering"/>
-	<param name="topico_velocidad_real" type="string" value="/manual_control/speed"/>
-
-        <param name="topico_estandarizado"         type="string" value="/standarized_vel_ste"/>
-            <!-- simulacion for simulation, anything else for real car -->
-        <param name="seleccion_real_simulacion"    type="string" value="real"/>
-    </node>
 
     <node name="line_detection_fu_node" pkg="line_detection_fu_mod" type="line_detection_fu_node"  >
 
@@ -49,41 +35,91 @@
       <param name="maxAngleDiff"                  type="int"    value="999"/>
 
       <!-- <param name="camera_name"           type="string"   value="/camera_name_ir/camera_name/depth/image_raw"/>    -->
-      <param name="camera_name"           type="string"   value="app/camera/rgb/image_raw"/>
-      <param name="cam_deg"               type="double"   value="8"/>
-      <param name="cam_height"            type="double"   value="18"/>
+      <param name="camera_name"         type="string"   value="app/camera/rgb/image_raw"/>
+      <param name="cam_deg"             type="double"   value="8"/>
+      <param name="cam_height"          type="double"   value="18"/>
 
       <!-- jack 13 720p calibration: -->
-      <!--param name="f_u"                type="double"   value="927.054138"/>
-      <param name="f_v"                   type="double"   value="935.428772"/>
-      <param name="c_u"                   type="double"   value="654.456376"/>
-      <param name="c_v"                   type="double"   value="346.241851"/-->
+      <!--param name="f_u"              type="double"   value="927.054138"/>
+      <param name="f_v"                 type="double"   value="935.428772"/>
+      <param name="c_u"                 type="double"   value="654.456376"/>
+      <param name="c_v"                 type="double"   value="346.241851"/-->
 
 
       <!-- jack 13 640*480 - cut to only bottom half (640*240) calibration: -->
-      <param name="f_u"                   type="double"   value="655.554626"/>
-      <param name="f_v"                   type="double"   value="652.052734"/>
-      <param name="c_u"                   type="double"   value="312.773367"/>
-      <param name="c_v"                   type="double"   value="7.779505"/>
+      <param name="f_u"                 type="double"   value="655.554626"/>
+      <param name="f_v"                 type="double"   value="652.052734"/>
+      <param name="c_u"                 type="double"   value="312.773367"/>
+      <param name="c_v"                 type="double"   value="7.779505"/>
 
-      <param name="topico_estandarizado"           type="string"   value="/standarized_vel_ste" />
-      <param name="kalpha"                type="double"   value="1.0"/>
-      <param name="kbeta"                 type="double"   value="0.5"/>
-      <param name="car_center"            type="int"      value="80" />
       <!-- vertical distance to group points -->
-      <param name="dbscan_epsilon"        type="int"      value="15" />
-      <param name="dbscan_min_points"     type="int"      value="5" />
+      <param name="dbscan_epsilon"      type="int"      value="15" />
+      <param name="dbscan_min_points"   type="int"      value="5" />
 
-      <param name="kp"                type="double"   value="1.0"/>
-      <param name="ki"                type="double"   value="0.01"/>
-      <param name="kd"                type="double"   value="0.0" />
-      
-      <param name="car_speed" 	type="int" value="-50" />
+      <param name="car_center"        type="int" value="80" />
     </node>
 
-  
-    <node name="lane_states_node" pkg="lane_states_original" type="lane_states_node" output="screen" >
-        <param name="car_center"           type="int" value="80" />
+
+    <node name="lane_states_node" pkg="lane_states_original" type="lane_states_node"  >
+
+        <param name="car_center"        type="int" value="80" />
+        <param name="image_height"      type="int" value="160" />
+
+        <param name="state_width_pixels"  type="int" value="16" />
+
+        <param name="model_num_gazebo"  type="int" value="1" />
+
+    </node>
+
+
+<!-- value is added to angle offset of topico estandarizado -->
+<!--
+<param name="kalpha"            type="double"   value="1.0"/>
+<param name="kbeta"             type="double"   value="0.5"/>
+-->
+
+    <node name="local_planner_node" pkg="local_planner" type="local_planner_node" output="screen" >
+
+        <param name="Kp"                type="double"   value="1.0"/>
+        <param name="Ki"                type="double"   value="0.01"/>
+        <param name="Kd"                type="double"   value="0.0" />
+
+        <param name="car_center"        type="int"      value="80" />
+        <param name="car_speed" 	type="int" 	value="-150" />
+
+
+        <param name="min_steering"      type="double" value="-0.7" />
+        <param name="max_steering"      type="double" value="0.7" />
+
+        <param name="topico_estandarizado"           type="string"   value="/standarized_vel_ste" />
+
+
+
+        <param name="image_height"      type="int" value="160" />
+
+        <param name="estado_deseado"      type="int" value="4" />
+
+        <param name="state_width_pixels"  type="int" value="16" />
+
+    </node>
+
+
+<!-- simulacion for simulation, anything else for real car -->
+
+    <node name="translate_sim_real_node" pkg="translate_sim_real" type="translate_sim_real_node" >
+
+        <param name="topico_steering_sim"          type="string" value="/AutoNOMOS_mini/manual_control/steering"/>
+        <param name="topico_velocidad_sim"         type="string" value="/AutoNOMOS_mini/manual_control/velocity"/>
+        <param name="topico_steering_sim_gary"         type="string" value="/manual_control/steering"/>
+        <param name="topico_velocidad_sim_gary"         type="string" value="/manual_control/speed" />
+
+        <param name="topico_estandarizado"         type="string" value="/standarized_vel_ste"/>
+
+
+        <param name="seleccion_real_simulacion"    type="string" value="gary"/>
+
+        <param name="offset_angle"	type="int"	value="90" />
+
     </node>
 
 
