@@ -453,7 +453,7 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
         array_horizontal.cell_height = 1;
         
 
-        for(int i = (int) laneMarkingsLeft.size() - 1; i >= 0 ; i--)
+        for(int i = 0; i < (int) laneMarkingsLeft.size(); i++)
         {         
             FuPoint<int> marking = laneMarkingsLeft[i];
             cv::Point markingLoc = cv::Point(marking.getX(), marking.getY());
@@ -466,7 +466,7 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
             array_left.cells.push_back(pt);
         }
         // center
-        for(int i = (int) laneMarkingsCenter.size() - 1; i >= 0 ; i--)
+        for(int i = 0; i < (int) laneMarkingsCenter.size(); i++)
         {         
             FuPoint<int> marking = laneMarkingsCenter[i];
             cv::Point markingLoc = cv::Point(marking.getX(), marking.getY());
@@ -479,7 +479,7 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
             array_center.cells.push_back(pt);
         }
         // right
-        for(int i = (int) laneMarkingsRight.size() - 1; i >= 0 ; i--)
+        for(int i = 0; i < (int) laneMarkingsRight.size(); i++)
         {         
             FuPoint<int> marking = laneMarkingsRight[i];
             cv::Point markingLoc = cv::Point(marking.getX(), marking.getY());
@@ -632,10 +632,6 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
                 */
             }
         }
-
-
-
-
 
         /* get state width aprox
         if (polyDetectedLeft && polyDetectedCenter && polyDetectedRight)
@@ -1152,11 +1148,20 @@ int cLaneDetectionFu::buildLaneMarkingsLists(
         }
     }
 
+    for (int i = 0; i < num_clusters; i++) {
+        // descendente
+        std::sort(groupedClusters[i].begin(), groupedClusters[i].end(),
+                [](FuPoint<int> a, FuPoint<int> b) {
+                    return a.getY() > b.getY();
+                });
+    }
+
     // crear un polinomio utilizando los puntos de cada cluster con el objetivo de ordenar los polinomios
     // y detectar L C R
     
     unsigned int numDetectedPolys = 0;
     
+    /*
     for (unsigned int i = 0; i < num_clusters; i++) {
         // la posicion no importa mucho
         std::vector<FuPoint<int>> supporters = std::vector<FuPoint<int>>();
@@ -1170,9 +1175,11 @@ int cLaneDetectionFu::buildLaneMarkingsLists(
         if (detectedPoly[i])
             numDetectedPolys++;
     }
+    */
 
     // printf("\n Detectados: %d ", numDetectedPolys);
 
+    /*
     std::vector<FuPoint<int>> detectedClusters [numDetectedPolys];
     NewtonPolynomial detectedPolys [numDetectedPolys];
 
@@ -1184,35 +1191,37 @@ int cLaneDetectionFu::buildLaneMarkingsLists(
             num_detected++;
         }
     }
+    */
 
     // el peor metodo de ordenamiento (bubble sort), pero espero sean máximo 3 clusters
-    for (unsigned int j = 0; j < (numDetectedPolys - 1); j++) { 
+    for (unsigned int j = 0; j < (num_clusters - 1); j++) {
         // Last i elements are already in place
-        for (unsigned int i = 0; i < (numDetectedPolys - j - 1); i++ ) {
+        for (unsigned int i = 0; i < (num_clusters - j - 1); i++ ) {
             // obtener Y de un polinomio
             // ordenar de manera decreciente
-            if (detectedPolys[i].at(minYPolyRoi) < detectedPolys[i + 1].at(minYPolyRoi)) {
+            // if (detectedPolys[i].at(minYPolyRoi) < detectedPolys[i + 1].at(minYPolyRoi)) {
+            if (groupedClusters[i][0].getX() < groupedClusters[i + 1][0].getX()) {
 
                 // swap points
-                std::vector<FuPoint<int>> tempPoints = detectedClusters[i];
-                detectedClusters[i] = detectedClusters[i + 1];
-                detectedClusters[i + 1] = tempPoints;
+                std::vector<FuPoint<int>> tempPoints = groupedClusters[i];
+                groupedClusters[i] = groupedClusters[i + 1];
+                groupedClusters[i + 1] = tempPoints;
 
                 // swap detected poly
-                NewtonPolynomial tempPoly = detectedPolys[i];
-                detectedPolys[i] = detectedPolys[i + 1];
-                detectedPolys[i + 1] = tempPoly;                
+                // NewtonPolynomial tempPoly = detectedPolys[i];
+                // detectedPolys[i] = detectedPolys[i + 1];
+                // detectedPolys[i + 1] = tempPoly;
             }
         }
     }
 
-    for (unsigned int i = 0; i < numDetectedPolys; i++ ) {
+    for (unsigned int i = 0; i < num_clusters; i++ ) { // detected polys
         if (i == 0)
-            laneMarkingsRight = detectedClusters[i];
+            laneMarkingsRight = groupedClusters[i];
         if (i == 1)
-            laneMarkingsCenter = detectedClusters[i];
+            laneMarkingsCenter = groupedClusters[i];
         if (i == 2)
-            laneMarkingsLeft = detectedClusters[i];
+            laneMarkingsLeft = groupedClusters[i];
     }
 
     return numDetectedPolys;

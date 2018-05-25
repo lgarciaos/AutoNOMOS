@@ -53,7 +53,7 @@
       <param name="c_v"                 type="double"   value="7.779505"/>
 
       <!-- vertical distance to group points -->
-      <param name="dbscan_epsilon"      type="int"      value="15" />
+      <param name="dbscan_epsilon"      type="int"      value="20" />
       <param name="dbscan_min_points"   type="int"      value="5" />
 
       <param name="car_center"        type="int" value="80" />
@@ -105,7 +105,7 @@
 
 
 <!-- simulacion for simulation, anything else for real car -->
-
+<!-- -->
     <node name="translate_sim_real_node" pkg="translate_sim_real" type="translate_sim_real_node" >
 
         <param name="topico_steering_sim"          type="string" value="/AutoNOMOS_mini/manual_control/steering"/>
@@ -118,7 +118,7 @@
 
         <param name="seleccion_real_simulacion"    type="string" value="gary"/>
 
-        <param name="offset_angle"	type="int"	value="45" />
+        <param name="offset_angle"	type="int"	value="90" />
 
     </node>
 
