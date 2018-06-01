@@ -19,6 +19,8 @@ image_transport::CameraPublisher image_publisher;
 image_transport::CameraPublisher image_publisher_ransac;
 image_transport::CameraPublisher image_publisher_lane_markings;
 
+image_transport::CameraPublisher image_publisher_scan;
+
 double f_u;
 double f_v;
 double c_u;
@@ -63,20 +65,20 @@ cLaneDetectionFu::cLaneDetectionFu(ros::NodeHandle nh)
 {
     std::string node_name = ros::this_node::getName();
     ROS_INFO("Node name: %s",node_name.c_str());
-    priv_nh_.param<std::string>(node_name+"/camera_name", camera_name, "/usb_cam/image_raw"); 
+    priv_nh_.param<std::string>(node_name+"/camera_name", camera_name, "/app/camera/rgb/image_raw");
 
     priv_nh_.param<int>(node_name+"/cam_w", cam_w, 640);
     priv_nh_.param<int>(node_name+"/cam_h", cam_h, 480);
-    priv_nh_.param<int>(node_name+"/proj_y_start", proj_y_start, 415);
-    priv_nh_.param<int>(node_name+"/proj_image_h", proj_image_h, 40);
-    priv_nh_.param<int>(node_name+"/proj_image_w", proj_image_w, 80);
+    priv_nh_.param<int>(node_name+"/proj_y_start", proj_y_start, 50);
+    priv_nh_.param<int>(node_name+"/proj_image_h", proj_image_h, 160);
+    priv_nh_.param<int>(node_name+"/proj_image_w", proj_image_w, 160);
     priv_nh_.param<int>(node_name+"/proj_image_horizontal_offset", proj_image_horizontal_offset, 0);
-    priv_nh_.param<int>(node_name+"/roi_top_w", roi_top_w, 62);
-    priv_nh_.param<int>(node_name+"/roi_bottom_w", roi_bottom_w, 30);
+    priv_nh_.param<int>(node_name+"/roi_top_w", roi_top_w, 160);
+    priv_nh_.param<int>(node_name+"/roi_bottom_w", roi_bottom_w, 50);
 
-    priv_nh_.param<int>(node_name+"/maxYRoi", maxYRoi, 5);
-    priv_nh_.param<int>(node_name+"/minYDefaultRoi", minYDefaultRoi, 39);
-    priv_nh_.param<int>(node_name+"/minYPolyRoi", minYPolyRoi, 39);
+    priv_nh_.param<int>(node_name+"/maxYRoi", maxYRoi, 159);
+    priv_nh_.param<int>(node_name+"/minYDefaultRoi", minYDefaultRoi, 110);
+    priv_nh_.param<int>(node_name+"/minYPolyRoi", minYPolyRoi, 45);
 
     priv_nh_.param<int>(node_name+"/defaultXLeft", defaultXLeft, 10);
     priv_nh_.param<int>(node_name+"/defaultXCenter", defaultXCenter, 30);
@@ -89,22 +91,25 @@ cLaneDetectionFu::cLaneDetectionFu(ros::NodeHandle nh)
     priv_nh_.param<int>(node_name+"/iterationsRansac", iterationsRansac, 10);
     priv_nh_.param<double>(node_name+"/proportionThreshould", proportionThreshould, 0.5);
     
-    priv_nh_.param<int>(node_name+"/m_gradientThreshold", m_gradientThreshold, 10);
+    priv_nh_.param<int>(node_name+"/m_gradientThreshold", m_gradientThreshold, 1);
     priv_nh_.param<int>(node_name+"/m_nonMaxWidth", m_nonMaxWidth, 10);
-    priv_nh_.param<int>(node_name+"/laneMarkingSquaredThreshold", laneMarkingSquaredThreshold, 25);
+    priv_nh_.param<int>(node_name+"/laneMarkingSquaredThreshold", laneMarkingSquaredThreshold, 144);
 
-    priv_nh_.param<int>(node_name+"/angleAdjacentLeg", angleAdjacentLeg, 25);
+    priv_nh_.param<int>(node_name+"/angleAdjacentLeg", angleAdjacentLeg, 18);
     
-    priv_nh_.param<int>(node_name+"/scanlinesVerticalDistance", scanlinesVerticalDistance, 1);
-    priv_nh_.param<int>(node_name+"/scanlinesMaxCount", scanlinesMaxCount, 100);
+    priv_nh_.param<int>(node_name+"/scanlinesVerticalDistance", scanlinesVerticalDistance, 2);
+    priv_nh_.param<int>(node_name+"/scanlinesMaxCount", scanlinesMaxCount, 200);
 
-    priv_nh_.param<int>(node_name+"/detectLaneStartX", detectLaneStartX, 38);
+    priv_nh_.param<int>(node_name+"/polyY1", polyY1, 155);
+    priv_nh_.param<int>(node_name+"/polyY2", polyY2, 145);
+    priv_nh_.param<int>(node_name+"/polyY3", polyY3, 130);
+
+    priv_nh_.param<int>(node_name+"/detectLaneStartX", detectLaneStartX, 155);
 
     priv_nh_.param<int>(node_name+"/maxAngleDiff", maxAngleDiff, 10);
 
-    priv_nh_.param<int>(node_name+"/polyY1", polyY1, 35);
-    priv_nh_.param<int>(node_name+"/polyY2", polyY2, 30);
-    priv_nh_.param<int>(node_name+"/polyY3", polyY3, 15);
+    priv_nh_.param<double>(node_name+"/cam_deg", cam_deg, 4);
+    priv_nh_.param<double>(node_name+"/cam_height", cam_height, 14);
 
     int cam_h_half = cam_h/2;
 
@@ -112,12 +117,9 @@ cLaneDetectionFu::cLaneDetectionFu(ros::NodeHandle nh)
     priv_nh_.param<double>(node_name+"/f_v", f_v, 626.987244); 
     priv_nh_.param<double>(node_name+"/c_u", c_u, 309.703230); 
     priv_nh_.param<double>(node_name+"/c_v", c_v, 231.473613); 
-    priv_nh_.param<double>(node_name+"/cam_deg", cam_deg, 27); 
-    priv_nh_.param<double>(node_name+"/cam_height", cam_height, 18);
 
-    priv_nh_.param<int>(node_name+"/dbscan_epsilon", dbscan_epsilon, 30);
+    priv_nh_.param<int>(node_name+"/dbscan_epsilon", dbscan_epsilon, 25);
     priv_nh_.param<int>(node_name+"/dbscan_min_points", dbscan_min_points, 5);
-
     priv_nh_.param<int>(node_name+"/car_center", car_center, 80);
 
     ipMapper = IPMapper(cam_w, cam_h_half, f_u, f_v, c_u, c_v, cam_deg, cam_height);
@@ -213,6 +215,7 @@ cLaneDetectionFu::cLaneDetectionFu(ros::NodeHandle nh)
         image_publisher_dbscan = image_transport.advertiseCamera("/lane_model/dbscan", MY_ROS_QUEUE_SIZE);
         image_publisher_ransac = image_transport.advertiseCamera("/lane_model/ransac", MY_ROS_QUEUE_SIZE);
         image_publisher_lane_markings = image_transport.advertiseCamera("/lane_model/lane_markings", MY_ROS_QUEUE_SIZE);
+        image_publisher_scan = image_transport.advertiseCamera("/lane_model/scan", MY_ROS_QUEUE_SIZE);
     #endif
 
     if (!rgb_camera_info)
@@ -297,14 +300,14 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
     //---------------------- DEBUG OUTPUT EDGES ---------------------------------//
     #ifdef PUBLISH_DEBUG_OUTPUT
         transformedImagePaintable = transformedImage.clone();
-        cv::cvtColor(transformedImagePaintable,transformedImagePaintable,CV_GRAY2BGR);
+        cv::cvtColor(transformedImagePaintable, transformedImagePaintable, CV_GRAY2BGR);
 
         for(int i = 0; i < (int)edges.size(); i++)
         {
             for(int j=0; j < edges[i].size(); j++) {
                 FuPoint<int> edge = edges[i][j].getImgPos();
                 cv::Point edgeLoc = cv::Point(edge.getX(), edge.getY());
-                cv::circle(transformedImagePaintable, edgeLoc, 0, cv::Scalar(0, 0, 0), -1);
+                cv::circle(transformedImagePaintable, edgeLoc, 1, cv::Scalar(0, 0, 0), -1);
             }            
         }
 
@@ -318,6 +321,7 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
         //        cv::circle(transformedImagePaintableHorizontal,edgeLoc,1,cv::Scalar(0, 0, edgesHorizontal[i][j].getValue()), -1);
         //    }
         // }
+        pubRGBImageMsg(transformedImagePaintable, image_publisher_scan);
 
     #ifdef PAINT_OUTPUT    
 	        
@@ -362,8 +366,8 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
     #ifdef PUBLISH_DEBUG_OUTPUT
 
         // clona nuevamente para no ver edges detectados 
-        // transformedImagePaintable = transformedImage.clone();
-        // cv::cvtColor(transformedImagePaintable, transformedImagePaintable, CV_GRAY2BGR);
+        transformedImagePaintable = transformedImage.clone();
+        cv::cvtColor(transformedImagePaintable, transformedImagePaintable, CV_GRAY2BGR);
 
         for(int i = 0; i < num_points; i++)
         {
@@ -373,7 +377,7 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
             }
             else {
                 cv::Point markingLoc = cv::Point(points[i].x, points[i].y);
-                cv::circle(transformedImagePaintable, markingLoc, 2, cv::Scalar(255, 255, 100), -1);
+                cv::circle(transformedImagePaintable, markingLoc, 1, cv::Scalar(255, 255, 100), -1);
             }
         }
 
@@ -406,6 +410,9 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
     try {
         printf("\n Num points: %d", num_points);
         printf("\n Num clusters: %d", num_clusters);
+
+        
+
         detected_polys = buildLaneMarkingsLists(points, num_points, num_clusters);
     } catch (...) {
         printf("buildLaneMarkings Exception");
@@ -416,8 +423,8 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
     geometry_msgs::Point pt;
     #ifdef PUBLISH_DEBUG_OUTPUT
 
-        // transformedImagePaintable = transformedImage.clone();
-        // cv::cvtColor(transformedImagePaintable,transformedImagePaintable,CV_GRAY2BGR);
+        transformedImagePaintable = transformedImage.clone();
+        cv::cvtColor(transformedImagePaintable,transformedImagePaintable,CV_GRAY2BGR);
 
     	// RULER
         for (int i = 0; i < 200; i = i + 10)
@@ -432,10 +439,6 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
             markingLoc = cv::Point(10, i);
             cv::putText(transformedImagePaintable,std::to_string(i),markingLoc,6,.15,cv::Scalar(0,237,221));
         }
-
-
-
-
 
         array_left.cells.clear();
         array_center.cells.clear();
@@ -453,11 +456,45 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
         array_horizontal.cell_height = 1;
         
 
+        if( laneMarkingsLeft.size() > 0 ) {
+
+            // cv::Point pt_next = cv::Point(arr_right.cells[next_move_y].x, -arr_right.cells[next_move_y].y);
+            // cv::Point pt_next_2 = cv::Point(arr_right.cells[next_move2_y < R ? next_move2_y : R].x, -arr_right.cells[next_move2_y < R ? next_move2_y : R].y);
+            double angle = atan2(laneMarkingsLeft[laneMarkingsLeft.size() - 1].getY() - laneMarkingsLeft[0].getY(), laneMarkingsLeft[laneMarkingsLeft.size() - 1].getX() - laneMarkingsLeft[0].getX());
+
+            printf("\n 1. angulo %.2f, L: %d", angle, laneMarkingsLeft.size());
+
+        }
+
+        if( laneMarkingsCenter.size() > 0 ) {
+
+            // cv::Point pt_next = cv::Point(arr_right.cells[next_move_y].x, -arr_right.cells[next_move_y].y);
+            // cv::Point pt_next_2 = cv::Point(arr_right.cells[next_move2_y < R ? next_move2_y : R].x, -arr_right.cells[next_move2_y < R ? next_move2_y : R].y);
+            double angle = atan2(laneMarkingsCenter[laneMarkingsCenter.size() - 1].getY() - laneMarkingsCenter[0].getY(), laneMarkingsCenter[laneMarkingsCenter.size() - 1].getX() - laneMarkingsCenter[0].getX());
+
+            printf("\n 2. angulo %.2f, C: %d", angle, laneMarkingsCenter.size());
+
+        }
+
+        if( laneMarkingsRight.size() > 0 ) {
+
+            // cv::Point pt_next = cv::Point(arr_right.cells[next_move_y].x, -arr_right.cells[next_move_y].y);
+            // cv::Point pt_next_2 = cv::Point(arr_right.cells[next_move2_y < R ? next_move2_y : R].x, -arr_right.cells[next_move2_y < R ? next_move2_y : R].y);
+            double angle = atan2(laneMarkingsRight[laneMarkingsRight.size() - 1].getY() - laneMarkingsRight[0].getY(), laneMarkingsRight[laneMarkingsRight.size() - 1].getX() - laneMarkingsRight[0].getX());
+
+            printf("\n 3. angulo %.2f, R: %d", angle, laneMarkingsRight.size());
+
+        }
+
+
         for(int i = 0; i < (int) laneMarkingsLeft.size(); i++)
         {         
+
+
+
             FuPoint<int> marking = laneMarkingsLeft[i];
             cv::Point markingLoc = cv::Point(marking.getX(), marking.getY());
-            cv::circle(transformedImagePaintable,markingLoc, 0, cv::Scalar(0,0,139), -1);
+            cv::circle(transformedImagePaintable,markingLoc, 1, cv::Scalar(0,0,139), -1);
             
             pt.x = marking.getX();
             pt.y = marking.getY();
@@ -465,12 +502,13 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
 
             array_left.cells.push_back(pt);
         }
+
         // center
         for(int i = 0; i < (int) laneMarkingsCenter.size(); i++)
         {         
             FuPoint<int> marking = laneMarkingsCenter[i];
             cv::Point markingLoc = cv::Point(marking.getX(), marking.getY());
-            cv::circle(transformedImagePaintable,markingLoc, 0, cv::Scalar(0,100,0), -1);
+            cv::circle(transformedImagePaintable,markingLoc, 1, cv::Scalar(0,100,0), -1);
 
             pt.x = marking.getX();
             pt.y = marking.getY();
@@ -478,12 +516,13 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
 
             array_center.cells.push_back(pt);
         }
+
         // right
         for(int i = 0; i < (int) laneMarkingsRight.size(); i++)
         {         
             FuPoint<int> marking = laneMarkingsRight[i];
             cv::Point markingLoc = cv::Point(marking.getX(), marking.getY());
-            cv::circle(transformedImagePaintable,markingLoc, 0, cv::Scalar(139,0,0), -1);
+            cv::circle(transformedImagePaintable,markingLoc, 1, cv::Scalar(139,0,0), -1);
 
             pt.x = marking.getX();
             pt.y = marking.getY();
@@ -893,6 +932,11 @@ vector<vector<EdgePoint>> cLaneDetectionFu::scanImage(cv::Mat image, ePosition p
 
                 //cv::Mat uses ROW-major system -> .at(y,x)
                 // use kernel width 5 and try sobel kernel
+
+                //  -1 -1 +1 0 +1
+                //  -2 -2 +2 0 +2
+                //  -1 -1 +1 0 +1
+
                 sum_x -= image.at<uint8_t>(offset-1, i+1);
                 sum_x -= image.at<uint8_t>(offset-1, i);
                 // kernel is 0
@@ -1076,6 +1120,7 @@ std::vector<FuPoint<int>> cLaneDetectionFu::extractLaneMarkings(const std::vecto
             if (edgePosition->isPositive() and not nextEdgePosition->isPositive()) {
                 FuPoint<int> candidateStartEdge = edgePosition->getImgPos();
                 FuPoint<int> candidateEndEdge = nextEdgePosition->getImgPos();
+
                 if ((candidateStartEdge - candidateEndEdge).squaredMagnitude() < laneMarkingSquaredThreshold) {
                     result.push_back(center(candidateStartEdge, candidateEndEdge));
                 }
@@ -2294,16 +2339,16 @@ void cLaneDetectionFu::config_callback(line_detection_fu::LaneDetectionConfig &c
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "cLaneDetectionFu");
-    ROS_INFO_STREAM("lane_detection initialized");
+    ROS_INFO_STREAM("line_detection initialized");
     ros::NodeHandle nh;
     ros::Rate loop_rate(RATE_HZ);
 
     cLaneDetectionFu node = cLaneDetectionFu(nh);
 
-    dynamic_reconfigure::Server<line_detection_fu::LaneDetectionConfig> server;
-    dynamic_reconfigure::Server<line_detection_fu::LaneDetectionConfig>::CallbackType f;
-    f = boost::bind(&cLaneDetectionFu::config_callback, &node, _1, _2);
-    server.setCallback(f);
+    // dynamic_reconfigure::Server<line_detection_fu::LaneDetectionConfig> server;
+    // dynamic_reconfigure::Server<line_detection_fu::LaneDetectionConfig>::CallbackType f;
+    // f = boost::bind(&cLaneDetectionFu::config_callback, &node, _1, _2);
+    // server.setCallback(f);
 
     while(ros::ok())
     {

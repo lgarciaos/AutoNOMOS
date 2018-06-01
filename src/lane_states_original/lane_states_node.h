@@ -1,5 +1,3 @@
-// #define GLOBAL_POSE_GAZEBO
-
 #include <ros/ros.h>
 #include <geometry_msgs/Twist.h>
 #include <geometry_msgs/Point.h>
@@ -28,9 +26,8 @@
 #include <nav_msgs/GridCells.h>
 // #include <nav_msgs/Odometry.h>
 
-#ifdef GLOBAL_POSE_GAZEBO
-    #include "gazebo_msgs/LinkStates.h"
-#endif
+#include <geometry_msgs/Pose2D.h>
+
 
 #include "../fu_line_detection/src/tools/NewtonPolynomial.h"
 
@@ -142,9 +139,9 @@ private:
 
     void get_car_orientation(const std_msgs::Float32& val);
 
-#ifdef GLOBAL_POSE_GAZEBO
-    void poseCallback(const gazebo_msgs::LinkStates& msg);
-#endif
+
+    void global_pose_callback(const geometry_msgs::Pose2D& global_pose);
+
 
     void get_imu(const sensor_msgs::Imu& val);
 
@@ -186,6 +183,6 @@ public:
 
     void write_to_image( cv::Mat& imagen, float* hits, std_msgs::Float32MultiArray sense, std_msgs::Float32MultiArray move, int values, int borrarSenseImagen, int *inc_color );
 
-    float* datosParaDebug(int* num_datos, std_msgs::Float32MultiArray locArray, float dist_sensado_ll, float dist_sensado_cc, float dist_sensado_rr, int U, state_car delta_odom, state_car delta_predict, state_car pos_odom, state_car pos_predict, double delta_t, bool bandera_primer);
+    float* datos_para_debug(int* num_datos, std_msgs::Float32MultiArray locArray, float dist_sensado_ll, float dist_sensado_cc, float dist_sensado_rr, int U, state_car delta_odom, state_car delta_predict, state_car pos_odom, state_car pos_predict, double delta_t, bool bandera_primer);
 
 };

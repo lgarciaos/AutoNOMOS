@@ -76,6 +76,7 @@ private:
     int R;
     int C;
     int L;
+
     nav_msgs::GridCells arr_left;
     nav_msgs::GridCells arr_center;
     nav_msgs::GridCells arr_right;

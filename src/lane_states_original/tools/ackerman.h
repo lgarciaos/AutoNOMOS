@@ -29,9 +29,9 @@ public:
 
     ackerman(float wheel_base, float wheel_radius);
 
-    state_car update_odometry(float vel_rad, float steering, float delta_time);
+    state_car update_odometry(float vel_rad_seg, float steering, float delta_time);
 
-    state_car predict_deltas(float vel_rad, float steering, float delta_time);
+    state_car predict_deltas(float vel_rad_seg, float steering, float delta_time);
 };
 
 #endif // ACKERMAN_H

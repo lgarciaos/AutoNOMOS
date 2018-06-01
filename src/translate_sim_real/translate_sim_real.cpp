@@ -131,6 +131,9 @@ public:
 
   void get_standarized_actions(const geometry_msgs::Twist& val)
   {
+
+      //steering plugin = -(-0.252556 * (_msg->data - 90) + .572957)
+
     if (seleccion_real_simulacion == "simulacion") {
       if (value_velocity_sim.linear.x != val.linear.x) {
         value_velocity_sim.linear.x = val.linear.x;
@@ -141,6 +144,7 @@ public:
         value_steering_sim.data = val.angular.z;
         _pub_steering.publish(value_steering_sim);
       }
+
     } else if (seleccion_real_simulacion == "gary") {
         if (value_velocity_real.data != val.linear.x) {
           value_velocity_real.data = val.linear.x;
@@ -149,9 +153,32 @@ public:
 
         if (value_steering_real.data != val.angular.z) {
           // transformar radianes a grados
-          value_steering_real.data = (val.angular.z * 180 / PI) + offset_angle; // corrección en carro real y simulador. 45 grados es derecho, 0 derecha. 90 izquierda.
+
+          // carro real config:
+          // command 0  : 0.3967852340780831    //  22.7341193   // izquierda
+          // command 30 : 0.28655792116953055   //  16.418559
+          // command 60 : 0.13636611612784297   //  7.8132029
+          // command 90 : -0.01                 //  -0.572957    // centro
+          // command 120: -0.139860631021484    //  -8.013423
+          // command 150: -0.2675472287070919   //  -15.329327
+          // command 180: -0.41853095368099036  //  -23.980057   // derecha
+
+          // transformacion lineal radianes
+          double rad_real_giro = val.angular.z;
+          double rad_transformados =  -(3.844760483 * rad_real_giro - 0.048447605);
+
+          //  0.41853095368099036 1.5707
+          //  0.01                0
+
+          // 1.1607 1.5707  1.9807
+
+          // y - .01 = (1.5707 - 0)/(.41853 - 0.01)(x - .01)
+          // y = (1.5707 - 0)/(.41853 - 0.01)(x - .01) + .01
+
+          value_steering_real.data = (rad_transformados * 180 / PI) + offset_angle; // corrección en carro real y simulador. 45 grados es derecho, 0 derecha. 90 izquierda.
           _pub_steering.publish(value_steering_real);
         }
+
     } else {
       if (value_velocity_real.data != val.linear.x) {
         value_velocity_real.data = val.linear.x;
@@ -163,6 +190,7 @@ public:
         value_steering_real.data = -(val.angular.z * 180 / PI) + offset_angle; // corrección en carro real y simulador. 45 grados es derecho, 0 derecha. 90 izquierda.
         _pub_steering.publish(value_steering_real);
       }
+
     }
   }
 
