@@ -1,6 +1,10 @@
 <launch>
+    <!--
+    <node name="spawn_model" pkg="gazebo_ros" type="spawn_model"  
+      args="-database AutoNOMOS_mini -sdf -model AutoNOMOS_mini -x 0 -y 0 -z 0 -R 0 -P 0 -Y 0" />
+    -->
 
-    <node name="line_detection_fu_node" pkg="line_detection_fu_mod" type="line_detection_fu_node" output="screen" >
+    <node name="line_detection_fu_node" pkg="line_detection_fu_mod" type="line_detection_fu_node"  >
 
       <param name="cam_w"                         type="int"    value="640"/>
       <param name="cam_h"                         type="int"    value="480"/> <!--we will use only bottom half of this...-->
@@ -23,7 +27,7 @@
       <param name="iterationsRansac"              type="int"    value="50"/>    <!-- ransac no se utiliza -->
       <param name="proportionThreshould"          type="double" value="0.85"/>  <!-- ransac no se utiliza -->
       <param name="m_gradientThreshold"           type="int"    value="1"/>     <!-- scan 8 -->
-      <param name="m_nonMaxWidth"                 type="int"    value="10"/>    <!-- scan con 14 2-2 -->
+      <param name="m_nonMaxWidth"                 type="int"    value="4"/>    <!-- scan con 14 2-2 con 10 funciona camino gary -->
       <param name="laneMarkingSquaredThreshold"   type="int"    value="144"/>   <!-- buildLaneMarkings -->
 
       <param name="angleAdjacentLeg"              type="int"    value="18"/>
@@ -70,13 +74,16 @@
 
     </node>
 
-<!-- 
+
 
     <node name="local_planner_node" pkg="local_planner" type="local_planner_node" output="screen" >
 
         <param name="Kp"                type="double"   value="1.0"/>
         <param name="Ki"                type="double"   value="0.01"/>
         <param name="Kd"                type="double"   value="0.0" />
+
+        <param name="Kdist"                type="double"   value="0.2"/>
+        <param name="Kh"                type="double"   value="1.0" />
 
         <param name="car_center"        type="int"      value="80" />
         <param name="car_speed" 	type="int" 	value="-100" />
@@ -89,8 +96,9 @@
         <param name="estado_deseado"      type="int" value="4" />
         <param name="state_width_pixels"  type="int" value="16" />
 
+        <param name="controlador"  type="string" value="linea" />
     </node>
     
--->
+
 
 </launch>

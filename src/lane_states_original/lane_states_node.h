@@ -152,6 +152,8 @@ private:
     int actual_state(std_msgs::Float32MultiArray locArray);
 
     int image_height;
+
+    double cte(double global_pose_x, double global_pose_y);
 public:
 
     ros::Publisher pub_loc;

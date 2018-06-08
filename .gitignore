@@ -6,4 +6,7 @@ install/
 logs/
 .catkin_tools/
 devel/
-.catkin_workspace/
+.catkin_workspace
+histogramfilter_*.txt
+*.out
+.ipynb_checkpoints/

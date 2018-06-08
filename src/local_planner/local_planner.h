@@ -15,7 +15,7 @@
 #include <geometry_msgs/Twist.h>
 #include "geometry_msgs/Point.h"
 
-#include "../fu_line_detection/src/tools/NewtonPolynomial.h"
+// #include "../fu_line_detection/src/tools/NewtonPolynomial.h"
 
 static const uint32_t MY_ROS_QUEUE_SIZE = 100;
 static const double PI = 3.14159265;
@@ -23,12 +23,11 @@ static const double PI = 3.14159265;
 static const int NUM_STATES = 7;
 static const int STATE_WIDTH = 20;
 // static const int STATE_WIDTH_PIX = 22;
-static const int RATE_HZ = 5;
+static const int RATE_HZ = 10;
 
 class local_planner {
 
 private:
-
     // the node handle
     ros::NodeHandle nh_;
 
@@ -48,6 +47,9 @@ private:
     ros::Subscriber sub_pts_center;
     ros::Subscriber sub_pts_right;
 
+    std::string nombre_estado [NUM_STATES] = { "OL",   "LL",   "LC",   "CC",   "RC",   "RR",   "OR"};
+    std::string controlador;
+
     double integralPID;
     double prevErrorPID;
     int estado_actual;
@@ -63,15 +65,18 @@ private:
     double Ki;
     double Kd;
 
+    double Kdist;
+    double Kh;
+
     int state_width_pix;
 
     bool polyDetectedLeft;
     bool polyDetectedCenter;
     bool polyDetectedRight;
 
-    NewtonPolynomial poly_left;
-    NewtonPolynomial poly_center;
-    NewtonPolynomial poly_right;
+    // NewtonPolynomial poly_left;
+    // NewtonPolynomial poly_center;
+    // NewtonPolynomial poly_right;
 
     int R;
     int C;
@@ -80,8 +85,6 @@ private:
     nav_msgs::GridCells arr_left;
     nav_msgs::GridCells arr_center;
     nav_msgs::GridCells arr_right;
-
-    std::string nombre_estado [NUM_STATES] = { "OL",   "LL",   "LC",   "CC",   "RC",   "RR",   "OR"};
 
     int car_text_position;
 
@@ -103,9 +106,7 @@ private:
 
     /* compute based on distance y_next_dist the points in pixels that the car needs to head to */
     bool ackerman_control_next_points(double y_next_dist, cv::Point& pt_car,
-                                                     cv::Point& y_next_pt, cv::Point& y_next_pt2,
-                                                     NewtonPolynomial& polyLeft, NewtonPolynomial& polyCenter,
-                                                     NewtonPolynomial& polyRight);
+                                                     cv::Point& y_next_pt, cv::Point& y_next_pt2);
 
     double PID(double error, double dt, double Kp, double Ki, double Kd);
 

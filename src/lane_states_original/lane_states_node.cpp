@@ -3,6 +3,9 @@
 #define PAINT_OUTPUT
 #define PUBLISH_DEBUG_OUTPUT
 
+int num_execution = 0;
+double pix_width_mts = 0;
+
 clane_states::clane_states(ros::NodeHandle nh)
     : nh_(nh), priv_nh_("~")
 {
@@ -12,6 +15,8 @@ clane_states::clane_states(ros::NodeHandle nh)
     priv_nh_.param<int>(node_name+"/image_height", image_height, 160);
     priv_nh_.param<int>(node_name+"/state_width_pixels", state_width_pix, 16);
     priv_nh_.param<int>(node_name+"/model_num_gazebo", model_num_gazebo, 1);
+    priv_nh_.param<double>(node_name+"/pix_width_mts", pix_width_mts, 0.00051);
+    priv_nh_.param<int>(node_name+"/num_execution", num_execution, 0);
 
     const char * format = "P(x)=[%.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f]\n";
 
@@ -570,10 +575,10 @@ std_msgs::Float32MultiArray clane_states::sense(std_msgs::Float32MultiArray p, f
 std_msgs::Float32MultiArray clane_states::move(std_msgs::Float32MultiArray prob, double delta_pos_y, int *U) {
 
     // movement
-    float p_exact = 0.8;
-    float p_undershoot = 0.1;
+    float p_exact = 0.9;
+    float p_undershoot = 0.05;
     float p_undershoot_2 = 0.05;
-    float p_overshoot = 0.1;
+    float p_overshoot = 0.05;
     float p_overshoot_2 = 0.05;
 
     // tamaño de celda en pixeles: 0.006879221 revisar por actualización de camino
@@ -582,7 +587,7 @@ std_msgs::Float32MultiArray clane_states::move(std_msgs::Float32MultiArray prob,
         // dist_x_steering = (global_position_x[1] - global_position_x[0]); // cuantos pixeles se desplaza por m/s
         // utilizando posicion derivada de modelo de ackerman
 
-    double cm_x_prob = delta_pos_y / 0.00051; // * 100; // * 100; // para cambiar de metros a centimetros
+    double cm_x_prob = delta_pos_y / pix_width_mts; // * 100; // * 100; // para cambiar de metros a centimetros
 
     // int
     *U = round( cm_x_prob ); // pixels
@@ -667,6 +672,8 @@ void clane_states::write_to_file(std_msgs::Float32MultiArray m_array, float* p, 
     // debug behavior of probabilities using file
     // FILE *f = fopen("~/git/AutoNOMOS/src/histogramfilter.txt", "a");
 
+    printf("%d", num_execution);
+
     for (int i = 0; i < NUM_STATES*STATE_WIDTH; ++i) {
             printf("\t%.2f ", m_array.data[i]);
     }
@@ -708,51 +715,148 @@ void clane_states::write_to_image( cv::Mat& imagen, float* hits, std_msgs::Float
     *inc_color = (*inc_color + 7) % 255;
 }
 
+double clane_states::cte(double global_pose_x, double global_pose_y){
+    // calcular cross track error en circuito de curva
+    double cte = 0;
+    // izquierda arriba
+    double robot_x = global_pose_x;
+    double robot_y = global_pose_y;
+    double radius = 1.3;
+    double pista_x;
+    double pista_y;
+    double alpha;
+
+    if (robot_y > 4 && robot_x < 2) {
+        // angulo al origen
+        alpha = atan2(robot_y - 4, robot_x - 2);
+        pista_x = radius * cos(alpha);
+        pista_y = radius * sin(alpha);
+
+        // printf ("\n 1. alpha {} ({}, {}) ".format(alpha, pista_x, pista_y))
+
+        // con traslacion
+        pista_x += 2;
+        pista_y += 4;
+
+        cte = sqrt(pow(pista_x - robot_x, 2) + pow(pista_y - robot_y, 2));
+
+        if (robot_x > pista_x)
+            cte = -cte;
+    }
+    // derecha arriba
+    else if (robot_y > 4 && robot_x > 7) {
+        alpha = atan2(robot_y - 4, robot_x - 7);
+        pista_x = radius * cos(alpha);
+        pista_y = radius * sin(alpha);
+
+        // printf ("\n 2. alpha {} ({}, {}) ".format(alpha, pista_x, pista_y))
+
+        pista_x += 7;
+        pista_y += 4;
+
+        cte = sqrt(pow(pista_x - robot_x, 2) + pow(pista_y - robot_y, 2));
+
+        if (robot_x < pista_x)
+            cte = -cte;
+    }
+    // izquierda abajo
+    else if (robot_y < -4 && robot_x < 2){
+        alpha = atan2(robot_y + 4, robot_x - 2);
+        pista_x = radius * cos(alpha);
+        pista_y = radius * sin(alpha);
+
+        pista_x += 2;
+        pista_y += -4;
+
+        cte = sqrt(pow(pista_x - robot_x, 2) + pow(pista_y - robot_y, 2));
+
+        if (robot_x > pista_x)
+            cte = -cte;
+    }
+    // derecha abajo
+    else if (robot_y < -4 && robot_x > 7) {
+        alpha = atan2(robot_y + 4, robot_x - 7);
+        pista_x = radius * cos(alpha);
+        pista_y = radius * sin(alpha);
+
+        pista_x += 7;
+        pista_y += -4;
+
+        cte = sqrt(pow(pista_x - robot_x, 2) + pow(pista_y - robot_y, 2));
+
+        if (robot_x < pista_x)
+            cte = -cte;
+    }
+    // recta izquierda
+    else if (robot_y >= -4 && robot_y <= 4 && robot_x < 2) {
+        cte = robot_x - .7;
+        // printf ("\n 3. {}".format(cte))
+    }
+    // recta derecha
+    else if (robot_y >= -4 && robot_y <= 4 && robot_x > 7) {
+        cte = robot_x - 8.3;
+        //printf ("\n 3. {}".format(cte))
+    }
+    // recta arriba
+    else if (robot_y >= 4 && robot_x >= 2 && robot_x <= 7) {
+        cte = robot_y - 5.3;
+        // printf ("\n 3. {}".format(cte))
+    }
+    // recta abajo
+    else {
+        cte = robot_y + 5.3;
+        // printf ("\n 4. {}".format(cte))
+    }
+
+    return cte;
+
+}
+
 void clane_states::write_to_file_headers() {
     // debug behavior of probabilities using file
     // FILE *f = fopen("~/git/AutoNOMOS/images/histogramfilter.txt", "w");
+
+    printf("num_execution");
 
     for (int i = 0; i < NUM_STATES * STATE_WIDTH; ++i) {
             printf("\tEst_%d ", i);
     }
 
+    printf("\tL"); // 0
+    printf("\tC");
+    printf("\tR");
+    printf("\td_ll");
+    printf("\td_cc");
+    printf("\td_rr");
+    printf("\tactual_speed");
+    printf("\tactual_steering"); // 7
 
-    printf("\t%s", "L"); // 0
-    printf("\t%s", "C");
-    printf("\t%s", "R");
-    printf("\t%s", "d_ll");
-    printf("\t%s", "d_cc");
-    printf("\t%s", "d_rr");
-    printf("\t%s", "actual_speed");
-    printf("\t%s", "actual_steering"); // 7
+    printf("\testimated_state");
+    printf("\tU"); // 9
+    printf("\tdesired_state");
 
-    printf("\t%s", "estimated_state");
-    printf("\t%s", "U"); // 9
-    printf("\t%s", "desired_state");
+    printf("\tglobal_x");
+    printf("\tglobal_y"); // 12
+    printf("\tglobal_theta");
 
-    printf("\t%s", "global_x");
-    printf("\t%s", "global_y"); // 12
-    printf("\t%s", "global_theta");
+    printf("\tpredicted_x");
+    printf("\tpredicted_y");
+    printf("\tpredicted_theta");
 
-    printf("\t%s", "predicted_x");
-    printf("\t%s", "predicted_y");
-    printf("\t%s", "predicted_theta");
+    printf("\tdelta_predicted_x");
+    printf("\tdelta_predicted_y");
+    printf("\tdelta_predicted_theta");
 
-    printf("\t%s", "delta_predicted_x");
-    printf("\t%s", "delta_predicted_y");
-    printf("\t%s", "delta_predicted_theta");
+    printf("\tpos_odom_x"); // 20
+    printf("\tpos_odom_y");
+    printf("\tpos_odom_theta");
 
-    printf("\t%s", "pos_odom_x"); // 20
-    printf("\t%s", "pos_odom_y");
-    printf("\t%s", "pos_odom_theta");
+    printf("\tdelta_odom_x");
+    printf("\tdelta_odom_y");
+    printf("\tdelta_odom_theta");
 
-    printf("\t%s", "delta_odom_x");
-    printf("\t%s", "delta_odom_y");
-    printf("\t%s", "delta_odom_theta");
-
-    printf("\t%s", "delta_time");
-
-
+    printf("\tdelta_time");
+    printf("\tcte");
 
     printf("\n");
     // fclose(f);
@@ -762,7 +866,7 @@ float* clane_states::datos_para_debug(int* num_datos, std_msgs::Float32MultiArra
 
     int estadoEstimado = actual_state(locArray);
 
-    *num_datos = 26;
+    *num_datos = 28;
     float *datos = new float[*num_datos];
 
     datos[0] = (float) polyDetectedLeft;
@@ -780,7 +884,7 @@ float* clane_states::datos_para_debug(int* num_datos, std_msgs::Float32MultiArra
 
     datos[11] = global_position_x [0];
     datos[12] = global_position_y [0];
-    datos[13] = car_global_pose.angular.z;
+    datos[13] = global_orientation [0];
 
     datos[14] = pos_predict.x;
     datos[15] = pos_predict.y; // direccion
@@ -798,6 +902,9 @@ float* clane_states::datos_para_debug(int* num_datos, std_msgs::Float32MultiArra
     datos[24] = delta_odom.y;
     datos[25] = delta_odom.theta;
 
+    datos[26] = delta_t;
+    datos[27] = cte(global_position_x [0], global_position_y [0]);
+
     return datos;
 }
 
@@ -805,7 +912,7 @@ float* clane_states::datos_para_debug(int* num_datos, std_msgs::Float32MultiArra
 int main(int argc, char** argv){
 
     ros::init(argc, argv, "lane_states_node");
-    ROS_INFO_STREAM("lane_states_node initialized");
+    // ROS_INFO_STREAM("lane_states_node initialized");
     ros::NodeHandle nh;
     ros::Rate loop_rate(RATE_HZ);
 

@@ -14,11 +14,12 @@ const int RATE_HZ = 30;
 // const int STATE_WIDTH_PIX = 13; // sim gary
 // const int STATE_WIDTH_PIX = 22; // sim automodel
 
+int num_execution = 0;
+
 image_transport::CameraPublisher image_publisher_dbscan;
 image_transport::CameraPublisher image_publisher;
 image_transport::CameraPublisher image_publisher_ransac;
 image_transport::CameraPublisher image_publisher_lane_markings;
-
 image_transport::CameraPublisher image_publisher_scan;
 
 double f_u;
@@ -121,6 +122,8 @@ cLaneDetectionFu::cLaneDetectionFu(ros::NodeHandle nh)
     priv_nh_.param<int>(node_name+"/dbscan_epsilon", dbscan_epsilon, 25);
     priv_nh_.param<int>(node_name+"/dbscan_min_points", dbscan_min_points, 5);
     priv_nh_.param<int>(node_name+"/car_center", car_center, 80);
+
+    priv_nh_.param<int>(node_name+"/num_execution", num_execution, 0);
 
     ipMapper = IPMapper(cam_w, cam_h_half, f_u, f_v, c_u, c_v, cam_deg, cam_height);
     
@@ -231,6 +234,8 @@ cLaneDetectionFu::cLaneDetectionFu(ros::NodeHandle nh)
     //the outer vector represents rows on image, inner vector is vector of line segments of one row, usualy just one line segment
     //we should generate this only once in the beginning! or even just have it pregenerated for our cam
     scanlines = getScanlines();
+
+    printf("\n num_execution, num_points, num_clusters, L, L_angle, C, C_angle, R, R_angle ");
 }
 
 cLaneDetectionFu::~cLaneDetectionFu()
@@ -359,7 +364,7 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
         num_clusters = dbscan::dbscan(points, num_points, epsilon, minpts, dbscan::euclidean_dist_vert); // euclidean_dist
     }
     catch(...) {
-        printf("\n Excepcion dbscan");
+        // printf("\n Excepcion dbscan");
     }
 
     //---------------------- DEBUG OUTPUT LANE MARKINGS ---------------------------------//
@@ -408,8 +413,8 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
 
     int detected_polys;
     try {
-        printf("\n Num points: %d", num_points);
-        printf("\n Num clusters: %d", num_clusters);
+        // printf("\n Num points: %d", num_points);
+        // printf("\n Num clusters: %d", num_clusters);
 
         
 
@@ -454,44 +459,17 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
 
         array_horizontal.cell_width = (int) laneMarkingsHorizontal.size() ;
         array_horizontal.cell_height = 1;
-        
 
-        if( laneMarkingsLeft.size() > 0 ) {
 
-            // cv::Point pt_next = cv::Point(arr_right.cells[next_move_y].x, -arr_right.cells[next_move_y].y);
-            // cv::Point pt_next_2 = cv::Point(arr_right.cells[next_move2_y < R ? next_move2_y : R].x, -arr_right.cells[next_move2_y < R ? next_move2_y : R].y);
-            double angle = atan2(laneMarkingsLeft[laneMarkingsLeft.size() - 1].getY() - laneMarkingsLeft[0].getY(), laneMarkingsLeft[laneMarkingsLeft.size() - 1].getX() - laneMarkingsLeft[0].getX());
 
-            printf("\n 1. angulo %.2f, L: %d", angle, laneMarkingsLeft.size());
-
-        }
-
-        if( laneMarkingsCenter.size() > 0 ) {
-
-            // cv::Point pt_next = cv::Point(arr_right.cells[next_move_y].x, -arr_right.cells[next_move_y].y);
-            // cv::Point pt_next_2 = cv::Point(arr_right.cells[next_move2_y < R ? next_move2_y : R].x, -arr_right.cells[next_move2_y < R ? next_move2_y : R].y);
-            double angle = atan2(laneMarkingsCenter[laneMarkingsCenter.size() - 1].getY() - laneMarkingsCenter[0].getY(), laneMarkingsCenter[laneMarkingsCenter.size() - 1].getX() - laneMarkingsCenter[0].getX());
-
-            printf("\n 2. angulo %.2f, C: %d", angle, laneMarkingsCenter.size());
-
-        }
-
-        if( laneMarkingsRight.size() > 0 ) {
-
-            // cv::Point pt_next = cv::Point(arr_right.cells[next_move_y].x, -arr_right.cells[next_move_y].y);
-            // cv::Point pt_next_2 = cv::Point(arr_right.cells[next_move2_y < R ? next_move2_y : R].x, -arr_right.cells[next_move2_y < R ? next_move2_y : R].y);
-            double angle = atan2(laneMarkingsRight[laneMarkingsRight.size() - 1].getY() - laneMarkingsRight[0].getY(), laneMarkingsRight[laneMarkingsRight.size() - 1].getX() - laneMarkingsRight[0].getX());
-
-            printf("\n 3. angulo %.2f, R: %d", angle, laneMarkingsRight.size());
-
-        }
-
+        printf("\n %d, %d, %d, %d, %.2f, %d, %.2f, %d, %.2f ", num_execution, num_points, num_clusters, \
+               laneMarkingsLeft.size(), laneMarkingsLeft.size() > 0 ? atan2(laneMarkingsLeft[laneMarkingsLeft.size() - 1].getY() - laneMarkingsLeft[0].getY(), laneMarkingsLeft[laneMarkingsLeft.size() - 1].getX() - laneMarkingsLeft[0].getX()) : 0, \
+               laneMarkingsCenter.size(), laneMarkingsCenter.size() > 0 ? atan2(laneMarkingsCenter[laneMarkingsCenter.size() - 1].getY() - laneMarkingsCenter[0].getY(), laneMarkingsCenter[laneMarkingsCenter.size() - 1].getX() - laneMarkingsCenter[0].getX()) : 0, \
+               laneMarkingsRight.size(), laneMarkingsRight.size() > 0 ? atan2(laneMarkingsRight[laneMarkingsRight.size() - 1].getY() - laneMarkingsRight[0].getY(), laneMarkingsRight[laneMarkingsRight.size() - 1].getX() - laneMarkingsRight[0].getX()) : 0 \
+        );
 
         for(int i = 0; i < (int) laneMarkingsLeft.size(); i++)
         {         
-
-
-
             FuPoint<int> marking = laneMarkingsLeft[i];
             cv::Point markingLoc = cv::Point(marking.getX(), marking.getY());
             cv::circle(transformedImagePaintable,markingLoc, 1, cv::Scalar(0,0,139), -1);
@@ -543,9 +521,6 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
             array_horizontal.cells.push_back(pt);      
         }
         */
-
-
-
         
         //ROI
         cv::Point2d p1(proj_image_w_half-(roi_bottom_w/2), maxYRoi-1);
@@ -724,7 +699,7 @@ void cLaneDetectionFu::ProcessInput(const sensor_msgs::Image::ConstPtr& msg)
         // cv::Mat transformedImageOrientation = transformedImage.clone();
         // tamaño de grid en pixeles para obtener orientacion del carro con respecto a polilineas
         
-        printf("\n Detected polys %d", detected_polys);
+        // printf("\n Detected polys %d", detected_polys);
 
         // if (detected_polys > 0) {
             /*

@@ -8,6 +8,7 @@ find_package(catkin REQUIRED
 	roscpp 
 	std_msgs
 	cv_bridge
+	sensor_msgs
 ) # gazebo_msgs )
 
 find_package(OpenCV REQUIRED)
@@ -27,12 +28,12 @@ include_directories(include
 #	${GAZEBO_INCLUDE_DIRS}
 )
 
-add_library(local_planner   
-  ../fu_line_detection/src/tools/NewtonPolynomial.cpp
-)
+#add_library(local_planner   
+#  ../fu_line_detection/src/tools/NewtonPolynomial.cpp
+#)
 
 # link_directories(${GAZEBO_LIBRARY_DIRS})
 
 add_executable(local_planner_node local_planner.cpp)
 
-target_link_libraries(local_planner_node ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} local_planner) #${GAZEBO_LIBRARIES} local_planner )
+target_link_libraries(local_planner_node ${catkin_LIBRARIES} ${OpenCV_LIBRARIES}) # local_planner) #${GAZEBO_LIBRARIES} local_planner )
