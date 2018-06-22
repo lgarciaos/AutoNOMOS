@@ -591,6 +591,7 @@ void local_planner::ackerman_control(cv::Mat& imagePaint) {
 
             double x = ptCar.x;
             double y = image_height - ptCar.y;
+            // cambio de signo en controlador original por carro
             double d = (a * x + b * y + c) / sqrt(pow(a, 2) + pow(b, 2));
             double theta_star = -(PI/2 + atan2 (-a, b));
 

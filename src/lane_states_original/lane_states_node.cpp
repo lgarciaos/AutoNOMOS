@@ -327,7 +327,7 @@ int clane_states::det_hit (int position, int lanes_detected, bool ll, bool cc, b
                 hit = (ll || cc || rr ) && ((lanes_detected == 1 && rr) ||
                                             (lanes_detected == 3 && cc) ||
                                             (lanes_detected == 7 && ll));
-
+		/*
                 if (hit) {
                     double state_center = (state * STATE_WIDTH + (state+1) * STATE_WIDTH) / 2;
                     // el supuesto es que solo ve una linea: right or center
@@ -337,7 +337,7 @@ int clane_states::det_hit (int position, int lanes_detected, bool ll, bool cc, b
                     if ((position < state_center - dist_car_in_state - RADIO / 2 || position >  state_center - dist_car_in_state + RADIO / 2) && (position < state_center + dist_car_in_state - RADIO / 2 || position >  state_center + dist_car_in_state + RADIO / 2))
                         hit = !hit;
                 }
-
+		*/
                 break;
 
                 // FALTA APROVECHAR INFORMACION DE SENSADO
@@ -355,6 +355,7 @@ int clane_states::det_hit (int position, int lanes_detected, bool ll, bool cc, b
                                              (C > 0 && lanes_detected == 3 && car_center > arr_center.cells[0].x && car_center < arr_right.cells[0].x) ||
                                              (C > 0 && lanes_detected == 7 && car_center > arr_left.cells[0].x && car_center < arr_center.cells[0].x));
 
+		/*
                  if (lanes_detected > 1) {
                      if (hit) {
                         double min_coord = state * STATE_WIDTH;
@@ -395,7 +396,7 @@ int clane_states::det_hit (int position, int lanes_detected, bool ll, bool cc, b
                                 hit = !hit;
                     }
                 }
-
+		*/
 
                 break;
         case 3: //CC
@@ -405,7 +406,7 @@ int clane_states::det_hit (int position, int lanes_detected, bool ll, bool cc, b
                 // 3L carro sobre C
                 hit = ( cc || rr ) && ((lanes_detected == 3) ||
                                        (lanes_detected == 7 && cc));
-
+		/*
                 if (hit) {
                     double state_center = (state*STATE_WIDTH + (state+1)*STATE_WIDTH) / 2;
                     // el supuesto es que solo ve una linea: right or center
@@ -417,7 +418,7 @@ int clane_states::det_hit (int position, int lanes_detected, bool ll, bool cc, b
                         position >  state_center + dist_car_in_state + RADIO / 2))
                                 hit = !hit;
                 }
-
+		*/
                 break;
         case 4: // RC
                 // posibles combinaciones:
@@ -429,7 +430,7 @@ int clane_states::det_hit (int position, int lanes_detected, bool ll, bool cc, b
                             ((R > 0 && car_center < arr_right.cells[0].x && lanes_detected == 1) ||
                             (C > 0 && car_center > arr_right.cells[0].x && lanes_detected == 3) ||
                             (C > 0 && car_center > arr_center.cells[0].x && car_center < arr_right.cells[0].x && (lanes_detected == 3 || lanes_detected == 7)));
-
+		/*
                 if (lanes_detected > 1) {
                     if (hit) {
                         double min_coord = state * STATE_WIDTH;
@@ -462,7 +463,7 @@ int clane_states::det_hit (int position, int lanes_detected, bool ll, bool cc, b
                                 hit = !hit;
                     }
                 }
-
+		*/
                 break;
         case 5: //RR
                 // posibles combinaciones:
@@ -473,7 +474,7 @@ int clane_states::det_hit (int position, int lanes_detected, bool ll, bool cc, b
 
                 hit = rr &&
                         (lanes_detected == 1 || lanes_detected == 3 || lanes_detected == 7);
-
+		/*
                 if (hit) {
                     if (hit) {
                         double state_center = (state * STATE_WIDTH + (state + 1) * STATE_WIDTH) / 2;
@@ -484,7 +485,7 @@ int clane_states::det_hit (int position, int lanes_detected, bool ll, bool cc, b
                         hit = !hit;
                     }
                 }
-
+		*/
                 break;
         case 6: //OR
                 // posibles combinaciones:
@@ -575,10 +576,10 @@ std_msgs::Float32MultiArray clane_states::sense(std_msgs::Float32MultiArray p, f
 std_msgs::Float32MultiArray clane_states::move(std_msgs::Float32MultiArray prob, double delta_pos_y, int *U) {
 
     // movement
-    float p_exact = 0.9;
-    float p_undershoot = 0.05;
+    float p_exact = 0.7;
+    float p_undershoot = 0.1;
     float p_undershoot_2 = 0.05;
-    float p_overshoot = 0.05;
+    float p_overshoot = 0.1;
     float p_overshoot_2 = 0.05;
 
     // tamaño de celda en pixeles: 0.006879221 revisar por actualización de camino
@@ -613,12 +614,10 @@ std_msgs::Float32MultiArray clane_states::move(std_msgs::Float32MultiArray prob,
         s += p_undershoot * prob.data[mod2];
 
         // UNDERSHOOT 2
-        /*
-        mov = i + U - 2;
+        mov = i + *U - 2;
         mod2 = (mov) % (NUM_STATES*STATE_WIDTH);
         if (mod2<0) mod2 = NUM_STATES*STATE_WIDTH+mod2;
         s += p_undershoot_2 * prob.data[mod2];
-        */
 
         //HISTOGRAMA CICLICLO
         //OVERSHOOT
@@ -628,12 +627,10 @@ std_msgs::Float32MultiArray clane_states::move(std_msgs::Float32MultiArray prob,
         s += p_overshoot * prob.data[mod2];
 
         //OVERSHOOT 2
-        /*
-        mov = i + U + 1;
+        mov = i + *U + 2;
         mod2 = (mov) % (NUM_STATES*STATE_WIDTH);
         if (mod2<0) mod2 = NUM_STATES*STATE_WIDTH+mod2;
         s += p_overshoot_2 * prob.data[mod2];
-        */
 
         q.data.push_back(s);
     }
@@ -986,7 +983,7 @@ int main(int argc, char** argv){
 
 #ifdef PAINT_OUTPUT
         node.write_to_image(node.img_hist, z_t, belief, belief_hat, STATE_WIDTH * NUM_STATES, borrarSenseImagen, &inc_color);
-        borrarSenseImagen = ++borrarSenseImagen % STATE_WIDTH;
+        // borrarSenseImagen = ++borrarSenseImagen % STATE_WIDTH; // borrar cada cierto numero de iteraciones
 //	 cv::imshow("Localization results", img_hist);
 //       cv::waitKey(1);
         imgmsg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", node.img_hist).toImageMsg();
