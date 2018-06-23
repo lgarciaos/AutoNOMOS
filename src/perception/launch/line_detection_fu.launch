@@ -1,7 +1,7 @@
 <launch>
 
   <!-- <node name="line_detection_fu_node" pkg="vision" type="line_detection_fu_node" output="screen" >  -->
-  <node name="line_detection_fu_node" pkg="vision" type="line_detection_fu_node" > 
+  <node name="line_detection_fu_node" pkg="perception" type="line_detection_fu_node" > 
 
     <param name="cam_w"                         type="int"    value="640"/>  
     <param name="cam_h"                         type="int"    value="480"/> <!--we will use only bottom half of this...-->  

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(vision)
+project(perception)
  
 add_compile_options(-std=c++11)
 ## Find catkin macros and libraries
@@ -12,6 +12,7 @@ find_package(
   roscpp 
   std_msgs 
   sensor_msgs 
+  nav_msgs
   cv_bridge 
   # pcl_ros
   camera_info_manager 
@@ -57,6 +58,7 @@ find_package(
 # find_package(catkin REQUIRED dynamic_reconfigure)
 generate_dynamic_reconfigure_options(
   cfg/LaneDetection.cfg
+  cfg/laser_processing.cfg
   #...
 )
 
@@ -96,9 +98,9 @@ include_directories(
 
 ## Declare a cpp library
 add_library(LaneDetectorFu   
-  src/tools/NewtonPolynomial.cpp
-  src/tools/LanePolynomial.cpp
-  src/tools/IPMapper.cpp
+  include/tools/NewtonPolynomial.cpp
+  include/tools/LanePolynomial.cpp
+  include/tools/IPMapper.cpp
 #    #src/LaneDetector.cpp
 #    #src/StrongClassifier.cpp
 #    #src/WeakClassifier.cpp
@@ -112,6 +114,7 @@ add_library(LaneDetectorFu
 
 ## Declare a cpp executable
 add_executable(line_detection_fu_node src/laneDetection.cpp)
+add_executable(laser_processing_node src/laser_processing.cpp)
 #add_executable(object_segmentation_node src/obj_segment/get_obj_clusters.cpp)
 
 ## Add cmake target dependencies of the executable/library
@@ -123,6 +126,11 @@ target_link_libraries(line_detection_fu_node
   ${catkin_LIBRARIES} 
   ${OpenCV_LIBRARIES} 
   LaneDetectorFu
+) 
+
+target_link_libraries(laser_processing_node 
+  ${catkin_LIBRARIES} 
+  ${OpenCV_LIBRARIES} 
 ) 
 #target_link_libraries(object_segmentation_node ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 

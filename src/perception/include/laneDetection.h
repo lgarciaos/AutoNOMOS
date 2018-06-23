@@ -61,7 +61,7 @@ THIS SOFTWARE IS PROVIDED BY AUDI AG AND CONTRIBUTORS “AS IS” AND ANY EXPRESS OR
 #include "tools/MergeSort.h"
 
 #include <dynamic_reconfigure/server.h>
-#include <vision/LaneDetectionConfig.h>
+#include <perception/LaneDetectionConfig.h>
 
 
 #include "nav_msgs/GridCells.h"
