@@ -64,6 +64,8 @@ class laser_processing
 
     	void config_callback(perception::laser_processingConfig &config, uint32_t level);
 
+    	void process();
+
 };
 
 #endif 

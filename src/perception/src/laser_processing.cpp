@@ -3,7 +3,7 @@
 #define RATE_HZ 5
 using namespace std;
 
-
+int num = 0;
 
 laser_processing::laser_processing(ros::NodeHandle nh)
     : nh_(nh), priv_nh_("~")
@@ -63,12 +63,21 @@ void laser_processing::fill_occupancyGrid()
 	// {
 	// 	/* code */
 	// }
+	num++;
+	num %= 100;
+	laser_grid.data[1170] = num;
+	ROS_INFO_STREAM("the num is: " << num);
 
 }
 
 void laser_processing::publish_topics()
 {	
 	pub_ocupancy_grid.publish(laser_grid);
+}
+
+void laser_processing::process()
+{	
+	fill_occupancyGrid();
 }
 
 void laser_processing::config_callback(perception::laser_processingConfig &config, uint32_t level)
@@ -98,8 +107,9 @@ int main(int argc, char **argv)
     while(ros::ok())
     {
         ros::spinOnce();
-        loop_rate.sleep();
+        node.process();
         node.publish_topics();
+        loop_rate.sleep();
         // //ROS_INFO_STREAM("At while");
     }
     return 0;
