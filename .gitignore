@@ -10,3 +10,5 @@ devel/
 histogramfilter_*.txt
 *.out
 .ipynb_checkpoints/
+.DS_Store
+
