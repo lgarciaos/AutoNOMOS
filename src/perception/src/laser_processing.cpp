@@ -17,6 +17,7 @@ laser_processing::laser_processing(ros::NodeHandle nh)
     priv_nh_.param<float>(node_name+"/laser_range_min", laser_range_min, .008);
     priv_nh_.param<float>(node_name+"/laser_range_max", laser_range_max, 6);
     priv_nh_.param<float>(node_name+"/cell_resolution", cell_resolution, 0.25);
+    priv_nh_.param<int>(node_name+"/angle_offset", angle_offset, 0);
 
     // priv_nh_.param<int>(node_name+"/grid_width",   grid_width, (int) 2 * laser_range_max / cell_resolution);
     // priv_nh_.param<int>(node_name+"/grid_height", grid_height, (int) 2 * laser_range_max / cell_resolution);
@@ -53,7 +54,14 @@ void laser_processing::callback_laser_scan(const sensor_msgs::LaserScan& msg)
 {
 	// laser_ranges = msg.ranges;
 	// double arr[100];
+	// int i = 0;
+	// for(auto &e:msg.ranges)
+	// {
+	// 	ROS_INFO_STREAM("callback: msg.data[" << i << "] = " << e);
+	// 	i++;
+	// }
 	copy(msg.ranges.begin(), msg.ranges.end(), laser_ranges);
+
 }
 
 void laser_processing::fill_occupancyGrid()
@@ -63,10 +71,31 @@ void laser_processing::fill_occupancyGrid()
 	// {
 	// 	/* code */
 	// }
-	num++;
-	num %= 100;
-	laser_grid.data[1170] = num;
-	ROS_INFO_STREAM("the num is: " << num);
+	float x, y, h;
+	int x_grid, y_grid;
+	for (int i = 0; i < 360; ++i)
+	{
+		h = laser_ranges[i];
+		if (h <= laser_range_max && h > 2 * cell_resolution) // the value is in range 
+		{
+			ROS_INFO_STREAM("laser_ranges["<< i << "] = " << h);
+			
+			x = h * cos( (i + angle_offset) * M_PI / 180);
+			y = h * sin( (i + angle_offset) * M_PI / 180);
+
+			ROS_INFO_STREAM("point: ( " << x << ", " << y << " )");
+			
+			x_grid = (int) (x * grid_width / laser_range_max / 2 + grid_width / 2);
+			y_grid = (int) (y * grid_height / laser_range_max / 2 + grid_height / 2);
+
+			ROS_INFO_STREAM("point: ( " << x_grid << ", " << y_grid << " )");
+
+
+			// int prob = laser_grid.data[x_grid + y_grid * grid_width];
+			// laser_grid.data[x_grid + y_grid * grid_width] = prob == 100 ? 100 : prob++ ;
+			laser_grid.data[x_grid + y_grid * grid_width] = 99;
+		}
+	}
 
 }
 
@@ -82,6 +111,8 @@ void laser_processing::process()
 
 void laser_processing::config_callback(perception::laser_processingConfig &config, uint32_t level)
 {
+	ROS_INFO_STREAM("Reconfigure Request");
+	angle_offset = config.angle_offset;
 
 }
 

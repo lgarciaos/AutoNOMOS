@@ -48,6 +48,7 @@ class laser_processing
 
 		int central_grid_cell;
 
+		int angle_offset;
 		
 
 		void callback_laser_scan(const sensor_msgs::LaserScan& msg);
