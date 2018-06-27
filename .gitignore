@@ -9,6 +9,7 @@ devel/
 .catkin_workspace
 histogramfilter_*.txt
 *.out
+*.log
 .ipynb_checkpoints/
 .DS_Store
 

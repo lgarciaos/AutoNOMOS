@@ -4,13 +4,13 @@
 
 function lanzar_gazebo {
 
-	source /home/emartinene/git/EK_AutoNOMOS_Sim/devel/setup.bash
+	source /home/neri/git/EK_AutoNOMOS_Sim/devel/setup.bash
 	nohup roslaunch autonomos_gazebo_simulation empty_curved_road.launch 2>&1 &
 
 	# save pid 
 	pid_gazebo=$!
 
-	source /home/emartinene/git/AutoNOMOS/devel/setup.bash
+	source /home/neri/git/AutoNOMOS/devel/setup.bash
 	nohup rosrun gazebo_ros spawn_model -database AutoNOMOS_mini -sdf -model AutoNOMOS_mini -x .75 -y 0.0 -z 0.019 -R 0 -P 0 -Y 1.5707 2>&1 &
 
     # echo $pid_gazebo
@@ -28,7 +28,7 @@ function recorrer_circuito {
 	declare -a array_ks=("${!3}")
 	# local __resultcte=$4
 
-	# echo "recorrer: " $counter $vel ${array_ks[@]} 
+	echo "recorrer: " $counter $vel ${array_ks[@]} 
 
 	nohup rosrun line_detection_fu_mod line_detection_fu_node \
 		_cam_w:=640 \
@@ -79,14 +79,15 @@ function recorrer_circuito {
 	    _state_width_pixels:=16 \
 	    _pix_width_mts:=0.00071 \
 	    _model_num_gazebo:=1 \
-	    _num_execution:=$counter > lane_states_$vel_${array_ks[0]}${array_ks[1]}${array_ks[2]}.log 2>&1 &
+	    _num_execution:=$counter > lane_states_linea_${vel}_${array_ks[0]}${array_ks[1]}${array_ks[2]}.log 2>&1 &
 
 	nohup rosrun local_planner local_planner_node \
+	    _controlador:=linea \
 	    _Kp:=${array_ks[0]} \
 	    _Ki:=${array_ks[1]} \
 	    _Kd:=${array_ks[2]} \
-	    _Kdist:=0.1 \
-	    _Kh:=1.0 \
+	    _Kdist:=2.816 \
+	    _Kh:=0.729 \
 	    _car_center:=80 \
 	    _car_speed:=$vel \
 	    _min_steering:=-0.41 \
@@ -106,7 +107,7 @@ function recorrer_circuito {
 	    _seleccion_real_simulacion:=gary \
 	    _offset_angle:=90 2>&1 &
 
-	sleep 90s #
+	sleep 120s #
 
 	pid_nodes=$(ps -o user,pid,ppid,command -ax | grep 'line_detection_fu_node\|lane_states_node\|local_planner_node\|translate_sim_real_node' | awk '{print $2}')
 
@@ -126,7 +127,7 @@ function recorrer_circuito {
 	sleep 15s #
 
 	# compute cte
-	# local cte_l=$(tail -n +2 lane_states_$vel_${array_ks[0]}${array_ks[1]}${array_ks[2]}.log | awk '{s+=$169} END {print s}')
+	# local cte_l=$(tail -n +2 lane_states_linea_${vel}_${array_ks[0]}${array_ks[1]}${array_ks[2]}.log | awk '{s+=$169} END {print s}')
 
     # echo $cte_l
 }
@@ -148,12 +149,12 @@ function sumar {
 # def twiddle(tol=0.2): 
 
 tol=0.02
-p=( 0.0 0.0 0.0 )
-dp=( 1.0 1.0 1.0 )
+p=( 0.0000 0.0000 )
+dp=( 1.0000 1.0000 )
 suma_dp=0
 best_err=1000.0
 err=0.0
-speed=-150
+speed=-180
 COUNTER=$(expr $COUNTER + 1)
 
 lanzar_gazebo
@@ -165,8 +166,8 @@ while [ $(echo "$suma_dp > $tol" | bc) -eq 1 ]; do
 
     for index in ${!p[@]}; do
         p[index]=$(echo "${p[index]} + ${dp[index]}" | bc)
-		recorrer_circuito $COUNTER $speed p[@]
-		err=$(tail -n +2 lane_states_$speed_${p[0]}${p[1]}${p[2]}.log | awk '{++n;sum+=($169^2)} END {print sum/n}')
+	recorrer_circuito $COUNTER $speed p[@]
+	err=$(tail -n +2 lane_states_linea_${speed}_${p[0]}${p[1]}${p[2]}.log | awk '{++n;sum+=($169^2)} END {print sum/n}')
 
         #if [$err -le $best_err]; then
         if [ $(echo "$err < $best_err" | bc) -eq 1 ]; then
@@ -175,7 +176,7 @@ while [ $(echo "$suma_dp > $tol" | bc) -eq 1 ]; do
         else
             p[index]=$(echo "${p[index]} - 2 * ${dp[index]}" | bc)
             recorrer_circuito $COUNTER $speed p[@]
-            err=$(tail -n +2 lane_states_$speed_${p[0]}${p[1]}${p[2]}.log | awk '{++n;sum+=($169^2)} END {print sum/n}')
+            err=$(tail -n +2 lane_states_linea_${speed}_${p[0]}${p[1]}${p[2]}.log | awk '{++n;sum+=($169^2)} END {print sum/n}')
 
             if [ $(echo "$err < $best_err" | bc) -eq 1 ]; then
                 best_err=$err
