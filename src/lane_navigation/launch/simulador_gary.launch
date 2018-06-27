@@ -91,16 +91,16 @@ era 1
 
     <node name="local_planner_node" pkg="local_planner" type="local_planner_node"  >
 
-        <param name="Kp"                type="double"   value="2.0"/>
-        <param name="Ki"                type="double"   value="0.3"/>
-        <param name="Kd"                type="double"   value="-1.0" />
+        <param name="Kp"                type="double"   value="0.7347"/>
+        <param name="Ki"                type="double"   value="0.001"/>
+        <param name="Kd"                type="double"   value="0.0" />
 
         <param name="controlador"  type="string" value="punto" />
         <param name="Kdist"                type="double"   value="0.2"/>
         <param name="Kh"                type="double"   value="1.0" />
 
         <param name="car_center"        type="int"      value="80" />
-        <param name="car_speed" 	type="int" 	value="-200" />
+        <param name="car_speed" 	type="int" 	value="-160" />
 
         <param name="min_steering"      type="double" value="-0.41" />
         <param name="max_steering"      type="double" value="0.41" />
