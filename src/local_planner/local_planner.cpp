@@ -333,6 +333,46 @@ bool local_planner::ackerman_control_next_points(double y_next_dist, cv::Point& 
             */
             // points
 
+
+            // points
+            if (C > 0) {
+                if (car_center < arr_center.cells[next_move_y].x) {
+                    cv::Point pt_next = cv::Point(arr_center.cells[next_move_y].x, -arr_center.cells[next_move_y].y);
+                    cv::Point pt_next_2 = cv::Point(arr_center.cells[next_move2_y < R ? next_move2_y : R].x, -arr_center.cells[next_move2_y < R ? next_move2_y : R].y);
+                    angle = atan2(pt_next_2.y - pt_next.y, pt_next_2.x - pt_next.x);
+                    hip = state_width_pix / sin(angle); // co = ca * tan (theta)
+
+                    // printf("\n 4.1. angulo %.2f, co: %.2f, R: %d", angle, hip, R);
+
+                    y_next_pt = cv::Point(arr_center.cells[next_move_y].x - hip, arr_center.cells[next_move_y].y);
+                    y_next_pt2 = cv::Point(arr_center.cells[next_move2_y < R ? next_move2_y : R].x - hip, arr_center.cells[next_move2_y < R ? next_move2_y : R].y);
+
+                } else {
+                    // ransac
+                    // y_next_pt = cv::Point((polyCenter.at(next_move_y) + polyRight.at(next_move_y))/2, next_move_y);
+                    // y_next_pt2 = cv::Point((polyCenter.at(next_move2_y) + polyRight.at(next_move2_y))/2, next_move2_y);
+                    // points
+                    y_next_pt = cv::Point((arr_center.cells[next_move_y].x + arr_right.cells[next_move_y].x)/2, (arr_center.cells[next_move_y].y + arr_right.cells[next_move_y].y)/2);
+                    y_next_pt2 = cv::Point((arr_center.cells[next_move2_y < C ? next_move2_y : C].x + arr_right.cells[next_move2_y < R ? next_move2_y : R].x)/2, (arr_center.cells[next_move2_y < C ? next_move2_y : C].y + arr_right.cells[next_move2_y < R ? next_move2_y : R].y)/2);
+                }
+            } else if (R > 0  && car_center < arr_right.cells[0].x) {
+
+                cv::Point pt_next = cv::Point(arr_right.cells[next_move_y].x, -arr_right.cells[next_move_y].y);
+                cv::Point pt_next_2 = cv::Point(arr_right.cells[next_move2_y < R ? next_move2_y : R].x, -arr_right.cells[next_move2_y < R ? next_move2_y : R].y);
+                angle = atan2(pt_next_2.y - pt_next.y, pt_next_2.x - pt_next.x);
+                hip = state_width_pix / sin(angle); // co = ca * tan (theta)
+
+                // printf("\n 4.2. angulo %.2f, co: %.2f, R: %d", angle, hip, R);
+
+                y_next_pt = cv::Point(arr_right.cells[next_move_y].x - hip, arr_right.cells[next_move_y].y);
+                y_next_pt2 = cv::Point(arr_right.cells[next_move2_y < R ? next_move2_y : R].x - hip, arr_right.cells[next_move2_y < R ? next_move2_y : R].y);
+
+            } else {
+                return false;
+            }
+
+
+            /*
             if (C > 0) {
                 if (L > 0 && pt_car.x < arr_center.cells[next_move_y].x) {
                     y_next_pt = cv::Point((arr_center.cells[next_move_y].x + arr_left.cells[next_move_y].x)/2, (arr_center.cells[next_move_y].y + arr_left.cells[next_move_y].y)/2);
@@ -350,19 +390,13 @@ bool local_planner::ackerman_control_next_points(double y_next_dist, cv::Point& 
                 cv::Point pt_next_2 = cv::Point(arr_right.cells[next_move2_y < R ? next_move2_y : R].x, -arr_right.cells[next_move2_y < R ? next_move2_y : R].y);
                 angle = atan2(pt_next_2.y - pt_next.y, pt_next_2.x - pt_next.x);
                 hip = state_width_pix / sin(angle); // co = ca * tan (theta)
-
-                // printf("\n 2.1. angulo %.2f, co: %.2f, R: %d", angle, hip, R);
-
-                // ransac
-                // y_next_pt = cv::Point(polyRight.at(next_move_y) - hip, next_move_y);
-                // y_next_pt2 = cv::Point(polyRight.at(next_move2_y) - hip, next_move2_y);
-                // points
                 y_next_pt = cv::Point(arr_right.cells[next_move_y].x + hip, arr_right.cells[next_move_y].y);
                 y_next_pt2 = cv::Point(arr_right.cells[next_move2_y < R ? next_move2_y : R].x + hip, arr_right.cells[next_move2_y < R ? next_move2_y : R].y);
 
             } else {
                 return false;
             }
+            */
             break;
         case 3: // CC
             // ransac
