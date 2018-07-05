@@ -1,0 +1,27 @@
+<launch>
+
+    <!-- <node name="lane_states_node" pkg="navigation" type="lane_states_node" output="screen" >  -->
+    <!-- <node name="lane_states_node" pkg="navigation" type="lane_states_node" >  -->
+    <!-- </node>  -->
+
+    <include file="$(find gazebo_ros)/launch/empty_world.launch">
+        <arg name="paused" value="false"/>
+        <arg name="use_sim_time" value="true"/>
+        <arg name="gui" value="true"/>
+        <arg name="debug" value="false"/>
+        <arg name="world_name" value="autoNOMOS_parking_lot.world"/>
+    <!-- more default parameters can be changed here -->
+    </include>
+
+    <!-- <include file="$(find perception)/launch/line_detection_fu.launch"/> -->
+
+  <!-- <node name="laser_processing_node" pkg="perception" type="laser_processing_node" >  -->
+
+    <!-- <param name="laser_range_min"               type="double"    value="0.008"/>   -->
+    <!-- <param name="laser_range_max"               type="double"    value="6"/> -->
+    <!-- <param name="cell_resolution"               type="double"    value="0.25"/> -->
+
+  <!-- </node> -->
+
+
+</launch>
