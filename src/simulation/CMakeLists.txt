@@ -2,13 +2,26 @@ cmake_minimum_required(VERSION 2.8.3)
 project(simulation)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-# add_compile_options(-std=c++11)
+add_compile_options(-std=c++11)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED)
-
+# find_package(catkin REQUIRED)
+find_package(
+  catkin REQUIRED COMPONENTS
+  roscpp
+  std_msgs
+  sensor_msgs
+	gazebo_msgs
+  # nav_msgs
+  # cv_bridge
+  # pcl_ros
+  # camera_info_manager
+  # image_transport
+  # message_generation
+  # dynamic_reconfigure
+)
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
@@ -112,8 +125,8 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-# include
-# ${catkin_INCLUDE_DIRS}
+include
+${catkin_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -130,6 +143,7 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME}_node src/simulation_node.cpp)
+add_executable(test_sim_tools_node src/test_sim_tools.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -142,9 +156,9 @@ include_directories(
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-# target_link_libraries(${PROJECT_NAME}_node
-#   ${catkin_LIBRARIES}
-# )
+target_link_libraries(test_sim_tools_node
+  ${catkin_LIBRARIES}
+)
 
 #############
 ## Install ##
