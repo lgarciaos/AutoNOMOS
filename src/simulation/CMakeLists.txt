@@ -14,6 +14,8 @@ find_package(
   std_msgs
   sensor_msgs
 	gazebo_msgs
+	# ignition-msgs1
+	# ignition-transport4
   # nav_msgs
   # cv_bridge
   # pcl_ros
@@ -22,6 +24,8 @@ find_package(
   # message_generation
   # dynamic_reconfigure
 )
+find_package(ignition-msgs1 REQUIRED)
+find_package(ignition-transport4 REQUIRED)
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
@@ -143,6 +147,10 @@ ${catkin_INCLUDE_DIRS}
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME}_node src/simulation_node.cpp)
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${IGNITION-TRANSPORT_CXX_FLAGS}")
+include_directories(${IGNITION-TRANSPORT_INCLUDE_DIRS})
+link_directories(${IGNITION-TRANSPORT_LIBRARY_DIRS})
+
 add_executable(test_sim_tools_node src/test_sim_tools.cpp)
 
 ## Rename C++ executable without prefix
@@ -157,7 +165,7 @@ add_executable(test_sim_tools_node src/test_sim_tools.cpp)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(test_sim_tools_node
-  ${catkin_LIBRARIES}
+  ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES} ${IGNITION-TRANSPORT_LIBRARIES}
 )
 
 #############
