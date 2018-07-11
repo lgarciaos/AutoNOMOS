@@ -19,9 +19,20 @@ void get_model_states(const gazebo_msgs::ModelStates& msg)
     // {
     //   ROS_INFO_STREAM("Pose: " << element);
     // }
+    delete_markers();
     std::vector<geometry_msgs::Point> points = generate_grid(.5, .5);
     std::vector<geometry_msgs::Point> points_w_obs = remove_obst_points(points);
-    paint_points(points_w_obs);
+    // paint_points(points_w_obs);
+    geometry_msgs::Point ini_p;
+    geometry_msgs::Point end_p;
+    ini_p.x = -10;
+    ini_p.y = -7.5;
+    end_p.x = -1;
+    end_p.y = 9;
+
+    // paint_point(ini_p, 1);
+    // paint_point(end_p, 2);
+    a_star(points_w_obs, ini_p, end_p);
 }
 
 int main(int argc, char **argv)
