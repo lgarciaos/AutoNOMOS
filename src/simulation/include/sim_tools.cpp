@@ -40,8 +40,8 @@ const int grid_init_y = -10;
 const int grid_end_y = 10;
 
 int markers_id = 0;
-std::string autonomos_static_regex("AutoNOMOS_mini_static_[[:digit:]]+");
-std::string lamp_post_regex("lamp_post_autonomos_[[:digit:]]+");
+std::string autonomos_static_regex("AutoNOMOS_mini_static[_]*\\d*");
+std::string lamp_post_regex("lamp_post_autonomos[_]*\\d*");
 std::vector<geometry_msgs::Pose> autonomos_pose;
 std::vector<geometry_msgs::Twist> autonomos_twist;
 std::vector<geometry_msgs::Pose> lamp_pose;
