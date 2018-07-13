@@ -1,5 +1,0 @@
-<launch>
-	<node pkg="parking_sensorless" type="parking_sensorless_node" name="parking_sensorless_node1" output="screen">
-
-	</node>
-</launch> 

@@ -1,6 +1,5 @@
 #include "boost/numeric/ublas/io.hpp"
 
-
 #include "NewtonPolynomial.h"
 
 NewtonPolynomial::NewtonPolynomial()

@@ -1,0 +1,104 @@
+<launch>
+    <!--
+    <node name="spawn_model" pkg="gazebo_ros" type="spawn_model"  
+      args="-database AutoNOMOS_mini -sdf -model AutoNOMOS_mini -x 0 -y 0 -z 0 -R 0 -P 0 -Y 0" />
+    -->
+
+    <node name="line_detection_fu_node" pkg="line_detection_fu_mod" type="line_detection_fu_node"  >
+
+      <param name="cam_w"                         type="int"    value="640"/>
+      <param name="cam_h"                         type="int"    value="480"/> <!--we will use only bottom half of this...-->
+      <param name="proj_y_start"                  type="int"    value="50"/>
+      <param name="proj_image_h"                  type="int"    value="160"/>
+      <param name="proj_image_w"                  type="int"    value="160"/>
+      <param name="proj_image_horizontal_offset"  type="int"    value="0"/>
+      <param name="roi_top_w"                     type="int"    value="160"/>   <!-- roi -->
+      <param name="roi_bottom_w"                  type="int"    value="50"/>    <!-- roi -->
+      <param name="maxYRoi"                       type="int"    value="159"/>   <!-- roi -->
+      <param name="minYDefaultRoi"                type="int"    value="110"/>
+      <param name="minYPolyRoi"                   type="int"    value="45"/>    <!-- roi -->
+      <param name="defaultXLeft"                  type="int"    value="38"/>
+      <param name="defaultXCenter"                type="int"    value="65"/>
+      <param name="defaultXRight"                 type="int"    value="93"/>
+      <param name="defaultYHorizontal"                 type="int"    value="100"/>
+
+      <param name="interestDistancePoly"          type="int"    value="5"/>
+      <param name="interestDistanceDefault"       type="int"    value="10"/>
+      <param name="iterationsRansac"              type="int"    value="50"/>    <!-- ransac no se utiliza -->
+      <param name="proportionThreshould"          type="double" value="0.85"/>  <!-- ransac no se utiliza -->
+      <param name="m_gradientThreshold"           type="int"    value="1"/>     <!-- scan 8 -->
+      <param name="m_nonMaxWidth"                 type="int"    value="4"/>    <!-- scan con 14 2-2 con 10 funciona camino gary -->
+      <param name="laneMarkingSquaredThreshold"   type="int"    value="144"/>   <!-- buildLaneMarkings -->
+
+      <param name="angleAdjacentLeg"              type="int"    value="18"/>
+      <param name="scanlinesVerticalDistance"     type="int"    value="2"/>
+      <param name="scanlinesMaxCount"             type="int"    value="200"/>
+      <param name="polyY1"                        type="int"    value="155"/>
+      <param name="polyY2"                        type="int"    value="145"/>
+      <param name="polyY3"                        type="int"    value="130"/>
+      <param name="detectLaneStartX"              type="int"    value="155"/> <!--this was originally 0.7m, which is about 90 in our case... used for gradient computation, might help us to get rid of too crazy polynomials-->
+      <param name="maxAngleDiff"                  type="int"    value="999"/>
+
+      <!-- <param name="camera_name"           type="string"   value="/camera_name_ir/camera_name/depth/image_raw"/>    -->
+      <param name="camera_name"         type="string"   value="app/camera/rgb/image_raw"/>
+      <param name="cam_deg"             type="double"   value="4"/>
+      <param name="cam_height"          type="double"   value="14"/>
+
+      <!-- jack 13 720p calibration: -->
+      <!--param name="f_u"              type="double"   value="927.054138"/>
+      <param name="f_v"                 type="double"   value="935.428772"/>
+      <param name="c_u"                 type="double"   value="654.456376"/>
+      <param name="c_v"                 type="double"   value="346.241851"/-->
+
+
+      <!-- jack 13 640*480 - cut to only bottom half (640*240) calibration: -->
+      <param name="f_u"                 type="double"   value="655.554626"/>
+      <param name="f_v"                 type="double"   value="652.052734"/>
+      <param name="c_u"                 type="double"   value="312.773367"/>
+      <param name="c_v"                 type="double"   value="7.779505"/>
+
+      <!-- vertical distance to group points -->
+      <param name="dbscan_epsilon"      type="int"      value="25" />
+      <param name="dbscan_min_points"   type="int"      value="5" />
+      <param name="car_center"        type="int" value="80" />
+
+    </node>
+
+
+    <node name="lane_states_node" pkg="lane_states_original" type="lane_states_node"  >
+
+        <param name="car_center"        type="int" value="80" />
+        <param name="image_height"      type="int" value="160" />
+        <param name="state_width_pixels"  type="int" value="16" />
+        <param name="model_num_gazebo"  type="int" value="1" />
+
+    </node>
+
+
+
+    <node name="local_planner_node" pkg="local_planner" type="local_planner_node" output="screen" >
+
+        <param name="Kp"                type="double"   value="1.0"/>
+        <param name="Ki"                type="double"   value="0.01"/>
+        <param name="Kd"                type="double"   value="0.0" />
+
+        <param name="Kdist"                type="double"   value="0.2"/>
+        <param name="Kh"                type="double"   value="1.0" />
+
+        <param name="car_center"        type="int"      value="80" />
+        <param name="car_speed" 	type="int" 	value="-100" />
+        <param name="min_steering"      type="double" value="-0.41" />
+        <param name="max_steering"      type="double" value="0.41" />
+
+        <param name="topico_estandarizado"           type="string"   value="/standarized_vel_ste" />
+        <param name="image_height"      type="int" value="160" />
+
+        <param name="estado_deseado"      type="int" value="4" />
+        <param name="state_width_pixels"  type="int" value="16" />
+
+        <param name="controlador"  type="string" value="linea" />
+    </node>
+    
+
+
+</launch>

@@ -34,9 +34,10 @@ THIS SOFTWARE IS PROVIDED BY AUDI AG AND CONTRIBUTORS “AS IS” AND ANY EXPRESS OR
 
 #include <ros/ros.h>
 #include <sensor_msgs/Image.h>
+
 #include <std_msgs/Float64.h>
 #include <std_msgs/Float32.h>
-#include <std_msgs/Float32MultiArray.h>
+
 #include <sensor_msgs/image_encodings.h>
 #include <cv_bridge/cv_bridge.h>
 #include <opencv2/imgproc/imgproc.hpp>
@@ -68,7 +69,7 @@ THIS SOFTWARE IS PROVIDED BY AUDI AG AND CONTRIBUTORS “AS IS” AND ANY EXPRESS OR
 #include "nav_msgs/GridCells.h"
 #include "std_msgs/Int32MultiArray.h"
 #include "geometry_msgs/Point.h"
-#include "geometry_msgs/Twist.h"
+// #include "geometry_msgs/Twist.h"
 // #include "msg/pts_array.msg"
 
 using namespace std;
@@ -84,13 +85,17 @@ class cLaneDetectionFu
         // Node handle in the private namespace
         ros::NodeHandle priv_nh_;
 
+        // static const uint32_t MY_ROS_QUEUE_SIZE = 100;
+        // double rate_hz = 30;
+
         // subscribers
         ros::Subscriber read_images_;
         ros::Subscriber sub_planning;
         ros::Subscriber planningxy;
-        ros::Subscriber sub_localization;
         ros::Subscriber sub_vel;
-        ros::Subscriber sub_des_state;
+
+        // ros::Subscriber sub_localization;
+        // ros::Subscriber sub_des_state;
 
         // publishers
         ros::Publisher publish_angle;
@@ -139,7 +144,13 @@ class cLaneDetectionFu
 
         int estado;
         int dbscan_epsilon;
+        int dbscan_min_points;
+
+        double kp;
+        double ki;
+        double kd;
         
+        int car_center;
 
         /**
          * The lane marking polynomials detected in the current picture.
@@ -267,6 +278,8 @@ class cLaneDetectionFu
         std::vector<FuPoint<int>> supportersRight;
         std::vector<FuPoint<int>> supportersHorizontal;
 
+        std::vector<geometry_msgs::Point> pointsRansacLeft;
+
         /**
          * The polynomials detected on the previous picture
          */
@@ -307,7 +320,6 @@ class cLaneDetectionFu
         nav_msgs::GridCells array_lane_model;
         nav_msgs::GridCells array_ransac_horizontal;
 
-        double rate_hz = 30;
 
     public:
                 
@@ -383,17 +395,19 @@ class cLaneDetectionFu
 
         void config_callback(line_detection_fu::LaneDetectionConfig &config, uint32_t level);
 
-        void get_localization(const std_msgs::Float32MultiArray& locArray);
+        // void get_localization(const std_msgs::Float32MultiArray& locArray);
 
-        void get_ctrl_action(const geometry_msgs::Twist& val);
+        // void get_ctrl_action(const geometry_msgs::Twist& val);
 
-        void get_ctrl_desired_state(const std_msgs::Float64& val);
+        // void get_ctrl_desired_state(const std_msgs::Int16& val);
 
-        bool ackerman_control_next_points(double y_next_dist, cv::Point& pt_car, cv::Point& y_next_pt, 
-            cv::Point& y_next_pt2);
+        // bool ackerman_control_next_points(double y_next_dist, cv::Point& pt_car, cv::Point& y_next_pt,
+        //     cv::Point& y_next_pt2);
 
-        void ackerman_control(cv::Mat& imagePaint, NewtonPolynomial& polyLeft, NewtonPolynomial& polyCenter,
-    NewtonPolynomial& polyRight);
+        // void ackerman_control(cv::Mat& imagePaint, NewtonPolynomial& polyLeft, NewtonPolynomial& polyCenter,
+        // NewtonPolynomial& polyRight);
+
+        // double PID(double error, double dt, double Kp, double Ki, double Kd);
 };
 
 #endif 

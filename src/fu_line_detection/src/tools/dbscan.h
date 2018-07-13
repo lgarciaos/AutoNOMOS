@@ -340,7 +340,7 @@ int main(void) {
         parse_input(stdin, &points, &epsilon, &minpts);
     if (num_points) {
         dbscan(points, num_points, epsilon,
-               minpts, euclidean_dist_vert);
+               minpts, euclidean_dist);
         printf("Epsilon: %lf\n", epsilon);
         printf("Minimum points: %u\n", minpts);
         print_points(points, num_points);
