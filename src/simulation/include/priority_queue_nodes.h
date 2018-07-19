@@ -11,6 +11,8 @@
 
 // own libraries
 // #include <node_g.cpp>
+#define TOLERANCE_COST 100
+#define TOLERANCE_RAD 0.1
 
 
 class priority_queue_nodes
@@ -19,6 +21,7 @@ class priority_queue_nodes
     std::vector<node_g*> nodes;
     int num_elements;
     int lookup_node(node_g* node);
+		bool nodes_in_vecinity(node_g* p1, node_g* p2);
 
   public:
 

@@ -54,13 +54,23 @@ int priority_queue_nodes::lookup_node(node_g* node)
   return start;
 }
 
+bool priority_queue_nodes::nodes_in_vecinity(node_g* n1, node_g* n2)
+{
+  double dx = fabs(n1 -> point.x - n2 -> point.x);
+  double dy = fabs(n1 -> point.y - n2 -> point.y);
+  double dc = fabs(n1 -> cost    - n2 -> cost);
+
+  return dx <= TOLERANCE_RAD && dy <= TOLERANCE_RAD && dc <= TOLERANCE_COST;
+}
+
 bool priority_queue_nodes::point_in_queue()
 {
   std::cout << __PRETTY_FUNCTION__ << '\n';
   for (size_t i = 0; i < nodes.size(); i++)
   {
     for (size_t j = 0; j < nodes.size(); j++) {
-      if(i != j && nodes[i] -> point.x == nodes[j] -> point.x && nodes[i] -> point.y == nodes[j] -> point.y)
+      // if(i != j && nodes[i] -> point.x == nodes[j] -> point.x && nodes[i] -> point.y == nodes[j] -> point.y)
+      if(i != j && nodes_in_vecinity(nodes[i], nodes[j]))
       {
         std::cout << "Found equal nodes:" << '\n';
         std::cout << "---n: cost = " << nodes[i] -> cost << " - (" << nodes[i] -> point.x << ", " << nodes[i] -> point.y << "). Parent " << nodes[i] -> parent << std::endl;
@@ -113,12 +123,29 @@ bool priority_queue_nodes::node_in_queue(node_g* node)
 {
   int i = lookup_node(node);
   // std::cout << __PRETTY_FUNCTION__ << '\n';
+  // std::cout << "i: " << i << "\tsize: " << nodes.size() << '\n';
+  // if (i == nodes.size() && i > 0)
+  // {
+  //   node -> print_node_g(std::string("node_looked"));
+  //   nodes[i-1] -> print_node_g(std::string("i-1"));
+  // }
   // node -> print_node_g(std::string("SEARCHING"));
   // std::cout << "Node Found: " << (node -> cost == nodes[i] -> cost & ARE_NODES_PTR_EQUAL(node, nodes[i])) << "\tat: " << i << std::endl;
   // print_vector();
-
-  return node -> cost == nodes[i] -> cost & ARE_NODES_PTR_EQUAL(node, nodes[i]);
-
+  // std::cout << "node -> cost: " << node -> cost << '\n';
+  // std::cout << "nodes[i] " << nodes[i] << '\n';
+  // nodes[i] -> print_node_g(std::string("n_i"));
+  // std::cout << "nodes[i] -> cost: " << nodes[i] -> cost << '\n';
+  // std::cout << "ARE_NODES_PTR_EQUAL(node, nodes[i])" << ARE_NODES_PTR_EQUAL(node, nodes[i]) << '\n';
+  if (0 < i && i == nodes.size())
+  {
+    return false;
+  }
+  else
+  {
+    // return node -> cost == nodes[i] -> cost & ARE_NODES_PTR_EQUAL(node, nodes[i]);
+    return nodes_in_vecinity(node, nodes[i]);
+  }
 }
 
 void priority_queue_nodes::remove_node_from_queue(node_g* node)

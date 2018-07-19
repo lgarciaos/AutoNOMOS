@@ -31,7 +31,16 @@
 #include "priority_queue_nodes.cpp"
 
 #define RADIUS 0.8
+#define GRID "GRID"
+#define CTRL_6 "CTRL_6"
+#define RRT "RRT"
+#define RECTANGLE 0
+#define CIRCLE 1
+#define CAR_SIZE_X 0.2
+#define CAR_SIZE_Y 0.125
+#define ITERATIONS_LIMIT 10000
 #define ARE_POINTS_EQUAL(A, B) (A.x == B.x & A.y == B.y)
+
 
 const double tol_dist = 0.1;
 const int grid_init_x = -10;
@@ -46,28 +55,28 @@ std::vector<geometry_msgs::Pose> autonomos_pose;
 std::vector<geometry_msgs::Twist> autonomos_twist;
 std::vector<geometry_msgs::Pose> lamp_pose;
 std::vector<geometry_msgs::Twist> lamp_twist;
+std::vector<geometry_msgs::Point> points_without_obs;
+
 
 ignition::msgs::Marker markerMsg;
 ignition::transport::Node node;
 ignition::msgs::Material *matMsg;
 
-///////////////////////////////////////////////////////////////////////////////
-// TODO:
-//       det if point is in car ==> trasformation
-//////////////////////////////////////////////////////////////////////////////
 void print_point(geometry_msgs::Point p);
 void print_vector(std::vector<geometry_msgs::Point> p);
 
 void get_obstacles_poses(gazebo_msgs::ModelStates msg)
 {
+  // std::cout << __PRETTY_FUNCTION__ << '\n';
   std::vector<int> obstacles_index;
-  // ROS_INFO_STREAM("At: " << __PRETTY_FUNCTION__);
   int i = 0;
   autonomos_pose.clear();
   autonomos_twist.clear();
   lamp_pose.clear();
   lamp_twist.clear();
-  for (auto element : msg.name) {
+  for (auto element : msg.name)
+  {
+    // std::cout << "model: " << element << '\n';
     // if (!element.compare(autonomos_static)) {
     if (std::regex_match (element, std::regex(autonomos_static_regex) ))
     {
@@ -87,8 +96,8 @@ void get_obstacles_poses(gazebo_msgs::ModelStates msg)
 
 bool point_in_car(geometry_msgs::Point point, geometry_msgs::Pose center_car, bool print = false)
 {
-  double x_dist = 0.125;
-  double y_dist = 0.2;
+  // double x_dist = 0.125;
+  // double y_dist = 0.2;
 
   bool x_match = false;
   bool y_match = false;
@@ -110,26 +119,30 @@ bool point_in_car(geometry_msgs::Point point, geometry_msgs::Pose center_car, bo
   x_point_tf = x_point_tf * cos(angle) - y_point_tf * sin(angle);
   y_point_tf = y_point_tf * cos(angle) + x_point_tf * sin(angle);
 
-  if (-x_dist <= x_point_tf && x_point_tf <= x_dist)
+  if (-CAR_SIZE_X <= x_point_tf && x_point_tf <= CAR_SIZE_X)
   {
     x_match = true;
   }
-  if (-y_dist <= y_point_tf && y_point_tf <= y_dist )
+  if (-CAR_SIZE_Y <= y_point_tf && y_point_tf <= CAR_SIZE_Y )
   {
     y_match = true;
   }
 
-  // if (print)
-  // {
-  //   std::cout <<
-  //     "( " << point.x << ", " << point.y << " )\t\t" <<
-  //     "( " << center_car.position.x << ", " << center_car.position.y << " )\t\t" <<
-  //     "( " << x_point_tf << ", " << y_point_tf << " )" << '\n';
-  // }
+  if (print)
+  {
+    std::cout <<
+      "( " << point.x << ", " << point.y << " )\t\t" <<
+      "( " << center_car.position.x << ", " << center_car.position.y << " )\t\t" <<
+      "( " << x_point_tf << ", " << y_point_tf << " )" << '\n';
+  }
 
   return x_match & y_match;
 }
 
+void set_points_without_obstacles(std::vector<geometry_msgs::Point> points_w_obs)
+{
+  points_without_obs = points_w_obs;
+}
 
 std::vector<geometry_msgs::Point> remove_obst_points(std::vector<geometry_msgs::Point> points_in)
 {
@@ -180,7 +193,9 @@ std::vector<geometry_msgs::Point> remove_obst_points(std::vector<geometry_msgs::
       } else {
         index_point = -1;
       }
-    } else {
+    }
+    else
+    {
       points_out.push_back(points_in[i]);
     }
   }
@@ -239,9 +254,9 @@ void paint_point(geometry_msgs::Point p, int id)
 {
   ignition::msgs::Marker markerMsg_2;
   ignition::msgs::Material *matMsg = markerMsg_2.mutable_material();
-  std::cout << "printing point:";
-  print_point(p);
-  std::cout << std::endl;
+  // std::cout << "printing point:";
+  // print_point(p);
+  // std::cout << std::endl;
 
   matMsg->mutable_script()->set_name("Gazebo/Red");
   // markerMsg.set_ns("default");
@@ -283,20 +298,8 @@ void print_point(geometry_msgs::Point p)
   printf("(%.1f, %.1f)", p.x, p.y);
 }
 
-
-// void print_queue(std::priority_queue<node_g*, std::vector<node_g*>, std::greater<node_g*>> q) {
-//     while(!q.empty()) {
-//         std::cout << q.top() ->cost << " - ";
-//         print_point(q.top() -> point);
-//         std::cout << std::endl;
-//         q.pop();
-//     }
-//     std::cout << '\n';
-// }
-
 void print_vector(std::vector<node_g*> vec)
 {
-  // std::cout << __PRETTY_FUNCTION__ << '\n';
   for (auto e : vec) {
     print_point(e->point);
     std::cout << ", ";
@@ -304,15 +307,205 @@ void print_vector(std::vector<node_g*> vec)
   std::cout << '\n';
 }
 
-std::vector<node_g*> get_adj_points(geometry_msgs::Point pt_ini, std::vector<node_g*> nodes)
+bool path_intersects_obstacle(geometry_msgs::Point start, double roll_start,
+                              geometry_msgs::Point end,   double roll_end,
+                              geometry_msgs::Pose obstacle, int obstacle_type)
+{
+  double s, t, d;
+  double x00, x01, x10, x11;
+  double y00, y01, y10, y11;
+  double x_aux, y_aux;
+  std::vector<double> x_obs_coords;
+  std::vector<double> y_obs_coords;
+  std::vector<double> x_sta_coords;
+  std::vector<double> y_sta_coords;
+  std::vector<double> x_end_coords;
+  std::vector<double> y_end_coords;
+
+  bool res = false;
+
+  // u0 = (x00, y00)
+  // u1 = (x10, y10)
+  // v0 = (x01, y01)
+  // v1 = (x11, y11)
+
+  // elements that would form a parametric line between the start and end points
+
+  // elements that would form a parametric line between two points of the obstacles_pos
+
+  if (obstacle_type == RECTANGLE)
+  {
+    // x00 = start.x;
+    // y00 = start.y;
+    // x01 = (start.x - end.x);
+    // y01 = (start.y - end.y);
+
+    x_obs_coords.push_back(obstacle.position.x + CAR_SIZE_X);
+    x_obs_coords.push_back(obstacle.position.x + CAR_SIZE_X);
+    x_obs_coords.push_back(obstacle.position.x - CAR_SIZE_X);
+    x_obs_coords.push_back(obstacle.position.x - CAR_SIZE_X);
+
+    y_obs_coords.push_back(obstacle.position.y + CAR_SIZE_Y);
+    y_obs_coords.push_back(obstacle.position.y - CAR_SIZE_Y);
+    y_obs_coords.push_back(obstacle.position.y + CAR_SIZE_Y);
+    y_obs_coords.push_back(obstacle.position.y - CAR_SIZE_Y);
+
+    x_sta_coords.push_back((+CAR_SIZE_X) * cos(roll_start) - (+CAR_SIZE_Y) * sin(roll_start) + start.x );
+    x_sta_coords.push_back((+CAR_SIZE_X) * cos(roll_start) - (-CAR_SIZE_Y) * sin(roll_start) + start.x );
+    x_sta_coords.push_back((-CAR_SIZE_X) * cos(roll_start) - (+CAR_SIZE_Y) * sin(roll_start) + start.x );
+    x_sta_coords.push_back((-CAR_SIZE_X) * cos(roll_start) - (-CAR_SIZE_Y) * sin(roll_start) + start.x );
+
+    y_sta_coords.push_back((+CAR_SIZE_Y) * cos(roll_start) + (+ CAR_SIZE_X) * sin(roll_start) + start.y);
+    y_sta_coords.push_back((-CAR_SIZE_Y) * cos(roll_start) + (+ CAR_SIZE_X) * sin(roll_start) + start.y);
+    y_sta_coords.push_back((+CAR_SIZE_Y) * cos(roll_start) + (- CAR_SIZE_X) * sin(roll_start) + start.y);
+    y_sta_coords.push_back((-CAR_SIZE_Y) * cos(roll_start) + (- CAR_SIZE_X) * sin(roll_start) + start.y);
+
+    x_end_coords.push_back((+ CAR_SIZE_X) * cos(roll_end) - (+ CAR_SIZE_Y) * sin(roll_end) + end.x);
+    x_end_coords.push_back((+ CAR_SIZE_X) * cos(roll_end) - (- CAR_SIZE_Y) * sin(roll_end) + end.x);
+    x_end_coords.push_back((- CAR_SIZE_X) * cos(roll_end) - (+ CAR_SIZE_Y) * sin(roll_end) + end.x);
+    x_end_coords.push_back((- CAR_SIZE_X) * cos(roll_end) - (- CAR_SIZE_Y) * sin(roll_end) + end.x);
+
+    y_end_coords.push_back((+ CAR_SIZE_Y) * cos(roll_end) + (+ CAR_SIZE_X) * sin(roll_end) + end.y);
+    y_end_coords.push_back((- CAR_SIZE_Y) * cos(roll_end) + (+ CAR_SIZE_X) * sin(roll_end) + end.y);
+    y_end_coords.push_back((+ CAR_SIZE_Y) * cos(roll_end) + (- CAR_SIZE_X) * sin(roll_end) + end.y);
+    y_end_coords.push_back((- CAR_SIZE_Y) * cos(roll_end) + (- CAR_SIZE_X) * sin(roll_end) + end.y);
+
+
+    for (size_t j = 0; j < 4; j++)
+    {
+      // x00 = start.x * cos(roll_start) - start.y * sin(roll_start);
+      // y00 = start.y * cos(roll_start) + start.x * sin(roll_start);
+      // x_aux = end.x * cos(roll_end) - end.y * sin(roll_end);
+      // y_aux = end.y * cos(roll_end) + end.x * sin(roll_end);
+
+      x00 = x_sta_coords[j];
+      y00 = y_sta_coords[j];
+      x01 = x_end_coords[j] - x00;
+      y01 = y_end_coords[j] - y00;
+
+      for (size_t i = 0; i < 4; i++)
+      {
+        // printf("Init_PT\t\tEnd_PT\t\tOBS_1\t\tOBST_2\n");
+        x10 = x_obs_coords[i];
+        y10 = y_obs_coords[i];
+        x11 = x_obs_coords[((i + 1) % 4)] - x_obs_coords[i];
+        y11 = y_obs_coords[((i + 1) % 4)] - y_obs_coords[i];
+        d = x11 * y01 - x01 * y11;
+        if (d == 0)
+        {
+          // lines are parallel
+        }
+        else
+        {
+          s = (1/d) *  ( (x00 - x10) * y01 - (y00 - y10) * x01);
+          t = (1/d) * -(-(x00 - x10) * y11 + (y00 - y10) * x11);
+          if (0 <= s && s <= 1 && 0 <= t && t <= 1 )
+          {
+            //   x00    y00     x01    y01      x10    y10      x11    y11
+            // printf("s = %.1f, t = %.1f, d = %.1f, roll_start = %.1f, roll_end = %.1f\n", s, t, d, roll_start, roll_end);
+            // printf("sta (%.2f, %.2f):\t(%.2f, %.2f)\t(%.2f, %.2f)\t(%.2f, %.2f)\t(%.2f, %.2f)\n", start.x, start.y, x_sta_coords[0], y_sta_coords[0], x_sta_coords[1], y_sta_coords[1], x_sta_coords[2], y_sta_coords[2], x_sta_coords[3], y_sta_coords[3]);
+            // printf("end (%.2f, %.2f):\t(%.2f, %.2f)\t(%.2f, %.2f)\t(%.2f, %.2f)\t(%.2f, %.2f)\n", end.x, end.y, x_end_coords[0], y_end_coords[0], x_end_coords[1], y_end_coords[1], x_end_coords[2], y_end_coords[2], x_end_coords[3], y_end_coords[3]);
+            // printf("obs (%.2f, %.2f):\t(%.2f, %.2f)\t(%.2f, %.2f)\t(%.2f, %.2f)\t(%.2f, %.2f)\n", obstacle.position.x, obstacle.position.y, x_obs_coords[0], y_obs_coords[0], x_obs_coords[1], y_obs_coords[1], x_obs_coords[2], y_obs_coords[2], x_obs_coords[3], y_obs_coords[3]);
+            // printf("x(t) = %.2f + %.2ft\ty(t) = %.2f + %.2ft\n", x00, x01, y00, y01);
+            // printf("x(t) = %.1f + %.1ft\ty(t) = %.1f + %.1ft\n", x_sta_coords[0], x_sta_coords[0] - x_end_coords[0], y_sta_coords[0], y_sta_coords[0] - y_end_coords[0]);
+            // printf("x(t) = %.1f + %.1ft\ty(t) = %.1f + %.1ft\n", x_sta_coords[1], x_sta_coords[1] - x_end_coords[1], y_sta_coords[1], y_sta_coords[1] - y_end_coords[1]);
+            // printf("x(t) = %.1f + %.1ft\ty(t) = %.1f + %.1ft\n", x_sta_coords[2], x_sta_coords[2] - x_end_coords[2], y_sta_coords[2], y_sta_coords[2] - y_end_coords[2]);
+            // printf("x(t) = %.1f + %.1ft\ty(t) = %.1f + %.1ft\n", x_sta_coords[3], x_sta_coords[3] - x_end_coords[3], y_sta_coords[3], y_sta_coords[3] - y_end_coords[3]);
+            // printf("(%.2f, %.2f)\t(%.2f, %.2f)\t(%.2f, %.2f). s = %.1f, t = %.1f, d = %.1f\n", start.x, start.y, end.x, end.y, obstacle.position.x, obstacle.position.y, s, t, d);
+            res = true;
+          }
+        }
+      }
+    }
+
+
+
+
+  }
+
+  return res;
+
+}
+
+double get_distance(int vel)
+{
+  double adj_fac = -15.0 / 31.0 * 1.0 / 12.0;
+  double rad = .03;
+  double time_s = 1;
+  // std::cout << "vel: " << vel << ", adj_fac: " << adj_fac << ", rad: " << rad << ", ret: " << vel * rad * adj_fac * time_s << '\n';
+  return vel * rad * adj_fac * time_s;
+}
+
+bool is_collision_free(geometry_msgs::Point start_pt, double roll_start, geometry_msgs::Point end_pt, double roll_end)
+{
+  // geometry_msgs::Point point;
+  // point.x = x_point_tf;
+  // point.y = y_point_tf;
+  int aut_count = 0;
+  // std::cout << "CAR \t\t POINT" << '\n';
+  // printf("(x00, y00)\t(x01, y01)\t(x10, y10)\t(x11, y11).\n");
+
+  for(auto pose : autonomos_pose)
+  {
+    // std::cout << "(" << pose.position.x << ", " << pose.position.y << ")\t(" << end_pt.x << ", " << end_pt.y << ")" << std::endl;
+    if (point_in_car(end_pt, pose, false))
+    {
+      return false;
+    //   points_in_obstacles.push_back(point_num);
+    }
+    if (path_intersects_obstacle(start_pt, roll_start, end_pt, roll_end, pose, RECTANGLE))
+    {
+      return false;
+    }
+    aut_count++;
+  }
+  return true;
+}
+
+std::vector<node_g*> get_adj_points(geometry_msgs::Point pt_ini, double roll,
+                                    std::vector<node_g*> nodes, std::string points_creation)
 {
   std::vector<node_g*> out;
-  for(auto n : nodes)
+
+  if (points_creation == GRID)
   {
-    // if (distance(pt_ini, pt) < RADIUS && !(pt_ini.x == pt.x && pt_ini.y == pt.y) ) // TODO: change != to macro??
-    if (distance(pt_ini, n -> point) < RADIUS && !ARE_POINTS_EQUAL(pt_ini, n -> point) ) // TODO: change != to macro??
+    for(auto n : nodes)
     {
-      out.push_back(n);
+      if (distance(pt_ini, n -> point) < RADIUS && !ARE_POINTS_EQUAL(pt_ini, n -> point) )
+      {
+        out.push_back(n);
+      }
+    }
+  }
+  else if (points_creation == CTRL_6)
+  {
+    std::vector<double> steering_vec = {-.5, 0, .5};
+    std::vector<int> speed_vec = {-100, -150, -200};
+    for (auto steering : steering_vec)
+    {
+      double angle = roll + steering;
+      for (auto speed : speed_vec )
+      {
+        double dist = get_distance(speed);
+        double x_point_tf = pt_ini.x + dist * sin(angle);
+        double y_point_tf = pt_ini.y + dist * cos(angle);
+        geometry_msgs::Point end_pt;
+        end_pt.x = x_point_tf;
+        end_pt.y = y_point_tf;
+        // printf("Dist: %.2f. Start: (%.2f, %.2f). End: (%.2f, %.2f)\n", dist, pt_ini.x, pt_ini.y, x_point_tf, y_point_tf);
+        if(is_collision_free(pt_ini, roll, end_pt, angle))
+        {
+          node_g* n;
+          n = (node_g*) malloc(sizeof(node_g));
+          n -> point.x = end_pt.x;
+          n -> point.y = end_pt.y;
+          n -> set_orientation(angle, 0, 0);
+          n -> parent = NULL;
+          // n -> print_node_g("FREE");
+          out.push_back(n);
+        }
+
+      }
     }
   }
   // TODO: determine if the point can be reach by the car.
@@ -323,27 +516,6 @@ bool point_reached(geometry_msgs::Point curr_point, geometry_msgs::Point end_poi
 {
   return distance(curr_point, end_point) <= tol_dist;
 }
-
-// std::priority_queue<node_g*, std::vector<node_g*>, std::greater<node_g*>> remove_node_from_open(
-//   std::priority_queue<node_g*, std::vector<node_g*>, std::greater<node_g*>> open, node_g* node)
-
-// {
-//   std::priority_queue<node_g*, std::vector<node_g*>, std::greater<node_g*>> res;
-//   while(0 < open.size())
-//   {
-//     node_g* n = open.top();
-//     if ( n == node)
-//     {
-//       // open.pop();
-//     }
-//     else
-//     {
-//       res.push(n);
-//     }
-//     open.pop();
-//   }
-//   return res;
-// }
 
 std::vector<node_g*> remove_node_from_closed(std::vector<node_g*> closed, node_g *node)
 {
@@ -358,26 +530,17 @@ std::vector<node_g*> remove_node_from_closed(std::vector<node_g*> closed, node_g
   return res;
 }
 
-// bool is_element_in_queue(std::priority_queue<node_g*, std::vector<node_g*>, std::greater<node_g*> > queue, node_g* element)
-// {
-//   while (0 < queue.size())
-//   {
-//     node_g *n = queue.top();
-//     queue.pop();
-//     if ( n -> point.x == element -> point.x && n -> point.y == element -> point.y )
-//     {
-//       return true;
-//     }
-//   }
-//   return false;
-// }
-
 bool is_element_in_vector(std::vector<node_g*> vector, node_g* element)
 {
   for(auto e : vector)
   {
-    if (e == element) {
-      assert(e -> point.x == element -> point.x && e -> point.y == element -> point.y);
+    double dx = fabs(e -> point.x - element -> point.x);
+    double dy = fabs(e -> point.y - element -> point.y);
+    double dc = fabs(e -> cost    - element -> cost);
+    // if (e == element) {
+    if (dx <= TOLERANCE_RAD && dy <= TOLERANCE_RAD && dc <= TOLERANCE_COST)
+    {
+      // assert(e -> point.x == element -> point.x && e -> point.y == element -> point.y);
       return true;
     }
   }
@@ -420,7 +583,6 @@ void print_path(node_g* end_node)
 
 void draw_lines(std::vector<geometry_msgs::Point> vec)
 {
-  std::cout << __PRETTY_FUNCTION__ << '\n';
   ignition::msgs::Marker markerMsg_2;
   ignition::msgs::Material *matMsg = markerMsg_2.mutable_material();
 
@@ -437,12 +599,14 @@ void draw_lines(std::vector<geometry_msgs::Point> vec)
   for (auto pt : vec)
   {
     ignition::msgs::Set(markerMsg_2.add_point(),
-       ignition::math::Vector3d(pt.x, pt.y, pt.z));
+       ignition::math::Vector3d(pt.x, pt.y, .01));
   }
 
 
   node.Request("/marker", markerMsg_2);
 }
+
+
 
 void draw_path(node_g* end_node)
 {
@@ -452,7 +616,7 @@ void draw_path(node_g* end_node)
   std::vector<geometry_msgs::Point> vec;
   // last_pt = n -> point;
   // n = n -> parent;
-  std::cout << __LINE__ << '\n';
+  // std::cout << __LINE__ << '\n';
 
   while (n->parent != NULL)
   {
@@ -462,8 +626,87 @@ void draw_path(node_g* end_node)
     last_pt = n -> point;
     n = n->parent;
   }
-  std::cout << __LINE__ << '\n';
   draw_lines(vec);
+}
+
+void draw_line(geometry_msgs::Point ini_pt, geometry_msgs::Point end_pt, std::string color)
+{
+  // std::cout << __PRETTY_FUNCTION__ << '\n';
+  // ROS_DEBUG_STREAM(__PRETTY_FUNCTION__ << ":" << __LINE__);
+  ignition::msgs::Marker markerMsg_2;
+  ignition::msgs::Material *matMsg ;//= markerMsg_2.mutable_material();
+  matMsg = (ignition::msgs::Material*) malloc(sizeof(ignition::msgs::Material*));
+  matMsg = markerMsg_2.mutable_material();
+
+  matMsg->mutable_script()->set_name(color);
+  markerMsg_2.set_id(markers_id);
+  markers_id++;
+  markerMsg_2.set_action(ignition::msgs::Marker::ADD_MODIFY);
+  markerMsg_2.set_type(ignition::msgs::Marker::LINE_LIST);
+
+
+  for (double i = -10; i < 0; i+=0.5)
+  {
+    ignition::msgs::Set(markerMsg_2.add_point(),
+      ignition::math::Vector3d(i, i, 0));
+    ignition::msgs::Set(markerMsg_2.add_point(),
+      ignition::math::Vector3d(i+.5, i+.5, 0));
+  }
+  // ignition::msgs::Set(markerMsg_2.add_point(),
+    // ignition::math::Vector3d(ini_pt.x, ini_pt.y, ini_pt.z));
+  // ignition::msgs::Set(markerMsg_2.add_point(),
+    // ignition::math::Vector3d(end_pt.x, end_pt.y, end_pt.z));
+
+
+  node.Request("/marker", markerMsg_2);
+}
+
+void draw_all_nodes(std::vector<node_g*> open, std::vector<node_g*> closed)
+{
+  ignition::msgs::Marker markerMsg_2;
+  ignition::msgs::Material *matMsg ;//= markerMsg_2.mutable_material();
+  matMsg = (ignition::msgs::Material*) malloc(sizeof(ignition::msgs::Material*));
+  matMsg = markerMsg_2.mutable_material();
+
+  matMsg->mutable_script()->set_name("Gazebo/Purple");
+  markerMsg_2.set_id(markers_id);
+  markers_id++;
+  markerMsg_2.set_action(ignition::msgs::Marker::ADD_MODIFY);
+  markerMsg_2.set_type(ignition::msgs::Marker::LINE_LIST);
+
+  for (auto n : open)
+  {
+    // n->print_node_g(std::string("DRAW"));
+    // draw_line(n -> point, n -> parent -> point, std::string("Gazebo/Purple"));
+    ignition::msgs::Set(markerMsg_2.add_point(),
+      ignition::math::Vector3d(n -> point.x, n -> point.y, 0));
+    ignition::msgs::Set(markerMsg_2.add_point(),
+      ignition::math::Vector3d(n -> parent -> point.x, n -> parent -> point.y, 0));
+  }
+  node.Request("/marker", markerMsg_2);
+  ignition::msgs::Marker markerMsg_3;
+  // ignition::msgs::Material *matMsg ;//= markerMsg_2.mutable_material();
+  // matMsg = (ignition::msgs::Material*) malloc(sizeof(ignition::msgs::Material*));
+  // matMsg = markerMsg_3.mutable_material();
+
+  matMsg->mutable_script()->set_name("Gazebo/White");
+  markerMsg_3.set_id(markers_id);
+  markers_id++;
+  markerMsg_3.set_action(ignition::msgs::Marker::ADD_MODIFY);
+  markerMsg_3.set_type(ignition::msgs::Marker::LINE_LIST);
+  for (auto n : closed)
+  {
+    if (n -> parent != NULL)
+    {
+      ignition::msgs::Set(markerMsg_3.add_point(),
+        ignition::math::Vector3d(n -> point.x, n -> point.y, 0));
+      ignition::msgs::Set(markerMsg_3.add_point(),
+        ignition::math::Vector3d(n -> parent -> point.x, n -> parent -> point.y, 0));
+      // draw_line(n -> point, n -> parent -> point, std::string("Gazebo/FlatBlack"));
+    }
+  }
+  node.Request("/marker", markerMsg_3);
+
 }
 
 std::vector<node_g*> init_nodes_g(std::vector<geometry_msgs::Point> points)
@@ -481,10 +724,8 @@ std::vector<node_g*> init_nodes_g(std::vector<geometry_msgs::Point> points)
   return res;
 }
 
-void a_star(std::vector<geometry_msgs::Point> points, geometry_msgs::Point init_point, geometry_msgs::Point fin_point)
+void a_star(geometry_msgs::Point init_point, geometry_msgs::Point fin_point, std::string points_creation)
 {
-  // std::cout << __PRETTY_FUNCTION__ << '\n';
-  // std::priority_queue<node_g*, std::vector<node_g*>, std::greater<node_g*> > open;
   priority_queue_nodes open;
   std::vector<node_g*> closed;
   std::vector<node_g*> neighbors;
@@ -494,134 +735,111 @@ void a_star(std::vector<geometry_msgs::Point> points, geometry_msgs::Point init_
   double cost, neig_actual_cost;
   bool neig_in_open = false;
   bool neig_in_closed = false;
+  int iterations = 0;
 
   double dummy;
-  std::vector<int> v_dummy = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-
-  /////////////////////////////////////////////////////////////////////////////
-  //  TODO: check that priority_queue is working well
-  /////////////////////////////////////////////////////////////////////////////
-  // srand(231192);
-  // for (size_t i = 0; i < 10; i++) {
-  //   node_g* aux;
-  //   aux = (node_g*) malloc(sizeof(node_g));
-  //   int i_dummy = rand() % v_dummy.size();
-  //   aux -> cost = v_dummy[i_dummy];
-  //   v_dummy.erase(v_dummy.begin() + i_dummy);
-  //   aux -> point.x = 10 - i;
-  //   aux -> point.y = 10 - i;
-  //   aux -> parent = NULL;
-  //   open.push(aux);
-  // }
-  // open.print_vector();
-  // std::cin >> dummy;
 
   current -> cost = 0;
   current -> point.x = init_point.x;
   current -> point.y = init_point.y;
+  current -> set_orientation(0, 0, 0);
   current -> parent = NULL;
   open.push(current);
 
-  nodes = init_nodes_g(points);
-  // std::cout << __LINE__ << '\n';
-  while (!point_reached(open.top() -> point, fin_point)) {
-      current = open.top();
-      open.pop();
-      closed.push_back(current);
-      neighbors = get_adj_points(current -> point, nodes);
-      std::cout << "current point: ";
-      print_point(current -> point);
-      std::cout << '\n';
-      std::cout << "Neighbors: ";
-      print_vector(neighbors);
-      std::cout << '\n';
-      // draw_line(last);
-      std::cout << "Current: " << current << '\n';
-      // std::cin >> dummy;
+  nodes = init_nodes_g(points_without_obs);
+  while (!point_reached(open.top() -> point, fin_point))
+  {
+    iterations++;
+    // std::cout << __LINE__ << '\n';
+    current = open.top();
+    // std::cout << __LINE__ << '\n';
+    open.pop();
+    // std::cout << __LINE__ << '\n';
+    closed.push_back(current);
+    // std::cout << __LINE__ << '\n';
+    neighbors = get_adj_points(current -> point, current -> get_roll(), nodes, points_creation);
+    // std::cout << "current point: ";
+    // print_point(current -> point);
+    // std::cout << '\n';
+    // std::cout << "Neighbors: ";
+    // print_vector(neighbors);
+    // std::cout << '\n';
+    // std::cout << "Current: " << current << '\n';
+    // std::cin >> dummy;
 
-      for(auto neig : neighbors)
+    // std::cout << __LINE__ << '\n';
+    for(auto neig : neighbors)
+    {
+      // std::cout << __LINE__ << '\n';
+      neig_actual_cost = actual_cost(current, neig);
+      cost = current -> cost ;
+      // std::cout << __LINE__ << '\n';
+      neig_in_open = open.node_in_queue(neig);
+      // std::cout << __LINE__ << '\n';
+      neig_in_closed = is_element_in_vector(closed, neig);
+      // std::cout << __LINE__ << '\n';
+
+      if (neig_in_open && cost < neig_actual_cost )
       {
-        // std::cout << __LINE__ << '\n';
-        neig_actual_cost = actual_cost(current, neig);
-        cost = current -> cost ; // + movement_cost(current, node_neig); // TODO: implement actual_cost & movementcost
-        // neig_in_open = is_element_in_queue(open, neig);
-        // std::cout << __LINE__ << '\n';
-        neig_in_open = open.node_in_queue(neig);
-        neig_in_closed = is_element_in_vector(closed, neig);
-
-
-        // std::cout << __LINE__ << '\n';
-        if (neig_in_open && cost < neig_actual_cost )
+        open.remove_node_from_queue(neig);
+      }
+      else if (!neig_in_open && !neig_in_closed)
+      {
+        if (current -> parent != neig)
         {
-          // open = remove_node_from_open(open, neig);// Remove neig from open
-          // std::cout << __LINE__ << '\n';
-          open.remove_node_from_queue(neig);
+          neig -> parent = current;
+          neig -> cost = neig_actual_cost + h(neig, fin_point);
+          // std::cout << "--- neighbor";
+          // print_point(neig -> point);
+          // std::cout << "\tcost: " << neig -> cost;
+          // std::cout << "\tthis:"  << neig;
+          // std::cout << '\n';
+          open.push(neig);
         }
-        // else if (neig_in_closed && cost < neig_actual_cost )
-        // {
-        //   // std::cout << __LINE__ << '\n';
-        //   closed = remove_node_from_closed(closed, neig);
-        // }
-        else if (!neig_in_open && !neig_in_closed)
+        else
         {
-          // if (current -> point.x == -8 && current -> point.y == -5.5)
-          // {
-          //   open.print_vector();
-          //   current -> print_node_g(std::string("current"));
-          //   neig -> print_node_g(std::string("neig"));
-          // }
-          // if (current -> point.x == -8.5 && current -> point.y == -5)
-          // {
-          //   open.print_vector();
-          //   current -> print_node_g(std::string("current"));
-          //   neig -> print_node_g(std::string("neig"));
-          // }
-
-          if (current -> parent != neig)
-          {
-
-
-            neig -> parent = current;
-            neig -> cost = neig_actual_cost + h(neig, fin_point);
-            std::cout << "--- neighbor";
-            print_point(neig -> point);
-            std::cout << "\tcost: " << neig -> cost;
-            std::cout << "\tthis:"  << neig;
-            std::cout << '\n';
-            // std::cout << __LINE__ << '\n';
-            open.push(neig);
-          }
-          else
-          {
-            std::cout << "problem..." << '\n';
-            current -> print_node_g("CURRENT");
-            neig -> print_node_g("NEIG");
-          }
-          // std::cout << __LINE__ << '\n';
-          // std::cout << "current: " << 1current << '\n';
-          // std::cout << "neighbor: " << node_neig << '\n';
+          std::cout << "problem..." << '\n';
+          current -> print_node_g("CURRENT");
+          neig -> print_node_g("NEIG");
         }
       }
-      // std::cout << "-------------   PATH   ------------- " << '\n';
-      // print_path(open.top());
-      // std::cout << "------------- END PATH -------------" << '\n';
-      // delete_markers();
-      // paint_points(points);
-      // paint_point(init_point, 1);
-      // paint_point(fin_point, 2);
-      // draw_path(open.top());
+      }
+
+      // open.print_vector();
+      // std::cout << __LINE__ << '\n';
+      if (iterations % ITERATIONS_LIMIT == 0 )
+      {
+        std::cout << "iterations: " << iterations << "... continue?" << '\n';
+        std::cin >> dummy;
+        if (dummy == 0)
+        {
+          break;
+        }
+        else
+        {
+          delete_markers();
+          paint_points(points_without_obs);
+          paint_point(init_point, 1);
+          paint_point(fin_point, 2);
+          // std::cout << __LINE__ << '\n';
+          draw_all_nodes(open.get_vector(), closed);
+          // std::cout << __LINE__ << '\n';
+          // print_path(open.top());
+
+          draw_path(open.top());
+        }
+      }
   }
-  ROS_INFO_STREAM("While ended...");
   delete_markers();
-  paint_points(points);
+  paint_points(points_without_obs);
   paint_point(init_point, 1);
   paint_point(fin_point, 2);
-
-  open.print_vector();
-  std::cout << __LINE__ << '\n';
+  // std::cout << __LINE__ << '\n';
+  draw_all_nodes(open.get_vector(), closed);
+  // std::cout << __LINE__ << '\n';
   // print_path(open.top());
 
   draw_path(open.top());
-  std::cout << __LINE__ << '\n';
+  // std::cout << __LINE__ << '\n';
 
 }
