@@ -1,0 +1,20 @@
+<launch>
+
+    <!-- <node name="lane_states_node" pkg="navigation" type="lane_states_node" output="screen" >  -->
+    <!-- <node name="lane_states_node" pkg="navigation" type="lane_states_node" >  -->
+    <!-- </node>  -->
+
+
+    <node name = "get_obstacles_node" pkg = "simulation" type = "get_obstacles_node"/>
+    <include file="$(find motion_planning)/launch/motion_planning.launch"/>
+
+  <!-- <node name="laser_processing_node" pkg="perception" type="laser_processing_node" >  -->
+
+    <!-- <param name="laser_range_min"               type="double"    value="0.008"/>   -->
+    <!-- <param name="laser_range_max"               type="double"    value="6"/> -->
+    <!-- <param name="cell_resolution"               type="double"    value="0.25"/> -->
+
+  <!-- </node> -->
+
+
+</launch>
