@@ -125,12 +125,19 @@ catkin_package(
 ###########
 ## Build ##
 ###########
-
+# set(sparce_rrt_INCLUDE_DIRS "$ENV{sparse_rrt} /include")
+# message("Printing from CMakeLists:")
+# message(${catkin_INCLUDE_DIRS})
+# message(${sparce_rrt_INCLUDE_DIRS})
+# message("Ended printing from CMakeLists")
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
+
 include_directories(
 include
 ${catkin_INCLUDE_DIRS}
+${IGNITION-TRANSPORT_INCLUDE_DIRS}
+# ${sparce_rrt_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -148,10 +155,16 @@ ${catkin_INCLUDE_DIRS}
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME}_node src/simulation_node.cpp)
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${IGNITION-TRANSPORT_CXX_FLAGS}")
-include_directories(${IGNITION-TRANSPORT_INCLUDE_DIRS})
-link_directories(${IGNITION-TRANSPORT_LIBRARY_DIRS})
+# include_directories(
+# 	${IGNITION-TRANSPORT_INCLUDE_DIRS}
+# 	)
+link_directories(
+	${IGNITION-TRANSPORT_LIBRARY_DIRS}
+	# ${sparce_rrt_INCLUDE_DIRS}
+	)
 
-add_executable(test_sim_tools_node src/test_sim_tools.cpp)
+add_executable(test_sim_tools_node src/simulation_node.cpp)
+add_executable(get_obstacles_node src/get_obstacles_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -165,6 +178,10 @@ add_executable(test_sim_tools_node src/test_sim_tools.cpp)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(test_sim_tools_node
+  ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES} ${IGNITION-TRANSPORT_LIBRARIES}
+)
+
+target_link_libraries(get_obstacles_node
   ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES} ${IGNITION-TRANSPORT_LIBRARIES}
 )
 

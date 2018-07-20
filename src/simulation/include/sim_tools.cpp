@@ -27,8 +27,8 @@
 #include <ignition/msgs.hh>
 
 // own libraries
-#include "node_g.cpp"
-#include "priority_queue_nodes.cpp"
+#include "../../motion_planning/include/node_g.cpp"
+#include "../../motion_planning/include/priority_queue_nodes.cpp"
 
 #define RADIUS 0.8
 #define GRID "GRID"
@@ -417,10 +417,6 @@ bool path_intersects_obstacle(geometry_msgs::Point start, double roll_start,
         }
       }
     }
-
-
-
-
   }
 
   return res;
@@ -750,34 +746,19 @@ void a_star(geometry_msgs::Point init_point, geometry_msgs::Point fin_point, std
   while (!point_reached(open.top() -> point, fin_point))
   {
     iterations++;
-    // std::cout << __LINE__ << '\n';
     current = open.top();
-    // std::cout << __LINE__ << '\n';
     open.pop();
-    // std::cout << __LINE__ << '\n';
     closed.push_back(current);
-    // std::cout << __LINE__ << '\n';
     neighbors = get_adj_points(current -> point, current -> get_roll(), nodes, points_creation);
-    // std::cout << "current point: ";
-    // print_point(current -> point);
-    // std::cout << '\n';
-    // std::cout << "Neighbors: ";
-    // print_vector(neighbors);
-    // std::cout << '\n';
-    // std::cout << "Current: " << current << '\n';
+
     // std::cin >> dummy;
 
-    // std::cout << __LINE__ << '\n';
     for(auto neig : neighbors)
     {
-      // std::cout << __LINE__ << '\n';
       neig_actual_cost = actual_cost(current, neig);
       cost = current -> cost ;
-      // std::cout << __LINE__ << '\n';
       neig_in_open = open.node_in_queue(neig);
-      // std::cout << __LINE__ << '\n';
       neig_in_closed = is_element_in_vector(closed, neig);
-      // std::cout << __LINE__ << '\n';
 
       if (neig_in_open && cost < neig_actual_cost )
       {
@@ -789,11 +770,6 @@ void a_star(geometry_msgs::Point init_point, geometry_msgs::Point fin_point, std
         {
           neig -> parent = current;
           neig -> cost = neig_actual_cost + h(neig, fin_point);
-          // std::cout << "--- neighbor";
-          // print_point(neig -> point);
-          // std::cout << "\tcost: " << neig -> cost;
-          // std::cout << "\tthis:"  << neig;
-          // std::cout << '\n';
           open.push(neig);
         }
         else
@@ -803,10 +779,8 @@ void a_star(geometry_msgs::Point init_point, geometry_msgs::Point fin_point, std
           neig -> print_node_g("NEIG");
         }
       }
-      }
+    }
 
-      // open.print_vector();
-      // std::cout << __LINE__ << '\n';
       if (iterations % ITERATIONS_LIMIT == 0 )
       {
         std::cout << "iterations: " << iterations << "... continue?" << '\n';
@@ -821,10 +795,7 @@ void a_star(geometry_msgs::Point init_point, geometry_msgs::Point fin_point, std
           paint_points(points_without_obs);
           paint_point(init_point, 1);
           paint_point(fin_point, 2);
-          // std::cout << __LINE__ << '\n';
           draw_all_nodes(open.get_vector(), closed);
-          // std::cout << __LINE__ << '\n';
-          // print_path(open.top());
 
           draw_path(open.top());
         }
@@ -834,12 +805,8 @@ void a_star(geometry_msgs::Point init_point, geometry_msgs::Point fin_point, std
   paint_points(points_without_obs);
   paint_point(init_point, 1);
   paint_point(fin_point, 2);
-  // std::cout << __LINE__ << '\n';
   draw_all_nodes(open.get_vector(), closed);
-  // std::cout << __LINE__ << '\n';
-  // print_path(open.top());
 
   draw_path(open.top());
-  // std::cout << __LINE__ << '\n';
 
 }
