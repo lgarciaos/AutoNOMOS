@@ -1,0 +1,49 @@
+<launch>
+
+  <node name="node" pkg="motion_planning" type="node" output = "screen" >
+
+    <param name="initial_point_x"            type="double" value="-10"/>
+    <param name="initial_point_y"            type="double" value="-7.5"/>
+    <param name="final_point_x"              type="double" value="-1"/>
+    <param name="final_point_y"              type="double" value="9"/>
+    <param name="integration_step"           type="double" value="0.002"/>
+    <param name="stopping_type"              type="string" value="time"/>
+    <param name="stopping_check"             type="double" value="15"/>
+    <param name="stats_type"                 type="string" value="time"/>
+    <param name="stats_check"                type="double" value="0"/>
+    <param name="min_time_steps"             type="int"    value="20"/>
+    <param name="max_time_steps"             type="int"    value="200"/>
+    <param name="random_seed"                type="int"    value="0"/>
+    <param name="sst_delta_near"             type="double" value="0.4"/>
+    <param name="sst_delta_drain"            type="double" value="0.2"/>
+    <param name="planner"                    type="string" value="A_STAR_CTRL"/>
+    <param name="system"                     type="string" value="point"/>
+    <param name="goal_radius"                type="double" value="0.2"/>
+    <param name="intermediate_visualization" type="bool"   value="false"/>
+
+    <param name="start_state/x"              type="double" value="-10"/>
+    <param name="start_state/y"              type="double" value="-7.5"/>
+    <param name="start_state/theta"          type="double" value="0"/>
+
+    <param name="goal_state/x"              type="double" value="-1"/>
+    <param name="goal_state/y"              type="double" value="9"/>
+    <param name="goal_state/theta"          type="double" value="0"/>
+<!--
+    <rosparam param="start_state">[-10, -7.5, 0]</rosparam>
+    <rosparam param="goal_state">[-1, 9, 0]</rosparam>
+-->
+<!--
+    <param name=""                 type="int"    value="10"/>
+    <param name=""   type="int"    value="49"/>
+    <param name=""              type="int"    value="18"/>
+    <param name=""     type="int"    value="2"/>
+    <param name=""             type="int"    value="200"/>
+    <param name=""                        type="int"    value="155"/>
+    <param name=""                        type="int"    value="145"/>
+    <param name=""                        type="int"    value="130"/>
+    <param name=""                  type="int"    value="999"/>
+ -->
+
+  </node>
+
+</launch>
