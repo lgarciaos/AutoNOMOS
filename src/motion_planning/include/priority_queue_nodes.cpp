@@ -2,7 +2,7 @@
 
 priority_queue_nodes::priority_queue_nodes()
 {
-  num_elements = 0;
+  // num_elements = 0;
 }
 priority_queue_nodes::~priority_queue_nodes()
 {
@@ -10,24 +10,19 @@ priority_queue_nodes::~priority_queue_nodes()
 
 int priority_queue_nodes::lookup_node(node_g* node)
 {
-  // std::cout << __PRETTY_FUNCTION__ << '\n';
   int start = 0;
   int end = nodes.size();
   int search_i;
-  // std::cout << __LINE__ << '\n';
   while (start != end)
   {
-    // std::cout << "start: " << start << "\tend: " << end << '\n';
     if(end - start == 1)
     {
       if (nodes[start] -> cost < node -> cost)
       {
-        // std::cout << __LINE__ << '\n';
         return end;
       }
       else
       {
-        // std::cout << __LINE__ << '\n';
         return start;
       }
     }
@@ -35,17 +30,14 @@ int priority_queue_nodes::lookup_node(node_g* node)
     search_i = ( start + end ) / 2;
     if (node -> cost == nodes[search_i] -> cost)
     {
-      // std::cout << __LINE__ << '\n';
       return search_i;
     }
     else if (node -> cost < nodes[search_i] -> cost)
     {
-      // std::cout << __LINE__ << '\n';
       end = search_i;
     }
     else
     {
-      // std::cout << __LINE__ << '\n';
       start = search_i;
     }
 
@@ -82,20 +74,10 @@ bool priority_queue_nodes::point_in_queue()
 
 void priority_queue_nodes::push(node_g* node)
 {
-  // std::cout << __PRETTY_FUNCTION__ << '\n';
   double cost = node -> cost;
-  // TODO: check if node is in the list ==> it shouldn be necessary...
   int i = lookup_node(node);
-  // std::cout << __LINE__ << '\n';
-  // std::cout << "----- start push" << '\n';
-  // std::cout << "inserting: " << node -> cost << "\tat: " << i << std::endl;
 
-
-  // point_in_queue();
   nodes.insert(nodes.begin()+i, node);
-  // print_vector();
-  // std::cout << "----- end push" << '\n';
-
 
 }
 
@@ -106,7 +88,7 @@ bool priority_queue_nodes::empty()
 
 int priority_queue_nodes::size()
 {
-  return num_elements;
+  return nodes.size();
 }
 
 node_g* priority_queue_nodes::top()
@@ -122,28 +104,12 @@ void priority_queue_nodes::pop()
 bool priority_queue_nodes::node_in_queue(node_g* node)
 {
   int i = lookup_node(node);
-  // std::cout << __PRETTY_FUNCTION__ << '\n';
-  // std::cout << "i: " << i << "\tsize: " << nodes.size() << '\n';
-  // if (i == nodes.size() && i > 0)
-  // {
-  //   node -> print_node_g(std::string("node_looked"));
-  //   nodes[i-1] -> print_node_g(std::string("i-1"));
-  // }
-  // node -> print_node_g(std::string("SEARCHING"));
-  // std::cout << "Node Found: " << (node -> cost == nodes[i] -> cost & ARE_NODES_PTR_EQUAL(node, nodes[i])) << "\tat: " << i << std::endl;
-  // print_vector();
-  // std::cout << "node -> cost: " << node -> cost << '\n';
-  // std::cout << "nodes[i] " << nodes[i] << '\n';
-  // nodes[i] -> print_node_g(std::string("n_i"));
-  // std::cout << "nodes[i] -> cost: " << nodes[i] -> cost << '\n';
-  // std::cout << "ARE_NODES_PTR_EQUAL(node, nodes[i])" << ARE_NODES_PTR_EQUAL(node, nodes[i]) << '\n';
   if (0 < i && i == nodes.size())
   {
     return false;
   }
   else
   {
-    // return node -> cost == nodes[i] -> cost & ARE_NODES_PTR_EQUAL(node, nodes[i]);
     return nodes_in_vecinity(node, nodes[i]);
   }
 }
@@ -165,11 +131,14 @@ std::vector<node_g*> priority_queue_nodes::get_vector()
 void priority_queue_nodes::print_vector()
 {
   int i = 0;
-  // std::cout << "printing vector" << '\n';
   for (auto n : nodes)
   {
     std::cout << i <<  ": cost = " << n -> cost << " - (" << n -> point.x << ", " << n -> point.y << "). Parent " << n -> parent << std::endl;
     i++;
   }
-  // std::cout << "ended printing vector" << '\n';
+}
+
+void priority_queue_nodes::reset_queue()
+{
+  nodes.clear();
 }

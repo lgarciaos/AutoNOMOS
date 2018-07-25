@@ -4,6 +4,10 @@
 
 // ros messages
 #include <geometry_msgs/Point.h>
+#include <geometry_msgs/Pose.h>
+#include <geometry_msgs/Pose2D.h>
+
+// ros
 #include <tf/tf.h>
 #include <tf/transform_datatypes.h>
 // #include <LinearMath/btMatrix3x3.h>
@@ -40,6 +44,27 @@ class node_g
     void set_orientation(double roll, double pitch, double yaw)
     {
       orientation = tf::createQuaternionFromRPY(roll, pitch, yaw);
+    }
+
+    geometry_msgs::Pose2D get_pose2d()
+    {
+      geometry_msgs::Pose2D pose;
+      pose.x = point.x;
+      pose.y = point.y;
+      pose.theta = get_roll();
+      return pose;
+    }
+
+    geometry_msgs::Pose get_pose()
+    {
+      geometry_msgs::Pose pose;
+      pose.position = point;
+      pose.orientation.x = orientation.x();
+      pose.orientation.y = orientation.y();
+      pose.orientation.z = orientation.z();
+      pose.orientation.w = orientation.w();
+
+      return pose;
     }
 
 };

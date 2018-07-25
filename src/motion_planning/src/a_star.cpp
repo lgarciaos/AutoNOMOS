@@ -9,14 +9,17 @@ a_star_t::~a_star_t()
 void a_star_t::setup_planning()
 {
   goal = (node_g*) malloc(sizeof(node_g));
+  collision_detector = new collision_detector_t();
+
 }
 
 void a_star_t::set_obstacles(std::vector<geometry_msgs::Pose> vec_obstacles_poses,
-  std::vector<int> vec_obstacles_type)
+  std::vector<int> vec_obstacles_type, double in_obstacles_radius)
 {
-  // std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << '\n';
-  obstacles_poses = vec_obstacles_poses;
-  obstacles_type = vec_obstacles_type;
+  collision_detector -> set_obstacles(vec_obstacles_poses, vec_obstacles_type);
+  collision_detector -> set_obstacles_radius(in_obstacles_radius);
+  // obstacles_poses = vec_obstacles_poses;
+  // obstacles_type = vec_obstacles_type;
 }
 
 void a_star_t::set_start_state(geometry_msgs::Pose2D in_start)
@@ -64,9 +67,11 @@ std::vector<geometry_msgs::Point> a_star_t::remove_obst_points(
   {
     car_num = 0;
     aux -> point = point;
+    // printf("aux:            (%.2f, %.2f, 0.00)\n", aux -> point.x, aux -> point.y );
+    // printf("aux_get_pose2d: (%.2f, %.2f, %.2f)\n", aux -> get_pose2d().x, aux -> get_pose2d().y, aux -> get_pose2d().theta );
     for(auto pose : obstacles_poses)
     {
-      if (node_in_car(aux, pose, false))
+      if (collision_detector -> pose_in_car(aux -> get_pose2d(), pose, false))
       {
         points_in_obstacles.push_back(point_num);
       }
@@ -103,10 +108,8 @@ std::vector<geometry_msgs::Point> a_star_t::remove_obst_points(
 
 void a_star_t::set_type(std::string in_type)
 {
-  std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << '\n';
-  std::cout << "type: " << in_type << '\n';
+  // std::cout << "type: " << in_type << '\n';
   type = in_type;
-  std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << '\n';
 }
 
 void a_star_t::set_goal_state(geometry_msgs::Pose2D in_goal, double in_radius)
@@ -122,26 +125,18 @@ void a_star_t::set_goal_state(geometry_msgs::Pose2D in_goal, double in_radius)
 
 void a_star_t::step()
 {
-  std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << '\n';
   std::vector<node_g*> neighbors;
-  node_g* current;
-  current = (node_g*) malloc(sizeof(node_g));
+  // node_g* current;
+  // current = (node_g*) malloc(sizeof(node_g));
   double cost, neig_actual_cost;
   bool neig_in_open = false;
   bool neig_in_closed = false;
 
-  std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << '\n';
   current = open.top();
-  std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << '\n';
   open.pop();
-  std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << '\n';
   closed.push_back(current);
-  std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << '\n';
   neighbors = get_adj_points(current, nodes_grid, type);
 
-  // std::cin >> dummy;
-
-  std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << '\n';
   for(auto neig : neighbors)
   {
     neig_actual_cost = actual_cost(current, neig);
@@ -149,7 +144,9 @@ void a_star_t::step()
     neig_in_open = open.node_in_queue(neig);
     neig_in_closed = is_element_in_vector(closed, neig);
 
-    std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << '\n';
+    // printf("(%.2f, %.2f, %.2f)\tactual_c: %.2f\tcost:%.2f\n", neig -> point.x,
+      // neig -> point.y, neig -> get_roll(), neig_actual_cost, neig_actual_cost + h(neig, goal));
+
     if (neig_in_open && cost < neig_actual_cost )
     {
       open.remove_node_from_queue(neig);
@@ -169,7 +166,27 @@ double a_star_t::distance(node_g* n1, node_g* n2)
   double d_x = n1 -> point.x - n2 -> point.x;
   double d_y = n1 -> point.y - n2 -> point.y;
   double d_theta = n1 -> get_roll() - n2 -> get_roll();
-  return sqrt( d_x * d_x + d_y * d_y + d_theta * d_theta);
+  // printf("1: (%.1f, %.1f, %.1f)\t2: (%.1f, %.1f, %.1f)", n1 -> point.x,
+  //   n1 -> point.y, n1 -> get_roll(), n2 -> point.x, n2 -> point.y, n2 -> get_roll());
+  // printf("\td_t: %.1f\tdis: %.1f\tdis_a: %.1f\n", d_theta,
+  //   sqrt( d_x * d_x + d_y * d_y), sqrt( d_x * d_x + d_y * d_y + d_theta * d_theta) );
+  // std::cout << "\td_t: " << d_theta << "\tdis: " <<sqrt( d_x * d_x + d_y * d_y)
+  //   << "\tdis_a: " << sqrt( d_x * d_x + d_y * d_y + d_theta * d_theta) << std::endl;
+  // return sqrt( d_x * d_x + d_y * d_y + d_theta * d_theta);
+  return sqrt( d_x * d_x + d_y * d_y);
+}
+
+double a_star_t::distance(node_g* n1, geometry_msgs::Pose2D pose)
+{
+  node_g* n_aux;
+  n_aux = (node_g*) malloc(sizeof(node_g));
+
+  n_aux -> point.x = pose.x;
+  n_aux -> point.y = pose.y;
+  n_aux -> set_orientation(pose.theta, 0, 0);
+  // return sqrt( d_x * d_x + d_y * d_y + d_theta * d_theta);
+  // return sqrt( d_x * d_x + d_y * d_y);// + d_theta * d_theta);
+  return distance(n1, n_aux);
 }
 
 double a_star_t::h(node_g* now, node_g* goal)
@@ -186,185 +203,183 @@ double a_star_t::get_distance_driven(int vel)
   return vel * rad * adj_fac * time_s;
 }
 
-bool a_star_t::node_in_car(node_g* node, geometry_msgs::Pose center_car, bool print = false)
-{
-
-  bool x_match = false;
-  bool y_match = false;
-
-  tf::Quaternion orient (center_car.orientation.x,
-                         center_car.orientation.y,
-                         center_car.orientation.z,
-                         center_car.orientation.w);
-
-  tf::Matrix3x3 m(orient);
-  double roll, pitch, yaw;
-  m.getRPY(roll, pitch, yaw);
-  double x_point_tf = node -> point.x - center_car.position.x;
-  double y_point_tf = node -> point.y - center_car.position.y;
-  double angle = roll;
-
-  x_point_tf = x_point_tf * cos(angle) - y_point_tf * sin(angle);
-  y_point_tf = y_point_tf * cos(angle) + x_point_tf * sin(angle);
-
-  if (-CAR_SIZE_X <= x_point_tf && x_point_tf <= CAR_SIZE_X)
-  {
-    x_match = true;
-  }
-  if (-CAR_SIZE_Y <= y_point_tf && y_point_tf <= CAR_SIZE_Y )
-  {
-    y_match = true;
-  }
-
-  if (print)
-  {
-    std::cout <<
-      "( " << node -> point.x << ", " << node -> point.y << " )\t\t" <<
-      "( " << center_car.position.x << ", " << center_car.position.y << " )\t\t" <<
-      "( " << x_point_tf << ", " << y_point_tf << " )" << '\n';
-  }
-
-  return x_match & y_match;
-}
-
-
-bool a_star_t::is_collision_free(node_g* start_node, node_g* end_node)
-{
-  int aut_count = 0;
-
-  // for(auto pose : obstacles_poses)
-  for (size_t i = 0; i < obstacles_poses.size(); i++)
-  {
-    if (obstacles_type[i] == RECTANGLE && node_in_car(end_node, obstacles_poses[i], false))
-    {
-      return false;
-    }
-    if (path_intersects_obstacle(start_node, end_node, obstacles_poses[i], obstacles_type[i]))
-    {
-      return false;
-    }
-    aut_count++;
-  }
-  return true;
-}
+// bool a_star_t::node_in_car(node_g* node, geometry_msgs::Pose center_car, bool print = false)
+// {
+//
+//   bool x_match = false;
+//   bool y_match = false;
+//
+//   tf::Quaternion orient (center_car.orientation.x,
+//                          center_car.orientation.y,
+//                          center_car.orientation.z,
+//                          center_car.orientation.w);
+//
+//   tf::Matrix3x3 m(orient);
+//   double roll, pitch, yaw;
+//   m.getRPY(roll, pitch, yaw);
+//   double x_point_tf = node -> point.x - center_car.position.x;
+//   double y_point_tf = node -> point.y - center_car.position.y;
+//   double angle = roll;
+//
+//   x_point_tf = x_point_tf * cos(angle) - y_point_tf * sin(angle);
+//   y_point_tf = y_point_tf * cos(angle) + x_point_tf * sin(angle);
+//
+//   if (-CAR_SIZE_X <= x_point_tf && x_point_tf <= CAR_SIZE_X)
+//   {
+//     x_match = true;
+//   }
+//   if (-CAR_SIZE_Y <= y_point_tf && y_point_tf <= CAR_SIZE_Y )
+//   {
+//     y_match = true;
+//   }
+//
+//   if (print)
+//   {
+//     std::cout <<
+//       "( " << node -> point.x << ", " << node -> point.y << " )\t\t" <<
+//       "( " << center_car.position.x << ", " << center_car.position.y << " )\t\t" <<
+//       "( " << x_point_tf << ", " << y_point_tf << " )" << '\n';
+//   }
+//
+//   return x_match & y_match;
+// }
 
 
-
-bool a_star_t::path_intersects_obstacle(node_g* start_node, node_g* end_node,
-                              geometry_msgs::Pose obstacle, int obstacle_type)
-{
-  double s, t, d;
-  double x00, x01, x10, x11;
-  double y00, y01, y10, y11;
-  double x_aux, y_aux;
-  double roll_start = start_node -> get_roll();
-  double roll_end = end_node -> get_roll();
-  std::vector<double> x_obs_coords;
-  std::vector<double> y_obs_coords;
-  std::vector<double> x_sta_coords;
-  std::vector<double> y_sta_coords;
-  std::vector<double> x_end_coords;
-  std::vector<double> y_end_coords;
-
-  bool res = false;
-
-  // u0 = (x00, y00)
-  // u1 = (x10, y10)
-  // v0 = (x01, y01)
-  // v1 = (x11, y11)
-
-  if (obstacle_type == RECTANGLE)
-  {
-
-    x_obs_coords.push_back(obstacle.position.x + CAR_SIZE_X);
-    x_obs_coords.push_back(obstacle.position.x + CAR_SIZE_X);
-    x_obs_coords.push_back(obstacle.position.x - CAR_SIZE_X);
-    x_obs_coords.push_back(obstacle.position.x - CAR_SIZE_X);
-
-    y_obs_coords.push_back(obstacle.position.y + CAR_SIZE_Y);
-    y_obs_coords.push_back(obstacle.position.y - CAR_SIZE_Y);
-    y_obs_coords.push_back(obstacle.position.y + CAR_SIZE_Y);
-    y_obs_coords.push_back(obstacle.position.y - CAR_SIZE_Y);
-
-    x_sta_coords.push_back((+CAR_SIZE_X) * cos(roll_start) - (+CAR_SIZE_Y) * sin(roll_start) + start_node -> point.x );
-    x_sta_coords.push_back((+CAR_SIZE_X) * cos(roll_start) - (-CAR_SIZE_Y) * sin(roll_start) + start_node -> point.x );
-    x_sta_coords.push_back((-CAR_SIZE_X) * cos(roll_start) - (+CAR_SIZE_Y) * sin(roll_start) + start_node -> point.x );
-    x_sta_coords.push_back((-CAR_SIZE_X) * cos(roll_start) - (-CAR_SIZE_Y) * sin(roll_start) + start_node -> point.x );
-
-    y_sta_coords.push_back((+CAR_SIZE_Y) * cos(roll_start) + (+ CAR_SIZE_X) * sin(roll_start) + start_node -> point.y);
-    y_sta_coords.push_back((-CAR_SIZE_Y) * cos(roll_start) + (+ CAR_SIZE_X) * sin(roll_start) + start_node -> point.y);
-    y_sta_coords.push_back((+CAR_SIZE_Y) * cos(roll_start) + (- CAR_SIZE_X) * sin(roll_start) + start_node -> point.y);
-    y_sta_coords.push_back((-CAR_SIZE_Y) * cos(roll_start) + (- CAR_SIZE_X) * sin(roll_start) + start_node -> point.y);
-
-    x_end_coords.push_back((+ CAR_SIZE_X) * cos(roll_end) - (+ CAR_SIZE_Y) * sin(roll_end) + end_node -> point.x);
-    x_end_coords.push_back((+ CAR_SIZE_X) * cos(roll_end) - (- CAR_SIZE_Y) * sin(roll_end) + end_node -> point.x);
-    x_end_coords.push_back((- CAR_SIZE_X) * cos(roll_end) - (+ CAR_SIZE_Y) * sin(roll_end) + end_node -> point.x);
-    x_end_coords.push_back((- CAR_SIZE_X) * cos(roll_end) - (- CAR_SIZE_Y) * sin(roll_end) + end_node -> point.x);
-
-    y_end_coords.push_back((+ CAR_SIZE_Y) * cos(roll_end) + (+ CAR_SIZE_X) * sin(roll_end) + end_node -> point.y);
-    y_end_coords.push_back((- CAR_SIZE_Y) * cos(roll_end) + (+ CAR_SIZE_X) * sin(roll_end) + end_node -> point.y);
-    y_end_coords.push_back((+ CAR_SIZE_Y) * cos(roll_end) + (- CAR_SIZE_X) * sin(roll_end) + end_node -> point.y);
-    y_end_coords.push_back((- CAR_SIZE_Y) * cos(roll_end) + (- CAR_SIZE_X) * sin(roll_end) + end_node -> point.y);
+// bool a_star_t::is_collision_free(node_g* start_node, node_g* end_node)
+// {
+//   int aut_count = 0;
+//
+//   // for(auto pose : obstacles_poses)
+//   for (size_t i = 0; i < obstacles_poses.size(); i++)
+//   {
+//     // if (obstacles_type[i] == RECTANGLE && node_in_car(end_node, obstacles_poses[i], false))
+//     if (obstacles_type[i] == RECTANGLE && pose_in_car(end_node, obstacles_poses[i], false))
+//     {
+//       return false;
+//     }
+//     if (collision_detector -> path_intersects_obstacle(start_node-> get_pose2d(),
+//       end_node -> get_pose2d(), obstacles_poses[i], obstacles_type[i]))
+//     {
+//       return false;
+//     }
+//     aut_count++;
+//   }
+//   return true;
+// }
 
 
-    for (size_t j = 0; j < 4; j++)
-    {
 
-      x00 = x_sta_coords[j];
-      y00 = y_sta_coords[j];
-      x01 = x_end_coords[j] - x00;
-      y01 = y_end_coords[j] - y00;
-
-      for (size_t i = 0; i < 4; i++)
-      {
-        x10 = x_obs_coords[i];
-        y10 = y_obs_coords[i];
-        x11 = x_obs_coords[((i + 1) % 4)] - x_obs_coords[i];
-        y11 = y_obs_coords[((i + 1) % 4)] - y_obs_coords[i];
-        d = x11 * y01 - x01 * y11;
-        if (d == 0)
-        {
-          // lines are parallel
-        }
-        else
-        {
-          s = (1/d) *  ( (x00 - x10) * y01 - (y00 - y10) * x01);
-          t = (1/d) * -(-(x00 - x10) * y11 + (y00 - y10) * x11);
-          if (0 <= s && s <= 1 && 0 <= t && t <= 1 )
-          {
-            //   x00    y00     x01    y01      x10    y10      x11    y11
-            // printf("s = %.1f, t = %.1f, d = %.1f, roll_start = %.1f, roll_end = %.1f\n", s, t, d, roll_start, roll_end);
-            // printf("sta (%.2f, %.2f):\t(%.2f, %.2f)\t(%.2f, %.2f)\t(%.2f, %.2f)\t(%.2f, %.2f)\n", start.x, start.y, x_sta_coords[0], y_sta_coords[0], x_sta_coords[1], y_sta_coords[1], x_sta_coords[2], y_sta_coords[2], x_sta_coords[3], y_sta_coords[3]);
-            // printf("end (%.2f, %.2f):\t(%.2f, %.2f)\t(%.2f, %.2f)\t(%.2f, %.2f)\t(%.2f, %.2f)\n", end.x, end.y, x_end_coords[0], y_end_coords[0], x_end_coords[1], y_end_coords[1], x_end_coords[2], y_end_coords[2], x_end_coords[3], y_end_coords[3]);
-            // printf("obs (%.2f, %.2f):\t(%.2f, %.2f)\t(%.2f, %.2f)\t(%.2f, %.2f)\t(%.2f, %.2f)\n", obstacle.position.x, obstacle.position.y, x_obs_coords[0], y_obs_coords[0], x_obs_coords[1], y_obs_coords[1], x_obs_coords[2], y_obs_coords[2], x_obs_coords[3], y_obs_coords[3]);
-            // printf("x(t) = %.2f + %.2ft\ty(t) = %.2f + %.2ft\n", x00, x01, y00, y01);
-            // printf("x(t) = %.1f + %.1ft\ty(t) = %.1f + %.1ft\n", x_sta_coords[0], x_sta_coords[0] - x_end_coords[0], y_sta_coords[0], y_sta_coords[0] - y_end_coords[0]);
-            // printf("x(t) = %.1f + %.1ft\ty(t) = %.1f + %.1ft\n", x_sta_coords[1], x_sta_coords[1] - x_end_coords[1], y_sta_coords[1], y_sta_coords[1] - y_end_coords[1]);
-            // printf("x(t) = %.1f + %.1ft\ty(t) = %.1f + %.1ft\n", x_sta_coords[2], x_sta_coords[2] - x_end_coords[2], y_sta_coords[2], y_sta_coords[2] - y_end_coords[2]);
-            // printf("x(t) = %.1f + %.1ft\ty(t) = %.1f + %.1ft\n", x_sta_coords[3], x_sta_coords[3] - x_end_coords[3], y_sta_coords[3], y_sta_coords[3] - y_end_coords[3]);
-            // printf("(%.2f, %.2f)\t(%.2f, %.2f)\t(%.2f, %.2f). s = %.1f, t = %.1f, d = %.1f\n", start.x, start.y, end.x, end.y, obstacle.position.x, obstacle.position.y, s, t, d);
-            res = true;
-          }
-        }
-      }
-    }
-  }
-
-  return res;
-
-}
+// bool a_star_t::path_intersects_obstacle(node_g* start_node, node_g* end_node,
+//                               geometry_msgs::Pose obstacle, int obstacle_type)
+// {
+//   double s, t, d;
+//   double x00, x01, x10, x11;
+//   double y00, y01, y10, y11;
+//   double x_aux, y_aux;
+//   double roll_start = start_node -> get_roll();
+//   double roll_end = end_node -> get_roll();
+//   std::vector<double> x_obs_coords;
+//   std::vector<double> y_obs_coords;
+//   std::vector<double> x_sta_coords;
+//   std::vector<double> y_sta_coords;
+//   std::vector<double> x_end_coords;
+//   std::vector<double> y_end_coords;
+//
+//   bool res = false;
+//
+//   // u0 = (x00, y00)
+//   // u1 = (x10, y10)
+//   // v0 = (x01, y01)
+//   // v1 = (x11, y11)
+//
+//   if (obstacle_type == RECTANGLE)
+//   {
+//
+//     x_obs_coords.push_back(obstacle.position.x + CAR_SIZE_X);
+//     x_obs_coords.push_back(obstacle.position.x + CAR_SIZE_X);
+//     x_obs_coords.push_back(obstacle.position.x - CAR_SIZE_X);
+//     x_obs_coords.push_back(obstacle.position.x - CAR_SIZE_X);
+//
+//     y_obs_coords.push_back(obstacle.position.y + CAR_SIZE_Y);
+//     y_obs_coords.push_back(obstacle.position.y - CAR_SIZE_Y);
+//     y_obs_coords.push_back(obstacle.position.y + CAR_SIZE_Y);
+//     y_obs_coords.push_back(obstacle.position.y - CAR_SIZE_Y);
+//
+//     x_sta_coords.push_back((+CAR_SIZE_X) * cos(roll_start) - (+CAR_SIZE_Y) * sin(roll_start) + start_node -> point.x );
+//     x_sta_coords.push_back((+CAR_SIZE_X) * cos(roll_start) - (-CAR_SIZE_Y) * sin(roll_start) + start_node -> point.x );
+//     x_sta_coords.push_back((-CAR_SIZE_X) * cos(roll_start) - (+CAR_SIZE_Y) * sin(roll_start) + start_node -> point.x );
+//     x_sta_coords.push_back((-CAR_SIZE_X) * cos(roll_start) - (-CAR_SIZE_Y) * sin(roll_start) + start_node -> point.x );
+//
+//     y_sta_coords.push_back((+CAR_SIZE_Y) * cos(roll_start) + (+ CAR_SIZE_X) * sin(roll_start) + start_node -> point.y);
+//     y_sta_coords.push_back((-CAR_SIZE_Y) * cos(roll_start) + (+ CAR_SIZE_X) * sin(roll_start) + start_node -> point.y);
+//     y_sta_coords.push_back((+CAR_SIZE_Y) * cos(roll_start) + (- CAR_SIZE_X) * sin(roll_start) + start_node -> point.y);
+//     y_sta_coords.push_back((-CAR_SIZE_Y) * cos(roll_start) + (- CAR_SIZE_X) * sin(roll_start) + start_node -> point.y);
+//
+//     x_end_coords.push_back((+ CAR_SIZE_X) * cos(roll_end) - (+ CAR_SIZE_Y) * sin(roll_end) + end_node -> point.x);
+//     x_end_coords.push_back((+ CAR_SIZE_X) * cos(roll_end) - (- CAR_SIZE_Y) * sin(roll_end) + end_node -> point.x);
+//     x_end_coords.push_back((- CAR_SIZE_X) * cos(roll_end) - (+ CAR_SIZE_Y) * sin(roll_end) + end_node -> point.x);
+//     x_end_coords.push_back((- CAR_SIZE_X) * cos(roll_end) - (- CAR_SIZE_Y) * sin(roll_end) + end_node -> point.x);
+//
+//     y_end_coords.push_back((+ CAR_SIZE_Y) * cos(roll_end) + (+ CAR_SIZE_X) * sin(roll_end) + end_node -> point.y);
+//     y_end_coords.push_back((- CAR_SIZE_Y) * cos(roll_end) + (+ CAR_SIZE_X) * sin(roll_end) + end_node -> point.y);
+//     y_end_coords.push_back((+ CAR_SIZE_Y) * cos(roll_end) + (- CAR_SIZE_X) * sin(roll_end) + end_node -> point.y);
+//     y_end_coords.push_back((- CAR_SIZE_Y) * cos(roll_end) + (- CAR_SIZE_X) * sin(roll_end) + end_node -> point.y);
+//
+//
+//     for (size_t j = 0; j < 4; j++)
+//     {
+//
+//       x00 = x_sta_coords[j];
+//       y00 = y_sta_coords[j];
+//       x01 = x_end_coords[j] - x00;
+//       y01 = y_end_coords[j] - y00;
+//
+//       for (size_t i = 0; i < 4; i++)
+//       {
+//         x10 = x_obs_coords[i];
+//         y10 = y_obs_coords[i];
+//         x11 = x_obs_coords[((i + 1) % 4)] - x_obs_coords[i];
+//         y11 = y_obs_coords[((i + 1) % 4)] - y_obs_coords[i];
+//         d = x11 * y01 - x01 * y11;
+//         if (d == 0)
+//         {
+//           // lines are parallel
+//         }
+//         else
+//         {
+//           s = (1/d) *  ( (x00 - x10) * y01 - (y00 - y10) * x01);
+//           t = (1/d) * -(-(x00 - x10) * y11 + (y00 - y10) * x11);
+//           if (0 <= s && s <= 1 && 0 <= t && t <= 1 )
+//           {
+//             //   x00    y00     x01    y01      x10    y10      x11    y11
+//             // printf("s = %.1f, t = %.1f, d = %.1f, roll_start = %.1f, roll_end = %.1f\n", s, t, d, roll_start, roll_end);
+//             // printf("sta (%.2f, %.2f):\t(%.2f, %.2f)\t(%.2f, %.2f)\t(%.2f, %.2f)\t(%.2f, %.2f)\n", start.x, start.y, x_sta_coords[0], y_sta_coords[0], x_sta_coords[1], y_sta_coords[1], x_sta_coords[2], y_sta_coords[2], x_sta_coords[3], y_sta_coords[3]);
+//             // printf("end (%.2f, %.2f):\t(%.2f, %.2f)\t(%.2f, %.2f)\t(%.2f, %.2f)\t(%.2f, %.2f)\n", end.x, end.y, x_end_coords[0], y_end_coords[0], x_end_coords[1], y_end_coords[1], x_end_coords[2], y_end_coords[2], x_end_coords[3], y_end_coords[3]);
+//             // printf("obs (%.2f, %.2f):\t(%.2f, %.2f)\t(%.2f, %.2f)\t(%.2f, %.2f)\t(%.2f, %.2f)\n", obstacle.position.x, obstacle.position.y, x_obs_coords[0], y_obs_coords[0], x_obs_coords[1], y_obs_coords[1], x_obs_coords[2], y_obs_coords[2], x_obs_coords[3], y_obs_coords[3]);
+//             // printf("x(t) = %.2f + %.2ft\ty(t) = %.2f + %.2ft\n", x00, x01, y00, y01);
+//             // printf("x(t) = %.1f + %.1ft\ty(t) = %.1f + %.1ft\n", x_sta_coords[0], x_sta_coords[0] - x_end_coords[0], y_sta_coords[0], y_sta_coords[0] - y_end_coords[0]);
+//             // printf("x(t) = %.1f + %.1ft\ty(t) = %.1f + %.1ft\n", x_sta_coords[1], x_sta_coords[1] - x_end_coords[1], y_sta_coords[1], y_sta_coords[1] - y_end_coords[1]);
+//             // printf("x(t) = %.1f + %.1ft\ty(t) = %.1f + %.1ft\n", x_sta_coords[2], x_sta_coords[2] - x_end_coords[2], y_sta_coords[2], y_sta_coords[2] - y_end_coords[2]);
+//             // printf("x(t) = %.1f + %.1ft\ty(t) = %.1f + %.1ft\n", x_sta_coords[3], x_sta_coords[3] - x_end_coords[3], y_sta_coords[3], y_sta_coords[3] - y_end_coords[3]);
+//             // printf("(%.2f, %.2f)\t(%.2f, %.2f)\t(%.2f, %.2f). s = %.1f, t = %.1f, d = %.1f\n", start.x, start.y, end.x, end.y, obstacle.position.x, obstacle.position.y, s, t, d);
+//             res = true;
+//           }
+//         }
+//       }
+//     }
+//   }
+//
+//   return res;
+//
+// }
 
 std::vector<node_g*> a_star_t::get_adj_points(node_g* node_ini,
                   std::vector<node_g*> nodes, std::string points_creation)
 {
-  std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << '\n';
-
   std::vector<node_g*> out;
 
   if (points_creation == GRID)
   {
-    std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << '\n';
-
     for(auto n : nodes)
     {
       if (distance(node_ini, n) < goal_radius &&
@@ -376,8 +391,6 @@ std::vector<node_g*> a_star_t::get_adj_points(node_g* node_ini,
   }
   else if (points_creation == CTRL)
   {
-    std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << '\n';
-
     std::vector<double> steering_vec = {-.5, 0, .5};
     std::vector<int> speed_vec = {-100, -150, -200};
     for (auto steering : steering_vec)
@@ -392,7 +405,10 @@ std::vector<node_g*> a_star_t::get_adj_points(node_g* node_ini,
         end_node = (node_g*) malloc(sizeof(node_g));
         end_node -> point.x = x_point_tf;
         end_node -> point.y = y_point_tf;
-        if(is_collision_free(node_ini, end_node))
+        end_node -> set_orientation(angle, 0, 0);
+        // printf("aux:            (%.2f, %.2f, %.2f)\n", node_ini -> point.x, node_ini -> point.y, node_ini -> get_roll() );
+        // printf("aux_get_pose2d: (%.2f, %.2f, %.2f)\n", node_ini -> get_pose2d().x, node_ini -> get_pose2d().y, node_ini -> get_pose2d().theta );
+        if(collision_detector -> is_collision_free(node_ini -> get_pose2d(), end_node -> get_pose2d()))
         {
           // node_g* n;
           // n = (node_g*) malloc(sizeof(node_g));
@@ -401,7 +417,6 @@ std::vector<node_g*> a_star_t::get_adj_points(node_g* node_ini,
           // n -> set_orientation(angle, 0, 0);
           // n -> parent = NULL;
           // out.push_back(n);
-          end_node -> set_orientation(angle, 0, 0);
           end_node -> parent = NULL;
           out.push_back(end_node);
         }
@@ -435,12 +450,130 @@ bool a_star_t::is_element_in_vector(std::vector<node_g*> vector, node_g* element
   return false;
 }
 
+bool a_star_t::pose_reached()
+{
+  // std::cout << "dist: " << distance(open.top(), goal) << "\t rad: " << goal_radius << '\n';
+  return distance(open.top(), goal) <= goal_radius;
+}
+
+std_msgs::Float64MultiArray a_star_t::get_closed_lines()
+{
+  std_msgs::Float64MultiArray res;
+  std_msgs::MultiArrayDimension layout_aux;
+
+  for (auto e : closed)
+  {
+    if (e -> parent != NULL)
+    {
+      res.data.push_back(e -> point.x);
+      res.data.push_back(e -> point.y);
+      res.data.push_back(e -> parent -> point.x);
+      res.data.push_back(e -> parent -> point.y);
+    }
+  }
+  res.layout.data_offset = 0;
+  layout_aux.label = "x_i";
+  layout_aux.size = closed.size()*4;
+  layout_aux.stride = 4*4*4*4;
+  res.layout.dim.push_back(layout_aux);
+  layout_aux.label = "y_i";
+  layout_aux.size = closed.size()*4;
+  layout_aux.stride = 4*4*4;
+  res.layout.dim.push_back(layout_aux);
+  layout_aux.label = "x_i + 1";
+  layout_aux.size = closed.size()*4;
+  layout_aux.stride = 4*4;
+  res.layout.dim.push_back(layout_aux);
+  layout_aux.label = "y_i + 1";
+  layout_aux.size = closed.size()*4;
+  layout_aux.stride = 4;
+  res.layout.dim.push_back(layout_aux);
+  return res;
+}
+
+std_msgs::Float64MultiArray a_star_t::get_opened_lines()
+{
+  std_msgs::Float64MultiArray res;
+  std_msgs::MultiArrayDimension layout_aux;
+
+  for (auto e : open.get_vector())
+  {
+    if (e -> parent != NULL)
+    {
+      res.data.push_back(e -> point.x);
+      res.data.push_back(e -> point.y);
+      res.data.push_back(e -> parent -> point.x);
+      res.data.push_back(e -> parent -> point.y);
+    }
+  }
+  res.layout.data_offset = 0;
+  layout_aux.label = "x_i";
+  layout_aux.size = open.get_vector().size() * 4;
+  layout_aux.stride = 4*4*4*4;
+  res.layout.dim.push_back(layout_aux);
+  layout_aux.label = "y_i";
+  layout_aux.size = open.get_vector().size() * 4;
+  layout_aux.stride = 4*4*4;
+  res.layout.dim.push_back(layout_aux);
+  layout_aux.label = "x_i + 1";
+  layout_aux.size = open.get_vector().size() * 4;
+  layout_aux.stride = 4*4;
+  res.layout.dim.push_back(layout_aux);
+  layout_aux.label = "y_i + 1";
+  layout_aux.size = open.get_vector().size() * 4;
+  layout_aux.stride = 4;
+  res.layout.dim.push_back(layout_aux);
+  return res;
+}
+
+std_msgs::Float64MultiArray a_star_t::get_path_lines()
+{
+  std_msgs::Float64MultiArray res;
+  std_msgs::MultiArrayDimension layout_aux;
+  node_g* aux = open.top();
+  int tot_nodes = 0;
+  while (aux -> parent != NULL)
+  {
+    tot_nodes++;
+    res.data.push_back(aux -> point.x);
+    res.data.push_back(aux -> point.y);
+    res.data.push_back(aux -> parent -> point.x);
+    res.data.push_back(aux -> parent -> point.y);
+    aux = aux -> parent;
+  }
+  res.layout.data_offset = 0;
+
+  layout_aux.label = "x_i";
+  layout_aux.size = tot_nodes * 4;
+  layout_aux.stride = 4*4*4*4;
+  res.layout.dim.push_back(layout_aux);
+  layout_aux.label = "y_i";
+  layout_aux.size = tot_nodes * 4;
+  layout_aux.stride = 4*4*4;
+  res.layout.dim.push_back(layout_aux);
+  layout_aux.label = "x_i + 1";
+  layout_aux.size = tot_nodes * 4;
+  layout_aux.stride = 4*4;
+  res.layout.dim.push_back(layout_aux);
+  layout_aux.label = "y_i + 1";
+  layout_aux.size = tot_nodes * 4;
+  layout_aux.stride = 4;
+  res.layout.dim.push_back(layout_aux);
+  return res;
+}
+
 int a_star_t::get_total_nodes()
 {
   return closed.size(); // add the opened nodes?
 }
 
+int a_star_t::reset_nodes()
+{
+  closed.clear();
+  open.reset_queue();
+}
+
 void a_star_t::get_solution(std::vector<std::pair<double*,double> >& controls)
 {
-  std::cout << "TODO" << '\n';
+  // std::cout << "TODO" << '\n';
 }

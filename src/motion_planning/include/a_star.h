@@ -21,6 +21,7 @@
 // ros msgs
 #include <geometry_msgs/Pose2D.h>
 #include <geometry_msgs/Point.h>
+#include <std_msgs/Float64MultiArray.h>
 
 // ignition
 // #include <ignition/math.hh>
@@ -32,6 +33,7 @@
 // own
 #include "node_g.cpp"
 #include "priority_queue_nodes.cpp"
+#include "collision_detector.h"
 
 // types of a_star
 #define GRID "A_STAR_GRID"
@@ -55,7 +57,8 @@ class a_star_t
 
     a_star_t()
     {
-      std::cout << "a_star initialized" << '\n';
+      current = (node_g*) malloc(sizeof(node_g));
+      // std::cout << "a_star initialized" << '\n';
     }
     virtual ~a_star_t();
 
@@ -126,7 +129,7 @@ class a_star_t
     void set_type(std::string in_type);
 
     void set_obstacles(std::vector<geometry_msgs::Pose> obstacle_poses,
-      std::vector<int> obstacles_type);
+      std::vector<int> obstacles_type, double in_obstacles_radius);
 
     std::vector<geometry_msgs::Point> generate_grid(double x_inc, double y_inc,
       double grid_init_x, double grid_init_y, double grid_end_x,
@@ -135,6 +138,14 @@ class a_star_t
     std::vector<geometry_msgs::Point> remove_obst_points(std::vector<geometry_msgs::Point> points_in);
 
     int get_total_nodes();
+
+    std_msgs::Float64MultiArray get_path_lines();
+    std_msgs::Float64MultiArray get_opened_lines();
+    std_msgs::Float64MultiArray get_closed_lines();
+
+    bool pose_reached();
+
+    int reset_nodes();
 
     /**
      * @brief The type of alg: grid or control.
@@ -151,6 +162,7 @@ class a_star_t
   	 * @details return the distance from one node to the other
   	 */
     double distance(node_g* n1, node_g* n2);
+    double distance(node_g* n1, geometry_msgs::Pose2D pose);
 
     /**
   	 * @brief get the points adjecent to the current point
@@ -219,9 +231,10 @@ class a_star_t
 
     std::vector<geometry_msgs::Point> grid_points;
 
+    collision_detector_t* collision_detector;
   private:
 
-
+    node_g* current;
 };
 
 #endif

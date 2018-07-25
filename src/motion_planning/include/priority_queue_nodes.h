@@ -19,7 +19,7 @@ class priority_queue_nodes
 {
 	private:
     std::vector<node_g*> nodes;
-    int num_elements;
+    // int num_elements;
     int lookup_node(node_g* node);
 		bool nodes_in_vecinity(node_g* p1, node_g* p2);
 
@@ -32,6 +32,7 @@ class priority_queue_nodes
     void pop();
     bool empty();
     int size();
+		void reset_queue();
 
     std::vector<node_g*> get_vector();
     void print_vector();
