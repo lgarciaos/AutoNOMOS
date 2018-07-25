@@ -160,11 +160,13 @@ set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${IGNITION-TRANSPORT_CXX_FLAGS}")
 # 	)
 link_directories(
 	${IGNITION-TRANSPORT_LIBRARY_DIRS}
+	${Boost_LIBRARY_DIRS}
 	# ${sparce_rrt_INCLUDE_DIRS}
 	)
 
 add_executable(test_sim_tools_node src/simulation_node.cpp)
 add_executable(get_obstacles_node src/get_obstacles_node.cpp)
+add_executable(gz_visual_tools_node src/gz_visual_tools_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -183,6 +185,13 @@ target_link_libraries(test_sim_tools_node
 
 target_link_libraries(get_obstacles_node
   ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES} ${IGNITION-TRANSPORT_LIBRARIES}
+)
+
+target_link_libraries(gz_visual_tools_node
+  ${catkin_LIBRARIES}
+	${GAZEBO_LIBRARIES}
+	${IGNITION-TRANSPORT_LIBRARIES}
+
 )
 
 #############

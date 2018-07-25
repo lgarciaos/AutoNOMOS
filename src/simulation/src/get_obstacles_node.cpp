@@ -87,7 +87,7 @@ int main(int argc, char **argv)
         ros::spinOnce();
         if (model_states.name.size() > 0)
         {
-          get_obstacles_poses(); 
+          get_obstacles_poses();
           msg_obstacles_poses.header.seq++;
           msg_obstacles_poses.header.stamp = ros::Time::now();
           pub_obs_poses.publish(msg_obstacles_poses);
