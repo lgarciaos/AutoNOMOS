@@ -130,8 +130,9 @@ ${catkin_INCLUDE_DIRS}
 
 LINK_DIRECTORIES(sparse_rrt/lib)
 ## Declare a C++ library
-add_library(${PROJECT_NAME}_a_star
+add_library(${PROJECT_NAME}
   src/a_star.cpp
+	src/collision_detector.cpp
 )
 
 ## Add cmake target dependencies of the library
@@ -162,7 +163,7 @@ set_target_properties(${PROJECT_NAME}_node PROPERTIES OUTPUT_NAME node PREFIX ""
 target_link_libraries(
 	${PROJECT_NAME}_node
   	${catkin_LIBRARIES}
-		${PROJECT_NAME}_a_star
+		${PROJECT_NAME}
 		SparseRRT
 		# ${PROJECT_SOURCE_DIR}/sparse_rrt/lib/libSparseRRT.so
 )

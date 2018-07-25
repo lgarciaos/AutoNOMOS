@@ -4,13 +4,18 @@
 // ros
 #include <geometry_msgs/PoseArray.h>
 #include <std_msgs/Int64MultiArray.h>
+#include <std_msgs/Float64MultiArray.h>
 
 // sparce rrt
 #include "utilities/parameter_reader.hpp"
 #include "utilities/condition_check.hpp"
 #include "utilities/random.hpp"
 #include "utilities/timer.hpp"
-
+#include "systems/point.hpp"
+#include "systems/car.hpp"
+#include "motion_planners/sst.hpp"
+#include "motion_planners/rrt.hpp"
+#include "utilities/parameter_reader.hpp"
 
 #define RRT "RRT"
 
@@ -21,59 +26,80 @@ std::vector<geometry_msgs::Pose> vec_obstacles_poses;
 std::vector<int> vec_obstacles_type;
 int path_counter;
 
-double integration_step;
-std::string stopping_type;
-double stopping_check;
-std::string stats_type;
-double param_stats_check;
-int min_time_steps;
-int max_time_steps;
-int random_seed;
-double sst_delta_near;
-double sst_delta_drain;
-std::string planner;
-std::string system_par;
-geometry_msgs::Pose2D start_state;
-geometry_msgs::Pose2D goal_state;
-double goal_radius;
-bool intermediate_visualization;
 
-void a_star_solve(a_star_t* a_star)
+geometry_msgs::Pose2D params_start_state, params_goal_state;
+
+bool simulation;
+std::vector<ros::Publisher> pub_gazebo_lines_visualizer;
+ros::Publisher pub_target_pose;
+int gz_total_lines;
+
+double obstacles_radius;
+
+std_msgs::Float64MultiArray vec_lines_closed;
+std_msgs::Float64MultiArray vec_lines_path;
+std_msgs::Float64MultiArray vec_lines_opened;
+
+int dummy;
+a_star_t* a_star_ptr;
+
+planner_t* planner;
+
+
+// functions
+void publish_lines();
+void a_star_solve();
+void create_path();
+void create_path();
+void get_obstacles_poses_callback(const geometry_msgs::PoseArray& msg);
+void get_obstacles_types_callback(const std_msgs::Int64MultiArray& msg);
+void rrt_sst_solver();
+
+void a_star_solve()
 {
-  std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << '\n';
 
-  condition_check_t checker(stopping_type,stopping_check);
+  condition_check_t checker(params::stopping_type, params::stopping_check);
 	condition_check_t* stats_check=NULL;
 	if(stats_check!=0)
 	{
-		stats_check = new condition_check_t(stats_type, param_stats_check);
+		stats_check = new condition_check_t(params::stats_type, params::stats_check);
 	}
-  std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << '\n';
 
 	checker.reset();
-	std::cout<<"Starting the planner: "<< planner << std::endl;
 
-  std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << '\n';
   if(stats_check==NULL)
 	{
 		do
 		{
-      std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << '\n';
-			a_star->step();
+			a_star_ptr->step();
+      if (params::intermediate_visualization)
+      {
+        publish_lines();
+        pub_target_pose.publish(params_goal_state);
+        std::cout << "continue?" << '\n';
+        std::cin >> dummy;
+        if (!dummy)
+        {
+          ros::shutdown();
+        }
+      }
 		}
-		while(!checker.check());
+		while(! a_star_ptr -> pose_reached() );
+
+
 		std::vector<std::pair<double*,double> > controls;
-		a_star->get_solution(controls);
+		a_star_ptr->get_solution(controls);
 		double solution_cost = 0;
 		for(unsigned i=0;i<controls.size();i++)
 		{
 			solution_cost+=controls[i].second;
 		}
+    // std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << '\n';
 		// std::cout << "Time: " << checker.time() << " Iterations: " <<
-    //   checker.iterations() << " Nodes: " << a_star -> get_total_nodes() <<
+    //   checker.iterations() << " Nodes: " << a_star_ptr -> get_total_nodes() <<
     //   " Solution Quality: " << solution_cost << std::endl ;
-		// a_star->visualize_tree(0);
-		// a_star->visualize_nodes(0);
+		// a_star_ptr->visualize_tree(0);
+		// a_star_ptr->visualize_nodes(0);
 	}
 	else
 	{
@@ -84,46 +110,47 @@ void a_star_solve(a_star_t* a_star)
 		{
 			do
 			{
-				a_star->step();
+				a_star_ptr -> step();
 				execution_done = checker.check();
 				stats_print = stats_check->check();
 			}
-			while(!execution_done && !stats_print);
+      while(! a_star_ptr -> pose_reached() );
+			// while(!execution_done && !stats_print);
 			if(stats_print)
 			{
 				std::vector<std::pair<double*, double> > controls;
-				a_star->get_solution(controls);
+				a_star_ptr -> get_solution(controls);
 				double solution_cost = 0;
 				for(unsigned i=0;i<controls.size();i++)
 				{
 					solution_cost+=controls[i].second;
 				}
 				// std::cout << "Time: " << checker.time() << " Iterations: " <<
-        //   checker.iterations() << " Nodes: " << a_star -> get_total_nodes() <<
+        //   checker.iterations() << " Nodes: " << a_star_ptr -> get_total_nodes() <<
         //   " Solution Quality: " << solution_cost << std::endl ;
 				stats_print = false;
 				// if(params::intermediate_visualization)
 				// {
-				// 	a_star->visualize_tree(count);
-				// 	a_star->visualize_nodes(count);
+				// 	a_star_ptr->visualize_tree(count);
+				// 	a_star_ptr->visualize_nodes(count);
 				// 	count++;
 				// }
 				stats_check->reset();
 			}
 			if (execution_done)
 			{
-				std::vector<std::pair<double*,double> > controls;
-				a_star->get_solution(controls);
-				double solution_cost = 0;
-				for(unsigned i=0;i<controls.size();i++)
-				{
-					solution_cost+=controls[i].second;
-				}
+				// std::vector<std::pair<double*,double> > controls;
+				// a_star_ptr->get_solution(controls);
+				// double solution_cost = 0;
+				// for(unsigned i=0;i<controls.size();i++)
+				// {
+				// 	solution_cost+=controls[i].second;
+				// }
 				// std::cout << "Time: " << checker.time() << " Iterations: " <<
-        //   checker.iterations() << " Nodes: " << a_star -> get_total_nodes() <<
+        //   checker.iterations() << " Nodes: " << a_star_ptr -> get_total_nodes() <<
         //   " Solution Quality: " << solution_cost << std::endl ;
-				// a_star->visualize_tree(count);
-				// a_star->visualize_nodes(count);
+				// a_star_ptr -> visualize_tree(count);
+				// a_star_ptr -> visualize_nodes(count);
 				break;
 			}
 		}
@@ -132,53 +159,172 @@ void a_star_solve(a_star_t* a_star)
 
 void create_path()
 {
-  std::cout << path_counter << ": creating new path" << '\n';
+  std::cout << path_counter << ": creating new path for " << params::planner << std::endl;
   std::vector<geometry_msgs::Pose> obstacles_pos;
   std::vector<geometry_msgs::Twist> obstacles_twist;
 
   path_counter++;
 
-  std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << '\n';
   std::vector<geometry_msgs::Point> points;
   std::vector<geometry_msgs::Point> points_w_obs;
 
-  if (planner == GRID)
+  if (params::planner == GRID)
   {
-    a_star_t* a_star_grid = new a_star_t();
-    a_star_grid -> set_type(planner);
-    a_star_grid -> set_obstacles(vec_obstacles_poses, vec_obstacles_type);
-    points = a_star_grid -> generate_grid(.5, .5, -10, -10, 0, 10);
-    a_star_grid -> remove_obst_points(points);
-    a_star_solve(a_star_grid);
+
+    // a_star_ptr = new a_star_t();
+    a_star_ptr -> set_type(params::planner);
+    a_star_ptr -> set_obstacles(vec_obstacles_poses, vec_obstacles_type, obstacles_radius);
+    points = a_star_ptr -> generate_grid(.5, .5, -10, -10, 0, 10);
+    a_star_ptr -> remove_obst_points(points);
+    a_star_solve();
+    // vec_lines_closed = a_star_ptr -> get_closed_lines();
+
+    // a_star_ptr(initial_pt, end_pt, planner);
+  }
+  else if(params::planner == CTRL)
+  {
+    // a_star_ptr = new a_star_t();
+    a_star_ptr -> reset_nodes();
+    a_star_ptr -> setup_planning();
+    a_star_ptr -> set_type(params::planner);
+    a_star_ptr -> set_obstacles(vec_obstacles_poses, vec_obstacles_type, obstacles_radius);
+    // printf("start: (%.1f, %.1f, %.1f)\n", start_state.x, start_state.y, start_state.theta );
+    // printf("goal: (%.1f, %.1f, %.1f) +- %.1f\n", goal_state.x, goal_state.y, goal_state.theta, goal_radius );
+    a_star_ptr -> set_start_state(params_start_state);
+    a_star_ptr -> set_goal_state(params_goal_state, params::goal_radius);
+    a_star_solve();
+
+    // if (simulation)
+    // {
+    //   vec_lines_path   = a_star_ptr -> get_path_lines();
+    //   vec_lines_opened = a_star_ptr -> get_opened_lines();
+    //   vec_lines_closed = a_star_ptr -> get_closed_lines();
+    // }
     // a_star(initial_pt, end_pt, planner);
   }
-  else if(planner == CTRL)
+  else if(params::planner == RRT)
   {
-    std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << '\n';
-    a_star_t* a_star_ctrl = new a_star_t();
-    a_star_ctrl -> setup_planning();
-    std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << '\n';
-    a_star_ctrl -> set_type(planner);
-    std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << '\n';
-    a_star_ctrl -> set_obstacles(vec_obstacles_poses, vec_obstacles_type);
-    std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << '\n';
-    a_star_ctrl -> set_start_state(start_state);
-    std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << '\n';
-    a_star_ctrl -> set_goal_state(goal_state, goal_radius);
-    std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << '\n';
-    a_star_solve(a_star_ctrl);
-    // a_star(initial_pt, end_pt, planner);
-  }
-  else if(planner == RRT)
-  {
-    std::cout << "RRT" << '\n';
+    system_t* system;
+    system = new car_t();
+    // system = new point_t();
+    planner = new rrt_t(system);
+    rrt_sst_solver();
   }
   else
   {
-    ROS_FATAL_STREAM("parameter not valid: " << planner);
+    ROS_FATAL_STREAM("parameter not valid: " << params::planner);
     ros::shutdown();
   }
 
+}
+
+void rrt_sst_solver()
+{
+  // double* params_start_state_ = new double[3];
+  // double* params_goal_state_ = new double[3];
+  // params_start_state_[0] = 0;//start_state.x;
+  // params_start_state_[1] = 0;//start_state.y;
+  // // start_state_[2] = start_state.theta;
+  // params_goal_state_[0] = 9; //goal_state.x;
+  // params_goal_state_[1] = 9; //goal_state.y;
+  // // goal_state_[2] = goal_state.theta;
+  params::goal_radius = .5;
+  planner->set_start_state(params::start_state);
+	planner->set_goal_state(params::goal_state, params::goal_radius);
+	planner->setup_planning();
+  // dummy variables
+  int dummy_cont;
+
+  std::cin >> dummy_cont;
+
+	condition_check_t checker(params::stopping_type, params::stopping_check);
+	condition_check_t* stats_check=NULL;
+	if(params::stats_check != 0)
+	{
+		stats_check = new condition_check_t(params::stats_type, params::stats_check);
+	}
+  checker.reset();
+	std::cout << "Starting the planner: " << params::planner << " for the system: "
+    << params::system << std::endl;
+	if(stats_check==NULL)
+	{
+		do
+		{
+			planner->step();
+      // std::cout << "line: " << __LINE__ << "\tcont: " << dummy_cont << '\n';
+      // dummy_cont++;
+		}
+		while(!checker.check());
+		std::vector<std::pair<double*,double> > controls;
+		planner->get_solution(controls);
+		double solution_cost = 0;
+    std::cout << "controls size: " << controls.size() << '\n';
+
+		for(unsigned i = 0; i < controls.size(); i++)
+		{
+			solution_cost += controls[i].second;
+		}
+		std::cout << "Time: " << checker.time() << " Iterations: " <<
+      checker.iterations() << " Nodes: " << planner -> number_of_nodes <<
+      " Solution Quality: " << solution_cost << std::endl ;
+		planner->visualize_tree(0);
+		planner->visualize_nodes(0);
+	}
+	else
+	{
+		int count = 0;
+		bool execution_done = false;
+		bool stats_print = false;
+		while(true)
+		{
+			do
+			{
+				planner->step();
+				execution_done = checker.check();
+				stats_print = stats_check->check();
+			}
+			while(!execution_done && !stats_print);
+			if(stats_print)
+			{
+				std::vector<std::pair<double*,double> > controls;
+				planner->get_solution(controls);
+				double solution_cost = 0;
+				for(unsigned i=0;i<controls.size();i++)
+				{
+					solution_cost += controls[i].second;
+				}
+				std::cout << "Time: " << checker.time() << " Iterations: " <<
+          checker.iterations() << " Nodes: " << planner -> number_of_nodes <<
+          " Solution Quality: " << solution_cost << std::endl ;
+				stats_print = false;
+				if(params::intermediate_visualization)
+				{
+					planner->visualize_tree(count);
+					planner->visualize_nodes(count);
+					count++;
+				}
+				stats_check->reset();
+			}
+			if (execution_done)
+			{
+				std::vector<std::pair<double*,double> > controls;
+				planner->get_solution(controls);
+				double solution_cost = 0;
+        std::cout << "controls size: " << controls.size() << '\n';
+				for(unsigned i = 0; i < controls.size(); i++)
+				{
+					solution_cost+=controls[i].second;
+				}
+				std::cout << "Time: " << checker.time() << " Iterations: " <<
+          checker.iterations() << " Nodes: " << planner -> number_of_nodes <<
+          " Solution Quality: " << solution_cost << std::endl ;
+				planner->visualize_tree(count);
+				planner->visualize_nodes(count);
+				break;
+			}
+		}
+	}
+	std::cout << "Done planning." << std::endl;
 }
 
 void get_obstacles_poses_callback(const geometry_msgs::PoseArray& msg)
@@ -199,6 +345,21 @@ void get_obstacles_types_callback(const std_msgs::Int64MultiArray& msg)
   // vec_obstacles_type = msg.data;
 }
 
+void publish_lines()
+{
+  // std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << '\n';
+  if (params::planner == CTRL)
+  {
+    vec_lines_path   = a_star_ptr -> get_path_lines();
+    vec_lines_opened = a_star_ptr -> get_opened_lines();
+    vec_lines_closed = a_star_ptr -> get_closed_lines();
+    pub_gazebo_lines_visualizer[0].publish(vec_lines_path);
+    pub_gazebo_lines_visualizer[1].publish(vec_lines_opened);
+    pub_gazebo_lines_visualizer[2].publish(vec_lines_closed);
+  }
+}
+
+
 int main(int argc, char **argv)
 {
     int rate_hz = 10;
@@ -209,50 +370,150 @@ int main(int argc, char **argv)
     path_counter = 0;
 
     // nh_priv.param<std::string>("points_creation", algorithm, "A_STAR_GRID");
-    nh_priv.param<double>     ("initial_point_x",  initial_pt.x, -10);
-    nh_priv.param<double>     ("initial_point_y",  initial_pt.y, -7.5);
-    nh_priv.param<double>     ("final_point_x",    end_pt.x, -1);
-    nh_priv.param<double>     ("final_point_y",    end_pt.y, 9);
-    nh_priv.param<double>     ("integration_step", integration_step, .002);
-  	nh_priv.param<std::string>("stopping_type",    stopping_type, "time");
-  	nh_priv.param<double>     ("stopping_check",   stopping_check, 15);
-  	nh_priv.param<std::string>("stats_type",       stats_type, "time");
-  	nh_priv.param<double>     ("stats_check",      param_stats_check, 0);
-  	nh_priv.param<int>        ("min_time_steps",   min_time_steps, 20);
-  	nh_priv.param<int>        ("max_time_steps",   max_time_steps, 200);
-  	nh_priv.param<int>        ("random_seed",      random_seed, 0);
-  	nh_priv.param<double>     ("sst_delta_near",   sst_delta_near, 0.4);
-  	nh_priv.param<double>     ("sst_delta_drain",  sst_delta_drain, 0.2);
-  	nh_priv.param<std::string>("planner",          planner, "A_STAR_CTRL");
-  	nh_priv.param<std::string>("system",           system_par, "point");
-  	nh_priv.param<double>     ("goal_radius",      goal_radius, 0.5);
-  	nh_priv.param<bool>       ("intermediate_visualization",
-      intermediate_visualization, false);
-    nh_priv.param<double>     ("start_state/x",     start_state.x, -10);
-    nh_priv.param<double>     ("start_state/y",     start_state.y, -7.5);
-    nh_priv.param<double>     ("start_state/theta", start_state.theta, 0);
-    nh_priv.param<double>     ("goal_state/x",      goal_state.x, -1);
-    nh_priv.param<double>     ("goal_state/y",      goal_state.y, 9);
-    nh_priv.param<double>     ("goal_state/theta",  goal_state.theta, 0);
+    // nh_priv.param<double>     ("initial_point_x",  initial_pt.x, -10);
+    // nh_priv.param<double>     ("initial_point_y",  initial_pt.y, -7.5);
+    // nh_priv.param<double>     ("final_point_x",    end_pt.x, -1);
+    // nh_priv.param<double>     ("final_point_y",    end_pt.y, 9);
+
+    int min_time_steps_aux, max_time_steps_aux;
+
+    nh_priv.param<double>      ("integration_step", params::integration_step, .002);
+  	nh_priv.param<std::string> ("stopping_type",    params::stopping_type, "time");
+  	nh_priv.param<double>      ("stopping_check",   params::stopping_check, 15);
+  	nh_priv.param<std::string> ("stats_type",       params::stats_type, "time");
+  	nh_priv.param<double>      ("stats_check",      params::stats_check, 0);
+  	nh_priv.param<int>         ("min_time_steps",   min_time_steps_aux, 20);
+  	nh_priv.param<int>         ("max_time_steps",   max_time_steps_aux, 200);
+  	nh_priv.param<int>         ("random_seed",      params::random_seed, 0);
+  	nh_priv.param<double>      ("sst_delta_near",   params::sst_delta_near, 0.4);
+  	nh_priv.param<double>      ("sst_delta_drain",  params::sst_delta_drain, 0.2);
+  	nh_priv.param<std::string> ("planner",          params::planner, CTRL);
+  	nh_priv.param<std::string> ("system",           params::system, "car");
+  	nh_priv.param<double>      ("goal_radius",      params::goal_radius, 0.5);
+  	nh_priv.param<bool>        ("intermediate_visualization",
+      params::intermediate_visualization, false);
+    nh_priv.param<double>     ("start_state/x",     params_start_state.x, -10);
+    nh_priv.param<double>     ("start_state/y",     params_start_state.y, -7.5);
+    nh_priv.param<double>     ("start_state/theta", params_start_state.theta, 0);
+    nh_priv.param<double>     ("goal_state/x",      params_goal_state.x, -1);
+    nh_priv.param<double>     ("goal_state/y",      params_goal_state.y, 9);
+    nh_priv.param<double>     ("goal_state/theta",  params_goal_state.theta, 0);
+
+    // global parameters
+    nh.param<bool>            ("simulation",       simulation,  true);
+    nh.param<int>             ("gz_total_lines",   gz_total_lines,  0);
+    nh.param<double>          ("obstacles_radius", obstacles_radius,  0);
+
+    // params::integration_step = params_integration_step;
+  	// params::stopping_type = params_stopping_type;
+  	// params::stopping_check = params_stopping_check;
+  	// params::stats_type = params_stats_type;
+  	// params::stats_check = params_stats_check;
+  	// params::intermediate_visualization = params_intermediate_visualization;
+  	// params::min_time_steps = params_min_time_steps;
+  	// params::max_time_steps = params_max_time_steps;
+  	// params::random_seed = params_random_seed;
+  	// params::sst_delta_near = params_sst_delta_near;
+  	// params::sst_delta_drain = params_sst_delta_drain;
+  	// params::planner = params_planner;
+  	// params::system = params_system;
+    // params::goal_radius = params_goal_radius;
+  	// params::start_state = params_start_state;
+
+    params::min_time_steps = min_time_steps_aux;
+  	params::max_time_steps = max_time_steps_aux;
+
+    params::start_state = new double[3];
+    params::start_state[0] = params_start_state.x;
+    params::start_state[1] = params_start_state.y;
+    params::start_state[2] = params_start_state.theta;
+
+    params::goal_state = new double[3];
+    params::goal_state[0] = params_goal_state.x;
+    params::goal_state[1] = params_goal_state.y;
+    params::goal_state[2] = params_goal_state.theta;
+  	// params::goal_state = params_goal_state;
+
+
+  	//Parameters for image output.
+  	extern double tree_line_width;
+  	extern double solution_line_width;
+  	extern int image_width;
+  	extern int image_height;
+  	extern double node_diameter;
+  	extern double solution_node_diameter;
+
 
     ros::Subscriber sub_obs_poses  = nh.subscribe("/obstacles/poses", 1,
       &get_obstacles_poses_callback);
     ros::Subscriber sub_obs_types  = nh.subscribe("/obstacles/types", 1,
       &get_obstacles_types_callback);
 
+    pub_target_pose = nh.advertise<geometry_msgs::Pose2D>("/goal_pose", 1);
     // ros::Publisher pub_target_pose = nh.advertise<geometry_msgs::Pose2D>("/target_pose", 1);
+
+    if (simulation)
+    {
+
+      for(int i = 0; i < gz_total_lines; i++)
+      {
+        std::stringstream i_ss;
+        i_ss << "/gz_visual/lines_" << i;
+	      pub_gazebo_lines_visualizer.push_back(
+          nh.advertise<std_msgs::Float64MultiArray>(i_ss.str(), rate_hz));
+      }
+    }
 
     ROS_INFO_STREAM("sim_tools_testing_node initiated");
     ros::spinOnce();
 
+    if(params::planner == CTRL || params::planner == GRID)
+    {
+      a_star_ptr = new a_star_t();
+    }
     while(ros::ok())
     {
         ros::spinOnce();
         if (vec_obstacles_poses.size() > 0)
         {
           create_path();
+          publish_lines();
+          pub_target_pose.publish(params_goal_state);
         }
         loop_rate.sleep();
     }
     return 0;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+//                                  TODO
+///////////////////////////////////////////////////////////////////////////////
+// TODO: make a simulation pkg file subscribe to the gz visulizer topics
+// TODO: create the functions to display the lines to the received msgs
+// TODO: implement the get_solution function from the a_star.cpp file
+// TODO: test that the code is working as the first one
+// TODO: start implementing the rrt & sst.

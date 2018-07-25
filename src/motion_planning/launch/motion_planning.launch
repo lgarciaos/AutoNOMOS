@@ -1,5 +1,6 @@
 <launch>
 
+  <param name="gz_total_lines" type = "int" value="3" />
   <node name="node" pkg="motion_planning" type="node" output = "screen" >
 
     <param name="initial_point_x"            type="double" value="-10"/>
@@ -16,9 +17,10 @@
     <param name="random_seed"                type="int"    value="0"/>
     <param name="sst_delta_near"             type="double" value="0.4"/>
     <param name="sst_delta_drain"            type="double" value="0.2"/>
+    <!-- <param name="planner"                    type="string" value="RRT"/> -->
     <param name="planner"                    type="string" value="A_STAR_CTRL"/>
-    <param name="system"                     type="string" value="point"/>
-    <param name="goal_radius"                type="double" value="0.2"/>
+    <param name="system"                     type="string" value="car"/>
+    <param name="goal_radius"                type="double" value=".4"/>
     <param name="intermediate_visualization" type="bool"   value="false"/>
 
     <param name="start_state/x"              type="double" value="-10"/>
