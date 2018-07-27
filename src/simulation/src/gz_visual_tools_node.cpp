@@ -45,6 +45,8 @@ void get_lines_callback(const std_msgs::Float64MultiArrayConstPtr& msg, const in
   markerMsg.set_id(lines_num);
   markerMsg.set_action(ignition::msgs::Marker::ADD_MODIFY);
   markerMsg.set_type(ignition::msgs::Marker::LINE_LIST);
+  markerMsg.clear_point();
+
   for (int j = 0; j < msg -> data.size(); j+=2)
   {
     pt_x = msg -> data[j];
@@ -69,21 +71,45 @@ void get_goal_callback(const geometry_msgs::Pose2D& msg)
   markerMsg.set_type(ignition::msgs::Marker::TRIANGLE_LIST);
   markerMsg.clear_point();
 
-  double x_offset = .2;
-  double y_offset = .4;
+  double x_offset = .4;
+  double y_offset = .2;
   double z_offset = 0.001;
-  // printf("triangle pose: (%.1f, %.1f, %.1f)\n", msg.x, msg.y, msg.theta );
-  // printf("triangle pt_1: (%.1f, %.1f, %.1f)\n", msg.x + x_offset, msg.y - y_offset, z_offset );
-  // printf("triangle pt_2: (%.1f, %.1f, %.1f)\n", msg.x - x_offset, msg.y - y_offset, z_offset );
-  // printf("triangle pt_3: (%.1f, %.1f, %.1f)\n", msg.x, msg.y + y_offset, z_offset );
   ignition::msgs::Set(markerMsg.mutable_pose(),
-    ignition::math::Pose3d(msg.x, msg.y, z_offset, msg.theta, 0, 0));
+    ignition::math::Pose3d(0, 0, 0, 0, 0, msg.theta));
   ignition::msgs::Set(markerMsg.add_point(),
-        ignition::math::Vector3d(-x_offset, -y_offset, z_offset));
+    ignition::math::Vector3d(msg.x -x_offset,msg.y - y_offset, z_offset));
   ignition::msgs::Set(markerMsg.add_point(),
-      ignition::math::Vector3d(x_offset, -y_offset, z_offset));
+    ignition::math::Vector3d(msg.x + x_offset, msg.y + 0, z_offset));
   ignition::msgs::Set(markerMsg.add_point(),
-      ignition::math::Vector3d(0, y_offset, z_offset));
+    ignition::math::Vector3d(msg.x -x_offset, msg.y + y_offset, z_offset));
+
+  ign_node.Request("/marker", markerMsg);
+
+}
+
+void get_start_callback(const geometry_msgs::Pose2D& msg)
+{
+  // std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << '\n';
+
+  ignition::msgs::Marker markerMsg;
+  ignition::msgs::Material *matMsg = markerMsg.mutable_material();
+  matMsg->mutable_script()->set_name("Gazebo/Yellow");
+  markerMsg.set_id(gz_total_lines + 1);
+  markerMsg.set_action(ignition::msgs::Marker::ADD_MODIFY);
+  markerMsg.set_type(ignition::msgs::Marker::TRIANGLE_LIST);
+  markerMsg.clear_point();
+
+  double x_offset = .4;
+  double y_offset = .2;
+  double z_offset = 0.001;
+  ignition::msgs::Set(markerMsg.mutable_pose(),
+    ignition::math::Pose3d(0, 0, 0, 0, 0, msg.theta));
+  ignition::msgs::Set(markerMsg.add_point(),
+    ignition::math::Vector3d(msg.x -x_offset,msg.y - y_offset, z_offset));
+  ignition::msgs::Set(markerMsg.add_point(),
+    ignition::math::Vector3d(msg.x + x_offset, msg.y + 0, z_offset));
+  ignition::msgs::Set(markerMsg.add_point(),
+    ignition::math::Vector3d(msg.x -x_offset, msg.y + y_offset, z_offset));
 
   ign_node.Request("/marker", markerMsg);
 
@@ -105,6 +131,7 @@ int main(int argc, char **argv)
 
     // ros::Subscriber sub_model_states  = nh.subscribe("/gz_visual/lines", 1, &get_model_states);
     ros::Subscriber sub_goal  = nh.subscribe("/goal_pose", 1, &get_goal_callback);
+    ros::Subscriber sub_start  = nh.subscribe("/start_pose", 1, &get_start_callback);
     std::cout << "gz_total_lines: " << gz_total_lines << '\n';
     std::vector<ros::Subscriber> sub_gazebo_lines_visualizer;
 
