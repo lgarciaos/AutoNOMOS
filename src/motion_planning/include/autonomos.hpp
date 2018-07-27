@@ -1,35 +1,43 @@
-
-
-#ifndef SPARSE_CAR_HPP
-#define SPARSE_CAR_HPP
+#ifndef AUTONOMOS_HPP
+#define AUTONOMOS_HPP
 
 #include "systems/system.hpp"
+
+#include "collision_detector.h"
+
+// ros msgs
+#include <geometry_msgs/Pose.h>
+#include <geometry_msgs/Pose2D.h>
+
 
 class autonomos_t : public system_t
 {
 public:
-	autonomos_t()
-	{
-		state_dimension = 3;
-		control_dimension = 2;
-		temp_state = new double[state_dimension];
-	}
-	virtual ~autonomos_t(){}
+	autonomos_t();
 
-	virtual double distance(double* point1, double* point2);
+	virtual ~autonomos_t();
 
-	virtual void random_state(double* state);
+	double distance(double* point1, double* point2);
 
-	virtual void random_control(double* control);
+	void random_state(double* state);
 
-	virtual bool propagate(double* start_state, double* control, int min_step,
+	void random_control(double* control);
+
+	bool propagate(double* start_state, double* control, int min_step,
     int max_step, double* result_state, double& duration );
 
-	virtual void enforce_bounds();
+	void enforce_bounds();
 
-	virtual bool valid_state();
+	bool valid_state();
 
 	svg::Point visualize_point(double* state, svg::Dimensions dims);
+
+	void set_obstacles(std::vector<geometry_msgs::Pose> vec_obstacles_poses,
+	  std::vector<int> vec_obstacles_type, double in_obstacles_radius);
+
+private:
+	collision_detector_t* collision_detector;
+	double obstacles_radius;
 };
 
 

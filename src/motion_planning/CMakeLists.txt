@@ -133,6 +133,9 @@ LINK_DIRECTORIES(sparse_rrt/lib)
 add_library(${PROJECT_NAME}
   src/a_star.cpp
 	src/collision_detector.cpp
+	src/autonomos.cpp
+	src/rrt_ros.cpp
+	src/sst_ros.cpp
 )
 
 ## Add cmake target dependencies of the library

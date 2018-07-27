@@ -1,7 +1,7 @@
 #include "collision_detector.h"
 
-void collision_detector_t::set_obstacles(std::vector<geometry_msgs::Pose> in_obstacles_poses,
-  std::vector<int> in_obstacles_types)
+void collision_detector_t::set_obstacles(std::vector<geometry_msgs::Pose>
+  in_obstacles_poses, std::vector<int> in_obstacles_types)
 {
   obstacles_poses = in_obstacles_poses;
   obstacles_types = in_obstacles_types;
@@ -12,13 +12,20 @@ bool collision_detector_t::is_collision_free(geometry_msgs::Pose2D start_pose,
 {
   for (size_t i = 0; i < obstacles_poses.size(); i++)
   {
-    if (obstacles_types[i] == RECTANGLE && pose_in_car(end_pose, obstacles_poses[i], false))
+    if (std::fabs(start_pose.x - obstacles_poses[i].position.x) < 2 * CAR_SIZE_X
+     && std::fabs(start_pose.y - obstacles_poses[i].position.y) < 2 * CAR_SIZE_Y
+     )
     {
-      return false;
-    }
-    if (path_intersects_obstacle(start_pose, end_pose, obstacles_poses[i], obstacles_types[i]))
-    {
-      return false;
+      if (obstacles_types[i] == RECTANGLE && pose_in_car(end_pose,
+        obstacles_poses[i], false))
+      {
+        return false;
+      }
+        // if (path_intersects_obstacle(start_pose, end_pose, obstacles_poses[i],
+        //   obstacles_types[i]))
+        // {
+        //   return false;
+        // }
     }
   }
   return true;

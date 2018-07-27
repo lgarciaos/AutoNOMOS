@@ -1,5 +1,8 @@
 // #define _GLIBCXX_USE_CXX11_ABI 0
 #include "a_star.h"
+#include "autonomos.hpp"
+#include "rrt_ros.hpp"
+#include "sst_ros.hpp"
 
 // ros
 #include <geometry_msgs/PoseArray.h>
@@ -13,11 +16,13 @@
 #include "utilities/timer.hpp"
 #include "systems/point.hpp"
 #include "systems/car.hpp"
-#include "motion_planners/sst.hpp"
-#include "motion_planners/rrt.hpp"
+// #include "motion_planners/sst.hpp"
+// #include "motion_planners/rrt.hpp"
 #include "utilities/parameter_reader.hpp"
 
+
 #define RRT "RRT"
+#define SST "SST"
 
 std::vector<geometry_msgs::Pose> model_states;
 std::string algorithm;
@@ -32,6 +37,7 @@ geometry_msgs::Pose2D params_start_state, params_goal_state;
 bool simulation;
 std::vector<ros::Publisher> pub_gazebo_lines_visualizer;
 ros::Publisher pub_target_pose;
+ros::Publisher pub_start_pose;
 int gz_total_lines;
 
 double obstacles_radius;
@@ -202,12 +208,18 @@ void create_path()
     // }
     // a_star(initial_pt, end_pt, planner);
   }
-  else if(params::planner == RRT)
+  else if (params::planner == RRT)
   {
-    system_t* system;
-    system = new car_t();
-    // system = new point_t();
-    planner = new rrt_t(system);
+    autonomos_t* system_aux = new autonomos_t();
+    system_aux -> set_obstacles(vec_obstacles_poses, vec_obstacles_type, obstacles_radius);
+    planner = new rrt_ros_t(system_aux);
+    rrt_sst_solver();
+  }
+  else if (params::planner == SST)
+  {
+    autonomos_t* system_aux = new autonomos_t();
+    system_aux -> set_obstacles(vec_obstacles_poses, vec_obstacles_type, obstacles_radius);
+    planner = new sst_ros_t(system_aux);
     rrt_sst_solver();
   }
   else
@@ -267,8 +279,11 @@ void rrt_sst_solver()
 		std::cout << "Time: " << checker.time() << " Iterations: " <<
       checker.iterations() << " Nodes: " << planner -> number_of_nodes <<
       " Solution Quality: " << solution_cost << std::endl ;
-		planner->visualize_tree(0);
-		planner->visualize_nodes(0);
+		planner -> visualize_tree(0);
+		planner -> visualize_nodes(0);
+
+
+    // planner.root;
 	}
 	else
 	{
@@ -357,6 +372,22 @@ void publish_lines()
     pub_gazebo_lines_visualizer[1].publish(vec_lines_opened);
     pub_gazebo_lines_visualizer[2].publish(vec_lines_closed);
   }
+  else if (params::planner == RRT)
+  {
+    // dynamic_cast<Derived<int> *>
+    rrt_ros_t *rrt_aux = dynamic_cast<rrt_ros_t*>(planner);
+    pub_gazebo_lines_visualizer[0].publish(rrt_aux -> get_vector_path());
+    pub_gazebo_lines_visualizer[1].publish(rrt_aux -> get_vector_tree());
+  }
+  else if (params::planner == SST)
+  {
+    // dynamic_cast<Derived<int> *>
+    sst_ros_t *sst_aux = dynamic_cast<sst_ros_t*>(planner);
+    pub_gazebo_lines_visualizer[0].publish(sst_aux -> get_vector_path());
+    pub_gazebo_lines_visualizer[1].publish(sst_aux -> get_vector_tree());
+  }
+  pub_target_pose.publish(params_goal_state);
+  pub_start_pose.publish(params_start_state);
 }
 
 
@@ -423,6 +454,12 @@ int main(int argc, char **argv)
     params::min_time_steps = min_time_steps_aux;
   	params::max_time_steps = max_time_steps_aux;
 
+    // if (params::planner == RRT || params::planner == SST)
+    // {
+    //   params_start_state.theta += M_PI / 2;
+    //   params_goal_state.theta += M_PI / 2;
+    // }
+
     params::start_state = new double[3];
     params::start_state[0] = params_start_state.x;
     params::start_state[1] = params_start_state.y;
@@ -450,6 +487,7 @@ int main(int argc, char **argv)
       &get_obstacles_types_callback);
 
     pub_target_pose = nh.advertise<geometry_msgs::Pose2D>("/goal_pose", 1);
+    pub_start_pose = nh.advertise<geometry_msgs::Pose2D>("/start_pose", 1);
     // ros::Publisher pub_target_pose = nh.advertise<geometry_msgs::Pose2D>("/target_pose", 1);
 
     if (simulation)
@@ -463,6 +501,7 @@ int main(int argc, char **argv)
           nh.advertise<std_msgs::Float64MultiArray>(i_ss.str(), rate_hz));
       }
     }
+
 
     ROS_INFO_STREAM("sim_tools_testing_node initiated");
     ros::spinOnce();
@@ -478,7 +517,6 @@ int main(int argc, char **argv)
         {
           create_path();
           publish_lines();
-          pub_target_pose.publish(params_goal_state);
         }
         loop_rate.sleep();
     }
@@ -512,8 +550,4 @@ int main(int argc, char **argv)
 ///////////////////////////////////////////////////////////////////////////////
 //                                  TODO
 ///////////////////////////////////////////////////////////////////////////////
-// TODO: make a simulation pkg file subscribe to the gz visulizer topics
-// TODO: create the functions to display the lines to the received msgs
-// TODO: implement the get_solution function from the a_star.cpp file
-// TODO: test that the code is working as the first one
-// TODO: start implementing the rrt & sst.
+// TODO: implement the collision_detector on autonomos.cpp to use with sparcerrt

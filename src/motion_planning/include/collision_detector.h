@@ -1,8 +1,3 @@
-/**
- * @file a_star.h
- *
- */
-
 #ifndef COLLISION_DETECTOR_H
 #define COLLISION_DETECTOR_H
 
