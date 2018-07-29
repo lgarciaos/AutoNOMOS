@@ -10,7 +10,7 @@ static const uint32_t MY_ROS_QUEUE_SIZE = 100;
 // #define NUM_STATES 7
 // #define STATE_WIDTH 20
 
-const int RATE_HZ = 30;
+const int RATE_HZ = 5;
 // const int STATE_WIDTH_PIX = 13; // sim gary
 // const int STATE_WIDTH_PIX = 22; // sim automodel
 

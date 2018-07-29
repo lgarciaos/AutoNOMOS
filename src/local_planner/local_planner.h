@@ -23,7 +23,7 @@ static const double PI = 3.14159265;
 static const int NUM_STATES = 7;
 static const int STATE_WIDTH = 20;
 // static const int STATE_WIDTH_PIX = 22;
-static const int RATE_HZ = 10;
+static const int RATE_HZ = 5;
 
 class local_planner {
 

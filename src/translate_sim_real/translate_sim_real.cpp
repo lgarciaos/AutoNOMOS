@@ -175,7 +175,7 @@ public:
           // y - .01 = (1.5707 - 0)/(.41853 - 0.01)(x - .01)
           // y = (1.5707 - 0)/(.41853 - 0.01)(x - .01) + .01
 
-          value_steering_real.data = (rad_transformados * 180 / PI) + offset_angle; // corrección en carro real y simulador. 45 grados es derecho, 0 derecha. 90 izquierda.
+          value_steering_real.data = -(rad_transformados * 180 / PI) + offset_angle; // corrección en carro real y simulador. 45 grados es derecho, 0 derecha. 90 izquierda.
           _pub_steering.publish(value_steering_real);
         }
 
