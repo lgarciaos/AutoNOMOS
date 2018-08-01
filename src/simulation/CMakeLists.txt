@@ -26,8 +26,8 @@ find_package(
 )
 
 
-# find_package(ignition-msgs1 REQUIRED)
-# find_package(ignition-transport4 REQUIRED)
+find_package(ignition-msgs1 QUIET)
+find_package(ignition-msgs2 QUIET)
 
 if(ignition-msgs1_FOUND OR ignition-msgs2_FOUND)
 	message("ignition msgs FOUND")
