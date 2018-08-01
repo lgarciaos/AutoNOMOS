@@ -43,10 +43,6 @@
 #define RECTANGLE 0
 #define CIRCLE 1
 
-// car dimensions
-#define CAR_SIZE_X 0.2
-#define CAR_SIZE_Y 0.125
-
 /**
  * @brief The motion planning algorithm RRT (Rapidly-exploring Random Tree)
  * @details The motion planning algorithm RRT (Rapidly-exploring Random Tree)

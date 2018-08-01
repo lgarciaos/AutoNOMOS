@@ -68,20 +68,76 @@ void get_goal_callback(const geometry_msgs::Pose2D& msg)
   matMsg->mutable_script()->set_name("Gazebo/Green");
   markerMsg.set_id(gz_total_lines);
   markerMsg.set_action(ignition::msgs::Marker::ADD_MODIFY);
-  markerMsg.set_type(ignition::msgs::Marker::TRIANGLE_LIST);
+  // markerMsg.set_type(ignition::msgs::Marker::TRIANGLE_LIST);
+  markerMsg.set_type(ignition::msgs::Marker::TRIANGLE_FAN);
   markerMsg.clear_point();
 
   double x_offset = .4;
   double y_offset = .2;
+  // x_offset = x_offset * cos(msg.theta) - y_offset * sin(msg.theta);
+  // y_offset = x_offset * cos(msg.theta) + y_offset * sin(msg.theta);
   double z_offset = 0.001;
+
+
   ignition::msgs::Set(markerMsg.mutable_pose(),
-    ignition::math::Pose3d(0, 0, 0, 0, 0, msg.theta));
-  ignition::msgs::Set(markerMsg.add_point(),
-    ignition::math::Vector3d(msg.x -x_offset,msg.y - y_offset, z_offset));
-  ignition::msgs::Set(markerMsg.add_point(),
-    ignition::math::Vector3d(msg.x + x_offset, msg.y + 0, z_offset));
-  ignition::msgs::Set(markerMsg.add_point(),
-    ignition::math::Vector3d(msg.x -x_offset, msg.y + y_offset, z_offset));
+                    ignition::math::Pose3d(msg.x, msg.y, z_offset, 0, 0, 0));
+  // ignition::msgs::Set(markerMsg.add_point(),
+  //       ignition::math::Vector3d(0, 0, 0.05));
+  double radius = 0.125;
+  for (double t = 0; t <= 2 * M_PI; t+= 0.01)
+  {
+    ignition::msgs::Set(markerMsg.add_point(),
+        ignition::math::Vector3d(radius * cos(t), radius * sin(t), z_offset));
+  }
+  // ign_node.Request("/marker", markerMsg);
+
+  // ignition::msgs::Set(markerMsg.mutable_pose(),
+  //   ignition::math::Pose3d(0, 0, 0, 0, 0, msg.theta));
+
+  // double* pt_x = new double[3];
+  // double* pt_y = new double[3];
+  // double* pt_z = new double[3];
+  //
+  // if (0 <= msg.theta && msg.theta < 3.14159 / 2 )
+  // {
+  //   std::cout << "lines:" << __LINE__ << '\n';
+  //   pt_x[0] = msg.x - x_offset; pt_y[0] = msg.y - y_offset; pt_z[0] = z_offset;
+  //   pt_x[1] = msg.x + x_offset; pt_y[1] = msg.y + 0;        pt_z[1] = z_offset;
+  //   pt_x[2] = msg.x - x_offset; pt_y[2] = msg.y + y_offset; pt_z[2] = z_offset;
+  //
+  //   // pt_x[0] = pt_x[0] * cos(msg.theta) - pt_y[0] * sin(msg.theta);
+  //   // pt_y[0] = pt_x[0] * cos(msg.theta) + pt_y[0] * sin(msg.theta);
+  //   // pt_x[1] = pt_x[1] * cos(msg.theta) - pt_y[1] * sin(msg.theta);
+  //   // pt_y[1] = pt_x[1] * cos(msg.theta) + pt_y[1] * sin(msg.theta);
+  //   // pt_x[2] = pt_x[2] * cos(msg.theta) - pt_y[2] * sin(msg.theta);
+  //   // pt_y[2] = pt_x[2] * cos(msg.theta) + pt_y[2] * sin(msg.theta);
+  // }
+  // else if (3.14159 / 2 <= msg.theta && msg.theta < 3.14159 )
+  // {
+  //   std::cout << "lines:" << __LINE__ << '\n';
+  //   pt_x[0] = msg.x + x_offset; pt_y[0] = msg.y - y_offset; pt_z[0] = z_offset;
+  //   pt_x[1] = msg.x - x_offset; pt_y[1] = msg.y - y_offset; pt_z[1] = z_offset;
+  //   pt_x[2] = msg.x + 0       ; pt_y[2] = msg.y + y_offset; pt_z[2] = z_offset;
+  // }
+  // else
+  // {
+  //   pt_x[0] = msg.x - x_offset; pt_y[0] = msg.y - y_offset; pt_z[0] = z_offset;
+  //   pt_x[1] = msg.x + x_offset; pt_y[1] = msg.y + 0;        pt_z[1] = z_offset;
+  //   pt_x[2] = msg.x - x_offset; pt_y[2] = msg.y + y_offset; pt_z[2] = z_offset;
+  // }
+
+  // ignition::msgs::Set(markerMsg.add_point(),
+  //   ignition::math::Vector3d(pt_x[0], pt_y[0], pt_z[0]));
+  // ignition::msgs::Set(markerMsg.add_point(),
+  //   ignition::math::Vector3d(pt_x[1], pt_y[1], pt_z[1]));
+  // ignition::msgs::Set(markerMsg.add_point(),
+  //   ignition::math::Vector3d(pt_x[2], pt_y[2], pt_z[2]));
+
+  // printf("Goal: (%.2f, %.2f, %.2f)\n", msg.x, msg.y, msg.theta );
+  // printf("offset: (%.2f, %.2f)\n", x_offset, y_offset );
+  // printf("pt_1: (%.2f, %.2f)\n", pt_x[0], pt_y[0] );
+  // printf("pt_2: (%.2f, %.2f)\n", pt_x[1], pt_y[1]);
+  // printf("pt_3: (%.2f, %.2f)\n", pt_x[2], pt_y[2] );
 
   ign_node.Request("/marker", markerMsg);
 
@@ -96,20 +152,32 @@ void get_start_callback(const geometry_msgs::Pose2D& msg)
   matMsg->mutable_script()->set_name("Gazebo/Yellow");
   markerMsg.set_id(gz_total_lines + 1);
   markerMsg.set_action(ignition::msgs::Marker::ADD_MODIFY);
-  markerMsg.set_type(ignition::msgs::Marker::TRIANGLE_LIST);
+  markerMsg.set_type(ignition::msgs::Marker::TRIANGLE_FAN);
+  // markerMsg.set_type(ignition::msgs::Marker::TRIANGLE_LIST);
   markerMsg.clear_point();
 
   double x_offset = .4;
   double y_offset = .2;
+  // x_offset = x_offset * cos(msg.theta) - y_offset * sin(msg.theta);
+  // y_offset = x_offset * cos(msg.theta) + y_offset * sin(msg.theta);
   double z_offset = 0.001;
   ignition::msgs::Set(markerMsg.mutable_pose(),
-    ignition::math::Pose3d(0, 0, 0, 0, 0, msg.theta));
-  ignition::msgs::Set(markerMsg.add_point(),
-    ignition::math::Vector3d(msg.x -x_offset,msg.y - y_offset, z_offset));
-  ignition::msgs::Set(markerMsg.add_point(),
-    ignition::math::Vector3d(msg.x + x_offset, msg.y + 0, z_offset));
-  ignition::msgs::Set(markerMsg.add_point(),
-    ignition::math::Vector3d(msg.x -x_offset, msg.y + y_offset, z_offset));
+                    ignition::math::Pose3d(msg.x, msg.y, z_offset, 0, 0, 0));
+  // ignition::msgs::Set(markerMsg.add_point(),
+  //       ignition::math::Vector3d(0, 0, 0.05));
+  double radius = 0.125;
+  for (double t = 0; t <= 2 * M_PI; t+= 0.01)
+  {
+    ignition::msgs::Set(markerMsg.add_point(),
+      ignition::math::Vector3d(radius * cos(t), radius * sin(t), z_offset));
+  }
+  // ignition::msgs::Set(markerMsg.add_point(),
+  //   ignition::math::Vector3d(msg.x -x_offset,msg.y - y_offset, z_offset));
+  // ignition::msgs::Set(markerMsg.add_point(),
+  //   ignition::math::Vector3d(msg.x + x_offset, msg.y + 0, z_offset));
+  // ignition::msgs::Set(markerMsg.add_point(),
+  //   ignition::math::Vector3d(msg.x -x_offset, msg.y + y_offset, z_offset));
+
 
   ign_node.Request("/marker", markerMsg);
 
@@ -124,8 +192,8 @@ int main(int argc, char **argv)
     ros::NodeHandle nh_priv("~");
     ros::Rate loop_rate(rate_hz);
 
-    nh.param<bool>("simulation",        simulation,  true);
-    nh.param<int> ("gz_total_lines",   gz_total_lines,  0);
+    nh.param<bool>("simulation/simulation",       simulation,  true);
+    nh.param<int> ("simulation/gz_total_lines",   gz_total_lines,  0);
     // nh_priv.param<std::string>("points_creation", points_creation, "GRID");
     // nh_priv.param<double>("initial_point_x", initial_pt.x, -10);
 

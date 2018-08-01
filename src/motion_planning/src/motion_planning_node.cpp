@@ -8,6 +8,7 @@
 #include <geometry_msgs/PoseArray.h>
 #include <std_msgs/Int64MultiArray.h>
 #include <std_msgs/Float64MultiArray.h>
+#include <std_srvs/Empty.h>
 
 // sparce rrt
 #include "utilities/parameter_reader.hpp"
@@ -35,10 +36,12 @@ int path_counter;
 geometry_msgs::Pose2D params_start_state, params_goal_state;
 
 bool simulation;
+int sim_iters;
 std::vector<ros::Publisher> pub_gazebo_lines_visualizer;
 ros::Publisher pub_target_pose;
 ros::Publisher pub_start_pose;
 int gz_total_lines;
+
 
 double obstacles_radius;
 
@@ -53,7 +56,7 @@ planner_t* planner;
 
 
 // functions
-void publish_lines();
+void publish_lines(bool dealloc);
 void a_star_solve();
 void create_path();
 void create_path();
@@ -80,7 +83,7 @@ void a_star_solve()
 			a_star_ptr->step();
       if (params::intermediate_visualization)
       {
-        publish_lines();
+        publish_lines(false);
         pub_target_pose.publish(params_goal_state);
         std::cout << "continue?" << '\n';
         std::cin >> dummy;
@@ -247,7 +250,7 @@ void rrt_sst_solver()
   // dummy variables
   int dummy_cont;
 
-  std::cin >> dummy_cont;
+  // std::cin >> dummy_cont;
 
 	condition_check_t checker(params::stopping_type, params::stopping_check);
 	condition_check_t* stats_check=NULL;
@@ -270,18 +273,18 @@ void rrt_sst_solver()
 		std::vector<std::pair<double*,double> > controls;
 		planner->get_solution(controls);
 		double solution_cost = 0;
-    std::cout << "controls size: " << controls.size() << '\n';
+    // std::cout << "controls size: " << controls.size() << '\n';
 
 		for(unsigned i = 0; i < controls.size(); i++)
 		{
 			solution_cost += controls[i].second;
 		}
-		std::cout << "Time: " << checker.time() << " Iterations: " <<
-      checker.iterations() << " Nodes: " << planner -> number_of_nodes <<
-      " Solution Quality: " << solution_cost << std::endl ;
+    std::cout << "Planner:\t" << params::planner << "\tTime:\t" <<
+      checker.time() << "\tIterations:\t" << checker.iterations() << "\tNodes\t"
+      << planner -> number_of_nodes << "\tSolution Quality\t" << solution_cost
+      << std::endl ;
 		planner -> visualize_tree(0);
 		planner -> visualize_nodes(0);
-
 
     // planner.root;
 	}
@@ -344,6 +347,7 @@ void rrt_sst_solver()
 
 void get_obstacles_poses_callback(const geometry_msgs::PoseArray& msg)
 {
+  std::cout << "Line: " << __LINE__ << '\n';
   for (auto e : msg.poses )
   {
     vec_obstacles_poses.push_back(e);
@@ -360,7 +364,7 @@ void get_obstacles_types_callback(const std_msgs::Int64MultiArray& msg)
   // vec_obstacles_type = msg.data;
 }
 
-void publish_lines()
+void publish_lines(bool dealloc)
 {
   // std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << '\n';
   if (params::planner == CTRL)
@@ -385,6 +389,11 @@ void publish_lines()
     sst_ros_t *sst_aux = dynamic_cast<sst_ros_t*>(planner);
     pub_gazebo_lines_visualizer[0].publish(sst_aux -> get_vector_path());
     pub_gazebo_lines_visualizer[1].publish(sst_aux -> get_vector_tree());
+    if (dealloc)
+    {
+      sst_aux -> dealloc_tree();
+      delete planner;
+    }
   }
   pub_target_pose.publish(params_goal_state);
   pub_start_pose.publish(params_start_state);
@@ -400,14 +409,9 @@ int main(int argc, char **argv)
     ros::Rate loop_rate(rate_hz);
     path_counter = 0;
 
-    // nh_priv.param<std::string>("points_creation", algorithm, "A_STAR_GRID");
-    // nh_priv.param<double>     ("initial_point_x",  initial_pt.x, -10);
-    // nh_priv.param<double>     ("initial_point_y",  initial_pt.y, -7.5);
-    // nh_priv.param<double>     ("final_point_x",    end_pt.x, -1);
-    // nh_priv.param<double>     ("final_point_y",    end_pt.y, 9);
-
     int min_time_steps_aux, max_time_steps_aux;
 
+    // motion planning parameters
     nh_priv.param<double>      ("integration_step", params::integration_step, .002);
   	nh_priv.param<std::string> ("stopping_type",    params::stopping_type, "time");
   	nh_priv.param<double>      ("stopping_check",   params::stopping_check, 15);
@@ -430,10 +434,12 @@ int main(int argc, char **argv)
     nh_priv.param<double>     ("goal_state/y",      params_goal_state.y, 9);
     nh_priv.param<double>     ("goal_state/theta",  params_goal_state.theta, 0);
 
+
     // global parameters
-    nh.param<bool>            ("simulation",       simulation,  true);
-    nh.param<int>             ("gz_total_lines",   gz_total_lines,  0);
-    nh.param<double>          ("obstacles_radius", obstacles_radius,  0);
+    nh.param<bool>            ("simulation/simulation",            simulation,  true);
+    nh.param<int>             ("simulation/iterations", sim_iters,  1);
+    nh.param<int>             ("simulation/gz_total_lines", gz_total_lines,  0);
+    nh.param<double>          ("obstacles_radius",      obstacles_radius,  0);
 
     // params::integration_step = params_integration_step;
   	// params::stopping_type = params_stopping_type;
@@ -502,6 +508,7 @@ int main(int argc, char **argv)
       }
     }
 
+    std_srvs::Empty empty;
 
     ROS_INFO_STREAM("sim_tools_testing_node initiated");
     ros::spinOnce();
@@ -510,15 +517,32 @@ int main(int argc, char **argv)
     {
       a_star_ptr = new a_star_t();
     }
+    ros::spinOnce();
+    loop_rate.sleep();
+    int iters = 0;
+    // for (size_t iters = 0; iters < sim_iters; iters++)
+    // while (iters < sim_iters)
     while(ros::ok())
     {
-        ros::spinOnce();
+      ros::spinOnce();
+
+      // std::cout << "iteration: " << iters << "\tobs: " << vec_obstacles_poses.size() << '\n';
+        ros::service::call("/gazebo/reset_simulation", empty);
         if (vec_obstacles_poses.size() > 0)
         {
           create_path();
-          publish_lines();
+          publish_lines(true);
+          // std::cin >> dummy;
+          iters++;
         }
-        loop_rate.sleep();
+        if (iters == sim_iters)
+        {
+          break;
+        }
+        else
+        {
+          loop_rate.sleep();
+        }
     }
     return 0;
 }

@@ -37,6 +37,7 @@ public:
   std_msgs::Float64MultiArray get_vector_path();
   std_msgs::Float64MultiArray get_vector_tree();
 
+  void dealloc_tree();
   // std_msgs::Float64MultiArray get_vector_();
 
 protected:
@@ -46,6 +47,9 @@ protected:
 
 
   void create_floatmultiarray_tree(tree_node_t* node);
+  void dealloc_tree_aux(tree_node_t* node);
+  void dealloc_metric();
+
 
   std_msgs::Float64MultiArray tree_floatmultiarray;
 

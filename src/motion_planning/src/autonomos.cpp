@@ -6,10 +6,10 @@
 
 #define MAX_SPEED -200.0
 
-#define POS_X_BOUND +15.0
-#define NEG_X_BOUND -15.0
-#define POS_Y_BOUND +15.0
-#define NEG_Y_BOUND -15.0
+#define POS_X_BOUND +00.0
+#define NEG_X_BOUND -10.0
+#define POS_Y_BOUND +10.0
+#define NEG_Y_BOUND -10.0
 
 #include <cmath>
 
@@ -23,7 +23,7 @@ autonomos_t::autonomos_t()
 
 autonomos_t::~autonomos_t()
 {
-
+  free(temp_state);
 }
 
 double autonomos_t::distance(double* point1, double* point2)

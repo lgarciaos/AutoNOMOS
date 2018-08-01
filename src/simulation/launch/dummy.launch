@@ -1,9 +1,19 @@
 <launch>
+  <arg name="stopping_check_in" default="555" />
+  <arg name="planner_in" default="RRT" />
+
+  <param name="simulation/gz_total_lines" type = "int" value="3" />
+  <param name="simulation/iterations" type = "int" value="1" />
+
+  <node name = "get_obstacles_node" pkg = "simulation" type = "get_obstacles_node"/>
+  <node name = "gz_visual_tools_node" pkg = "simulation" type = "gz_visual_tools_node" output = "screen"/>
+
+  <include file="$(find motion_planning)/launch/motion_planning.launch">
+    <arg name="stopping_check_arg" default = "$(arg stopping_check_in)" />
+    <arg name="planner_arg" default = "$(arg planner_in)" />
+  </include>
 
 
-    <node name = "get_obstacles_node" pkg = "simulation" type = "get_obstacles_node"/>
-    <include file="$(find motion_planning)/launch/motion_planning.launch"/>
-    <node name = "gz_visual_tools_node" pkg = "simulation" type = "gz_visual_tools_node" />
 
 
 

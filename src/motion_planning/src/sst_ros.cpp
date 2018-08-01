@@ -52,3 +52,39 @@ void sst_ros_t::create_floatmultiarray_tree(tree_node_t* node)
 
 	}
 }
+
+void sst_ros_t::dealloc_tree()
+{
+
+  // dealloc_tree_aux(root);
+  //
+  // delete best_goal;
+  // delete start_state;
+  // delete witness_sample;
+  // delete metric_query;
+  // delete system;
+
+}
+
+void sst_ros_t::dealloc_metric()
+{
+
+}
+
+void sst_ros_t::dealloc_tree_aux(tree_node_t* node)
+{
+  for (std::list<tree_node_t*>::iterator i = node->children.begin();
+    i != node->children.end(); ++i)
+	{
+    // std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << '\n';
+    // std::cout << "node:\t" << node << '\n';
+    dealloc_tree_aux(*i);
+    // std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << '\n';
+    // if (i == node -> children.end())
+    // {
+    //   std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << '\n';
+    // }
+
+	}
+  free(node);
+}
