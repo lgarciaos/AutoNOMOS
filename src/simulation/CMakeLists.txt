@@ -24,8 +24,25 @@ find_package(
   # message_generation
   # dynamic_reconfigure
 )
-find_package(ignition-msgs1 REQUIRED)
-find_package(ignition-transport4 REQUIRED)
+
+
+# find_package(ignition-msgs1 REQUIRED)
+# find_package(ignition-transport4 REQUIRED)
+
+if(ignition-msgs1_FOUND OR ignition-msgs2_FOUND)
+	message("ignition msgs FOUND")
+else()
+	message(FATAL_ERROR "ignition msgs NOT FOUND. Version 1 or higher REQUIRED. Install it or set the correct paths")
+endif()
+
+find_package(ignition-transport4 QUIET)
+find_package(ignition-transport5 QUIET)
+if(ignition-transport4_FOUND OR ignition-transport5_FOUND)
+	message("ignition transport FOUND")
+else()
+	message(FATAL_ERROR "ignition transport NOT FOUND. Version 4 or higher REQUIRED. Install it or set the correct paths")
+endif()
+
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
