@@ -1,0 +1,10 @@
+<launch>
+  <!-- <arg name="stopping_check_in" default="555" /> -->
+
+
+
+  <node name = "follow_path_node" pkg = "navigation" type = "follow_path_node"
+    output = "screen"/>
+
+
+</launch>
