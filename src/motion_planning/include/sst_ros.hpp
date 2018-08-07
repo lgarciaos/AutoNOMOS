@@ -12,7 +12,10 @@
 #include "motion_planners/sst.hpp"
 
 // ros msgs
-#include "std_msgs/Float64MultiArray.h"
+#include <std_msgs/Float64MultiArray.h>
+
+
+
 
 /**
  * @brief The base class for motion planners.
@@ -29,13 +32,21 @@ public:
 	 *
 	 * @param in_system The system this planner will plan for.
 	 */
-  sst_ros_t(system_t* in_system) : sst_t(in_system){};
+  sst_ros_t(system_t* in_system) : sst_t(in_system)
+  {
+    // ctrl_to_use = ctrl_to_use_in;
+  };
     //sst_t(in_system), rrt_t(in_system){};
 
   virtual ~sst_ros_t();
 
+  // void set_ctrl_to_use(int ctrl_to_use_in);
   std_msgs::Float64MultiArray get_vector_path();
   std_msgs::Float64MultiArray get_vector_tree();
+  // motion_planning::ctrl_path get_ctrl_path(
+  //   std::vector<std::pair<double*,double> >& controls);
+
+  // void random_sample();
 
   void dealloc_tree();
   // std_msgs::Float64MultiArray get_vector_();

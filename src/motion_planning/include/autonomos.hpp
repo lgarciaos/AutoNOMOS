@@ -9,11 +9,13 @@
 #include <geometry_msgs/Pose.h>
 #include <geometry_msgs/Pose2D.h>
 
+#define RANDOM_CTRL 0
+#define BANG_BANG   1
 
 class autonomos_t : public system_t
 {
 public:
-	autonomos_t();
+	autonomos_t(int ctrl_to_use_in);
 
 	virtual ~autonomos_t();
 
@@ -35,9 +37,13 @@ public:
 	void set_obstacles(std::vector<geometry_msgs::Pose> vec_obstacles_poses,
 	  std::vector<int> vec_obstacles_type, double in_obstacles_radius);
 
+	void bang_bang_ctrl(double* control);
+
 private:
 	collision_detector_t* collision_detector;
 	double obstacles_radius;
+	int ctrl_to_use;
+
 };
 
 
