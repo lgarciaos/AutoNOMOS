@@ -3,9 +3,12 @@
 
   <arg name="planner_arg" />
 
+  <arg name="kill_on_exit" />
 
 
-  <node name="node" pkg="motion_planning" type="node" output = "screen" required = "true">
+
+  <node name="node" pkg="motion_planning" type="node" output = "screen"
+    required = "$(arg kill_on_exit)">
     <!-- launch-prefix = "valgrind"  -->
 
     <param name="initial_point_x"            type="double" value="-10"/>
@@ -35,10 +38,13 @@
     <param name="start_state/y"              type="double" value="-7.5"/>
     <param name="start_state/theta"          type="double" value="0"/>
 
-    <param name="goal_state/x"              type="double" value="-6"/>
-    <param name="goal_state/y"              type="double" value="-4"/>
-    <param name="goal_state/theta"          type="double" value="$(eval 3 * 3.14159 / 4)"/>
-    <!-- <param name="goal_state/theta"          type="double" value="0"/> -->
+    <param name="goal_state/x"              type="double" value="-1"/>
+    <param name="goal_state/y"              type="double" value="-9"/>
+    <!-- <param name="goal_state/theta"          type="double" value="$(eval 3 * 3.14159 / 4)"/> -->
+    <param name="goal_state/theta"          type="double" value="0"/>
+
+
+    <param name="ctrl_to_use"          type="int" value="1"/>
 <!--
     <rosparam param="start_state">[-10, -7.5, 0]</rosparam>
     <rosparam param="goal_state">[-1, 9, 0]</rosparam>

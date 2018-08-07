@@ -4,25 +4,45 @@
 
 sst_ros_t::~sst_ros_t(){}
 
+// void sst_ros_t::random_sample()
+// {
+//   system -> random_state(sample_state);
+//   switch (ctrl_to_use)
+//   {
+//     case RANDOM_CTRL:
+//       system -> random_control(sample_control);
+//     break;
+//     case BANG_BANG:
+//       system -> bang_bang_ctrl(sample_control);
+//     break;
+//   }
+// }
+
+
 std_msgs::Float64MultiArray sst_ros_t::get_vector_path()
 {
   std_msgs::Float64MultiArray res;
+  std::stringstream x_ss, y_ss;
+
   if(last_solution_path.size() > 1)
   {
-    // svg::Polyline traj_line(svg::Stroke(params::solution_line_width, svg::Color::Black));
     for(unsigned i = 0; i < last_solution_path.size() - 1; i++)
     {
-      // traj_line<<system->visualize_point(last_solution_path[i]->point,dim);
+      x_ss << last_solution_path[i] -> point[0] << ",";
+      y_ss << last_solution_path[i] -> point[1] << ",";
       res.data.push_back(last_solution_path[i] -> point[0]);
       res.data.push_back(last_solution_path[i] -> point[1]);
       res.data.push_back(last_solution_path[i + 1] -> point[0]);
       res.data.push_back(last_solution_path[i + 1] -> point[1]);
     }
-    // doc<<traj_line;
   }
+  std::cout << "x: " << x_ss.str() << '\n';
+  std::cout << "y: " << y_ss.str() << '\n';
   return res;
 
 }
+
+
 
 std_msgs::Float64MultiArray sst_ros_t::get_vector_tree()
 {
@@ -65,6 +85,7 @@ void sst_ros_t::dealloc_tree()
   // delete system;
 
 }
+
 
 void sst_ros_t::dealloc_metric()
 {

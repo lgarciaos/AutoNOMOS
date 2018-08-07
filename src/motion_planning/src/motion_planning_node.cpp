@@ -21,9 +21,22 @@
 // #include "motion_planners/rrt.hpp"
 #include "utilities/parameter_reader.hpp"
 
+// own
+#include "motion_planning/ctrl_path.h"
+#include "sim_params.h"
 
 #define RRT "RRT"
 #define SST "SST"
+
+
+namespace sim_params
+{
+	bool simulation;
+	int sim_iters;
+	int gz_total_lines;
+  bool plot_lines;
+	bool publish_ctrl_path;
+}
 
 std::vector<geometry_msgs::Pose> model_states;
 std::string algorithm;
@@ -35,13 +48,17 @@ int path_counter;
 
 geometry_msgs::Pose2D params_start_state, params_goal_state;
 
-bool simulation;
-int sim_iters;
+// sim_params::simulation = true;
+// sim_params::publish_ctrl_path = true;
+// sim_params::gz_total_lines = 0;
+// sim_params::plot_lines = false;
+
 std::vector<ros::Publisher> pub_gazebo_lines_visualizer;
 ros::Publisher pub_target_pose;
 ros::Publisher pub_start_pose;
-int gz_total_lines;
+ros::Publisher pub_ctrl_path;
 
+int ctrl_to_use;
 
 double obstacles_radius;
 
@@ -55,6 +72,8 @@ a_star_t* a_star_ptr;
 planner_t* planner;
 
 
+
+
 // functions
 void publish_lines(bool dealloc);
 void a_star_solve();
@@ -63,6 +82,8 @@ void create_path();
 void get_obstacles_poses_callback(const geometry_msgs::PoseArray& msg);
 void get_obstacles_types_callback(const std_msgs::Int64MultiArray& msg);
 void rrt_sst_solver();
+void publish_ctrl_path(std::vector<std::pair<double*,double> >& controls);
+
 
 void a_star_solve()
 {
@@ -186,9 +207,7 @@ void create_path()
     points = a_star_ptr -> generate_grid(.5, .5, -10, -10, 0, 10);
     a_star_ptr -> remove_obst_points(points);
     a_star_solve();
-    // vec_lines_closed = a_star_ptr -> get_closed_lines();
 
-    // a_star_ptr(initial_pt, end_pt, planner);
   }
   else if(params::planner == CTRL)
   {
@@ -213,14 +232,15 @@ void create_path()
   }
   else if (params::planner == RRT)
   {
-    autonomos_t* system_aux = new autonomos_t();
+    autonomos_t* system_aux = new autonomos_t(ctrl_to_use);
     system_aux -> set_obstacles(vec_obstacles_poses, vec_obstacles_type, obstacles_radius);
     planner = new rrt_ros_t(system_aux);
     rrt_sst_solver();
   }
   else if (params::planner == SST)
   {
-    autonomos_t* system_aux = new autonomos_t();
+    autonomos_t* system_aux = new autonomos_t(ctrl_to_use);
+
     system_aux -> set_obstacles(vec_obstacles_poses, vec_obstacles_type, obstacles_radius);
     planner = new sst_ros_t(system_aux);
     rrt_sst_solver();
@@ -235,19 +255,11 @@ void create_path()
 
 void rrt_sst_solver()
 {
-  // double* params_start_state_ = new double[3];
-  // double* params_goal_state_ = new double[3];
-  // params_start_state_[0] = 0;//start_state.x;
-  // params_start_state_[1] = 0;//start_state.y;
-  // // start_state_[2] = start_state.theta;
-  // params_goal_state_[0] = 9; //goal_state.x;
-  // params_goal_state_[1] = 9; //goal_state.y;
-  // // goal_state_[2] = goal_state.theta;
+
   params::goal_radius = .5;
   planner->set_start_state(params::start_state);
 	planner->set_goal_state(params::goal_state, params::goal_radius);
 	planner->setup_planning();
-  // dummy variables
   int dummy_cont;
 
   // std::cin >> dummy_cont;
@@ -266,19 +278,20 @@ void rrt_sst_solver()
 		do
 		{
 			planner->step();
-      // std::cout << "line: " << __LINE__ << "\tcont: " << dummy_cont << '\n';
-      // dummy_cont++;
 		}
 		while(!checker.check());
 		std::vector<std::pair<double*,double> > controls;
-		planner->get_solution(controls);
+		planner -> get_solution(controls);
 		double solution_cost = 0;
-    // std::cout << "controls size: " << controls.size() << '\n';
 
 		for(unsigned i = 0; i < controls.size(); i++)
 		{
 			solution_cost += controls[i].second;
 		}
+    if (sim_params::publish_ctrl_path)
+    {
+      publish_ctrl_path(controls);
+    }
     std::cout << "Planner:\t" << params::planner << "\tTime:\t" <<
       checker.time() << "\tIterations:\t" << checker.iterations() << "\tNodes\t"
       << planner -> number_of_nodes << "\tSolution Quality\t" << solution_cost
@@ -286,7 +299,6 @@ void rrt_sst_solver()
 		planner -> visualize_tree(0);
 		planner -> visualize_nodes(0);
 
-    // planner.root;
 	}
 	else
 	{
@@ -305,12 +317,14 @@ void rrt_sst_solver()
 			if(stats_print)
 			{
 				std::vector<std::pair<double*,double> > controls;
-				planner->get_solution(controls);
+				planner -> get_solution(controls);
 				double solution_cost = 0;
 				for(unsigned i=0;i<controls.size();i++)
 				{
 					solution_cost += controls[i].second;
 				}
+        // sst_ros_t *sst_aux = dynamic_cast<sst_ros_t*>(planner);
+        publish_ctrl_path(controls);
 				std::cout << "Time: " << checker.time() << " Iterations: " <<
           checker.iterations() << " Nodes: " << planner -> number_of_nodes <<
           " Solution Quality: " << solution_cost << std::endl ;
@@ -345,6 +359,20 @@ void rrt_sst_solver()
 	std::cout << "Done planning." << std::endl;
 }
 
+void publish_ctrl_path(std::vector<std::pair<double*,double> >& controls)
+{
+  std::cout << __PRETTY_FUNCTION__ << '\n';
+  motion_planning::ctrl_path res;
+  for(unsigned i = 0; i < controls.size(); i++)
+  {
+    res.speed.push_back(controls[i].first[0]);
+    res.steering.push_back(controls[i].first[1]);
+    res.duration.push_back(controls[i].second);
+  }
+  pub_ctrl_path.publish(res);
+
+}
+
 void get_obstacles_poses_callback(const geometry_msgs::PoseArray& msg)
 {
   std::cout << "Line: " << __LINE__ << '\n';
@@ -352,7 +380,6 @@ void get_obstacles_poses_callback(const geometry_msgs::PoseArray& msg)
   {
     vec_obstacles_poses.push_back(e);
   }
-  // vec_obstacles_poses = msg.poses;
 }
 
 void get_obstacles_types_callback(const std_msgs::Int64MultiArray& msg)
@@ -361,12 +388,10 @@ void get_obstacles_types_callback(const std_msgs::Int64MultiArray& msg)
   {
     vec_obstacles_type.push_back(e);
   }
-  // vec_obstacles_type = msg.data;
 }
 
 void publish_lines(bool dealloc)
 {
-  // std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << '\n';
   if (params::planner == CTRL)
   {
     vec_lines_path   = a_star_ptr -> get_path_lines();
@@ -378,14 +403,16 @@ void publish_lines(bool dealloc)
   }
   else if (params::planner == RRT)
   {
-    // dynamic_cast<Derived<int> *>
     rrt_ros_t *rrt_aux = dynamic_cast<rrt_ros_t*>(planner);
     pub_gazebo_lines_visualizer[0].publish(rrt_aux -> get_vector_path());
     pub_gazebo_lines_visualizer[1].publish(rrt_aux -> get_vector_tree());
+    if (dealloc)
+    {
+      delete planner;
+    }
   }
   else if (params::planner == SST)
   {
-    // dynamic_cast<Derived<int> *>
     sst_ros_t *sst_aux = dynamic_cast<sst_ros_t*>(planner);
     pub_gazebo_lines_visualizer[0].publish(sst_aux -> get_vector_path());
     pub_gazebo_lines_visualizer[1].publish(sst_aux -> get_vector_tree());
@@ -434,37 +461,21 @@ int main(int argc, char **argv)
     nh_priv.param<double>     ("goal_state/y",      params_goal_state.y, 9);
     nh_priv.param<double>     ("goal_state/theta",  params_goal_state.theta, 0);
 
+    nh_priv.param<int>     ("ctrl_to_use",  ctrl_to_use, RANDOM_CTRL);
+
 
     // global parameters
-    nh.param<bool>            ("simulation/simulation",            simulation,  true);
-    nh.param<int>             ("simulation/iterations", sim_iters,  1);
-    nh.param<int>             ("simulation/gz_total_lines", gz_total_lines,  0);
-    nh.param<double>          ("obstacles_radius",      obstacles_radius,  0);
+    nh.param<bool>  ("simulation/simulation", sim_params::simulation,  true);
+    nh.param<bool>  ("simulation/publish_ctrl_path", sim_params::publish_ctrl_path,  true);
+    nh.param<int>   ("simulation/gz_total_lines", sim_params::gz_total_lines,  0);
+    nh.param<bool>  ("simulation/plot_lines", sim_params::plot_lines,  false);
+    nh.param<int>   ("simulation/iterations", sim_params::sim_iters,  1);
 
-    // params::integration_step = params_integration_step;
-  	// params::stopping_type = params_stopping_type;
-  	// params::stopping_check = params_stopping_check;
-  	// params::stats_type = params_stats_type;
-  	// params::stats_check = params_stats_check;
-  	// params::intermediate_visualization = params_intermediate_visualization;
-  	// params::min_time_steps = params_min_time_steps;
-  	// params::max_time_steps = params_max_time_steps;
-  	// params::random_seed = params_random_seed;
-  	// params::sst_delta_near = params_sst_delta_near;
-  	// params::sst_delta_drain = params_sst_delta_drain;
-  	// params::planner = params_planner;
-  	// params::system = params_system;
-    // params::goal_radius = params_goal_radius;
-  	// params::start_state = params_start_state;
+    nh.param<double>("obstacles_radius",      obstacles_radius,  0);
+
 
     params::min_time_steps = min_time_steps_aux;
   	params::max_time_steps = max_time_steps_aux;
-
-    // if (params::planner == RRT || params::planner == SST)
-    // {
-    //   params_start_state.theta += M_PI / 2;
-    //   params_goal_state.theta += M_PI / 2;
-    // }
 
     params::start_state = new double[3];
     params::start_state[0] = params_start_state.x;
@@ -494,17 +505,18 @@ int main(int argc, char **argv)
 
     pub_target_pose = nh.advertise<geometry_msgs::Pose2D>("/goal_pose", 1);
     pub_start_pose = nh.advertise<geometry_msgs::Pose2D>("/start_pose", 1);
-    // ros::Publisher pub_target_pose = nh.advertise<geometry_msgs::Pose2D>("/target_pose", 1);
+    pub_ctrl_path = nh.advertise<motion_planning::ctrl_path>(
+      "/motion_planning/path", 1, true);
 
-    if (simulation)
+    if (sim_params::simulation)
     {
 
-      for(int i = 0; i < gz_total_lines; i++)
+      for(int i = 0; i < sim_params::gz_total_lines; i++)
       {
         std::stringstream i_ss;
         i_ss << "/gz_visual/lines_" << i;
 	      pub_gazebo_lines_visualizer.push_back(
-          nh.advertise<std_msgs::Float64MultiArray>(i_ss.str(), rate_hz));
+          nh.advertise<std_msgs::Float64MultiArray>(i_ss.str(), rate_hz, true));
       }
     }
 
@@ -531,11 +543,14 @@ int main(int argc, char **argv)
         if (vec_obstacles_poses.size() > 0)
         {
           create_path();
-          publish_lines(true);
+          if (sim_params::plot_lines)
+          {
+            publish_lines(true);
+          }
           // std::cin >> dummy;
           iters++;
         }
-        if (iters == sim_iters)
+        if (iters == sim_params::sim_iters)
         {
           break;
         }
@@ -574,4 +589,7 @@ int main(int argc, char **argv)
 ///////////////////////////////////////////////////////////////////////////////
 //                                  TODO
 ///////////////////////////////////////////////////////////////////////////////
-// TODO: implement the collision_detector on autonomos.cpp to use with sparcerrt
+// TODO: subscribe to motion_planning/path topic from the follow_path node
+// TODO: add the points to the topic ==> to know if the car has reached and change the ctrl
+// TODO: implement getting the next ctrl if a point has been reached.
+//
