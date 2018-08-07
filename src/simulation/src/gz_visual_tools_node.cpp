@@ -147,6 +147,8 @@ void get_start_callback(const geometry_msgs::Pose2D& msg)
 {
   // std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << '\n';
 
+  // std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << '\n';
+
   ignition::msgs::Marker markerMsg;
   ignition::msgs::Material *matMsg = markerMsg.mutable_material();
   matMsg->mutable_script()->set_name("Gazebo/Yellow");
@@ -200,6 +202,7 @@ int main(int argc, char **argv)
     // ros::Subscriber sub_model_states  = nh.subscribe("/gz_visual/lines", 1, &get_model_states);
     ros::Subscriber sub_goal  = nh.subscribe("/goal_pose", 1, &get_goal_callback);
     ros::Subscriber sub_start  = nh.subscribe("/start_pose", 1, &get_start_callback);
+    std::cout << "NODE: gz_visual_tools_node" << '\n';
     std::cout << "gz_total_lines: " << gz_total_lines << '\n';
     std::vector<ros::Subscriber> sub_gazebo_lines_visualizer;
 
