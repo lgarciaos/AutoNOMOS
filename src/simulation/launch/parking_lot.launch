@@ -8,22 +8,16 @@
     <include file="$(find gazebo_ros)/launch/empty_world.launch">
         <arg name="paused" value="false"/>
         <arg name="use_sim_time" value="true"/>
-        <arg name="gui" value="false"/>
+        <arg name="gui" value="true"/>
         <arg name="debug" value="false"/>
         <arg name="world_name" value="autoNOMOS_parking_lot.world"/>
     <!-- more default parameters can be changed here -->
     </include>
 
-    <!-- <node name = "get_obstacles_node" pkg = "simulation" type = "get_obstacles_node"/> -->
+    
 
-
-  <!-- <node name="laser_processing_node" pkg="perception" type="laser_processing_node" >  -->
-
-    <!-- <param name="laser_range_min"               type="double"    value="0.008"/>   -->
-    <!-- <param name="laser_range_max"               type="double"    value="6"/> -->
-    <!-- <param name="cell_resolution"               type="double"    value="0.25"/> -->
-
-  <!-- </node> -->
-
+    <!-- rosrun gazebo_ros spawn_model -file `rospack find
+      autonomos_gazebo_simulation`/models/AutoNOMOS_mini/model.sdf -sdf
+      -model AutoNOMOS_mini -->
 
 </launch>
