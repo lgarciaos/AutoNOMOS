@@ -1,10 +1,11 @@
 <launch>
   <arg name="stopping_check_arg" />
-
   <arg name="planner_arg" />
-
   <arg name="kill_on_exit" />
-
+  <arg name="ctrl_to_use"/>
+  <arg name="goal_state/x"/>
+  <arg name="goal_state/y"/>
+  <arg name="goal_state/theta"/>
 
 
   <node name="node" pkg="motion_planning" type="node" output = "screen"
@@ -38,13 +39,13 @@
     <param name="start_state/y"              type="double" value="-7.5"/>
     <param name="start_state/theta"          type="double" value="0"/>
 
-    <param name="goal_state/x"              type="double" value="-1"/>
-    <param name="goal_state/y"              type="double" value="-9"/>
+    <param name="goal_state/x"              type="double" value="$(arg goal_state/x)"/>
+    <param name="goal_state/y"              type="double" value="$(arg goal_state/y)"/>
     <!-- <param name="goal_state/theta"          type="double" value="$(eval 3 * 3.14159 / 4)"/> -->
-    <param name="goal_state/theta"          type="double" value="0"/>
+    <param name="goal_state/theta"          type="double" value="$(arg goal_state/theta)"/>
 
 
-    <param name="ctrl_to_use"          type="int" value="1"/>
+    <param name="ctrl_to_use"          type="string" value="$(arg ctrl_to_use)"/>
 <!--
     <rosparam param="start_state">[-10, -7.5, 0]</rosparam>
     <rosparam param="goal_state">[-1, 9, 0]</rosparam>

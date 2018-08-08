@@ -5,6 +5,11 @@
   <arg name="simulation_iterations_in" default="1"/>
   <arg name="gz_plot_lines_in" default="false"/>
   <arg name="publish_ctrl_path_in" default="true"/>
+  <arg name="goal_state/x" default="-1"/>
+  <arg name="goal_state/y" default="-9"/>
+  <arg name="goal_state/theta" default="0"/>
+  <arg name="ctrl_to_use_in" default="RANDOM_CTRL"/>
+
 
   <param name="simulation/gz_total_lines" type = "int" value="3" />
   <param name="simulation/iterations" type = "int" value="$(arg simulation_iterations_in)" />
@@ -19,6 +24,10 @@
     <arg name="stopping_check_arg" default = "$(arg stopping_check_in)" />
     <arg name="planner_arg" default = "$(arg planner_in)" />
     <arg name="kill_on_exit" default = "$(arg kill_on_exit_in)" />
+    <arg name="goal_state/x" default = "$(arg goal_state/x)"/>
+    <arg name="goal_state/y" default = "$(arg goal_state/y)"/>
+    <arg name="goal_state/theta" default = "$(arg goal_state/theta)"/>
+    <arg name="ctrl_to_use" default="$(arg ctrl_to_use_in)"/>
   </include>
 
   <include file = "$(find navigation)/launch/follow_path.launch">
