@@ -11,7 +11,7 @@
 namespace sim_params
 {
 	extern bool simulation;
-	// extern int sim_iters;
+	extern int sim_iters;
 	extern int gz_total_lines;
   extern bool plot_lines;
 	extern bool publish_ctrl_path;

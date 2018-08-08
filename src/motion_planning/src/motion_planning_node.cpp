@@ -28,7 +28,6 @@
 #define RRT "RRT"
 #define SST "SST"
 
-
 namespace sim_params
 {
 	bool simulation;
@@ -58,7 +57,7 @@ ros::Publisher pub_target_pose;
 ros::Publisher pub_start_pose;
 ros::Publisher pub_ctrl_path;
 
-int ctrl_to_use;
+std::string ctrl_to_use;
 
 double obstacles_radius;
 
@@ -293,9 +292,9 @@ void rrt_sst_solver()
       publish_ctrl_path(controls);
     }
     std::cout << "Planner:\t" << params::planner << "\tTime:\t" <<
-      checker.time() << "\tIterations:\t" << checker.iterations() << "\tNodes\t"
-      << planner -> number_of_nodes << "\tSolution Quality\t" << solution_cost
-      << std::endl ;
+      checker.time() << "\tIterations:\t" << checker.iterations() << "\tNodes:\t"
+      << planner -> number_of_nodes << "\tSolution Quality:\t" << solution_cost
+      << "\tcontroller:\t" << ctrl_to_use << std::endl ;
 		planner -> visualize_tree(0);
 		planner -> visualize_nodes(0);
 
@@ -435,6 +434,8 @@ int main(int argc, char **argv)
     ros::NodeHandle nh_priv("~");
     ros::Rate loop_rate(rate_hz);
     path_counter = 0;
+    std_srvs::Empty empty;
+    ros::service::call("/gazebo/reset_simulation", empty);
 
     int min_time_steps_aux, max_time_steps_aux;
 
@@ -461,7 +462,7 @@ int main(int argc, char **argv)
     nh_priv.param<double>     ("goal_state/y",      params_goal_state.y, 9);
     nh_priv.param<double>     ("goal_state/theta",  params_goal_state.theta, 0);
 
-    nh_priv.param<int>     ("ctrl_to_use",  ctrl_to_use, RANDOM_CTRL);
+    nh_priv.param<std::string>     ("ctrl_to_use",  ctrl_to_use, RANDOM_CTRL);
 
 
     // global parameters
@@ -520,26 +521,23 @@ int main(int argc, char **argv)
       }
     }
 
-    std_srvs::Empty empty;
 
     ROS_INFO_STREAM("sim_tools_testing_node initiated");
-    ros::spinOnce();
+    // ros::spinOnce();
 
     if(params::planner == CTRL || params::planner == GRID)
     {
       a_star_ptr = new a_star_t();
     }
-    ros::spinOnce();
+    // ros::spinOnce();
     loop_rate.sleep();
     int iters = 0;
-    // for (size_t iters = 0; iters < sim_iters; iters++)
-    // while (iters < sim_iters)
     while(ros::ok())
     {
+      ros::service::call("/gazebo/reset_simulation", empty);
       ros::spinOnce();
 
       // std::cout << "iteration: " << iters << "\tobs: " << vec_obstacles_poses.size() << '\n';
-        ros::service::call("/gazebo/reset_simulation", empty);
         if (vec_obstacles_poses.size() > 0)
         {
           create_path();
@@ -552,6 +550,8 @@ int main(int argc, char **argv)
         }
         if (iters == sim_params::sim_iters)
         {
+          std::cout << "Press enter to finish process" << '\n';
+          std::cin >> dummy;
           break;
         }
         else
@@ -589,7 +589,5 @@ int main(int argc, char **argv)
 ///////////////////////////////////////////////////////////////////////////////
 //                                  TODO
 ///////////////////////////////////////////////////////////////////////////////
-// TODO: subscribe to motion_planning/path topic from the follow_path node
-// TODO: add the points to the topic ==> to know if the car has reached and change the ctrl
-// TODO: implement getting the next ctrl if a point has been reached.
+// TODO:  Change the ctrl_to_use from int to string and use an array at autonomos
 //
