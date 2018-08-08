@@ -13,13 +13,24 @@
 
 #include <cmath>
 
-autonomos_t::autonomos_t(int ctrl_to_use_in)
+autonomos_t::autonomos_t(std::string ctrl_to_use_in)
 {
   state_dimension = 3;
   control_dimension = 2;
   temp_state = new double[state_dimension];
   collision_detector = new collision_detector_t();
-  ctrl_to_use = ctrl_to_use_in;
+
+  if (ctrl_to_use_in == RANDOM_CTRL ||
+      ctrl_to_use_in == BANG_BANG)
+  {
+    ctrl_to_use = ctrl_to_use_in;
+  }
+  else
+  {
+    ROS_FATAL_STREAM("Not a valid controller: " << ctrl_to_use_in);
+
+  }
+
 }
 
 autonomos_t::~autonomos_t()
@@ -44,15 +55,16 @@ void autonomos_t::random_state(double* state)
 
 void autonomos_t::random_control(double* control)
 {
-  switch (ctrl_to_use) {
-    case RANDOM_CTRL:
-      control[0] = uniform_random(0,1);// * MAX_SPEED;
-      control[1] = uniform_random(-.5,.5);
-    break;
-    case BANG_BANG:
-      bang_bang_ctrl(control);
-    break;
+  if (ctrl_to_use == RANDOM_CTRL)
+  {
+    control[0] = uniform_random(0,1);// * MAX_SPEED;
+    control[1] = uniform_random(-.5,.5);
   }
+  else if (ctrl_to_use == BANG_BANG)
+  {
+    bang_bang_ctrl(control);
+  }
+
 }
 
 void autonomos_t::bang_bang_ctrl(double* control)
@@ -60,9 +72,9 @@ void autonomos_t::bang_bang_ctrl(double* control)
   int speed_aux = uniform_random(0, 3);
   int steer_aux = uniform_random(0, 3);
   switch (speed_aux) {
-    case 0:  control[0] = 1 / 3;
+    case 0:  control[0] = 1.0 / 3.0;
     break;
-    case 1:  control[0] = 2 / 3;
+    case 1:  control[0] = 2.0 / 3.0;
     break;
     default: control[0] = 1;
     break;
