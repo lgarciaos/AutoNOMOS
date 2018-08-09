@@ -15,7 +15,6 @@ find_package(
 	sensor_msgs
 	tf
 	message_generation
-	simulation
 	# ignition-math4
 	# ignition-msgs1
 )
