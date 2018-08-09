@@ -553,7 +553,7 @@ int main(int argc, char **argv)
           if (publish_ctrl_path)
           {
             std::cout << "Input something and press enter to finish process" << '\n';
-            std::cin >> dummy;
+            //std::cin >> dummy;
           }
           break;
         }
