@@ -12,6 +12,7 @@ planner="SST"
 
 
 cont_planner=1
+last_wc=0
 until [ $cont_planner -gt 2 ] # 2
 do
   iters=1000000
@@ -38,7 +39,12 @@ do
         # add code to check that there is new data after the roslaunch command
         # it could be done using the output of the cmd awk '/Solution Quality'
         # with wc -l and check that there is greater that the previous iteration
-      ((counter_int++))
+        if [[ $(cat $home_$file_aux | awk '/Solution Quality/' | wc -l ) -gt last_wc ]]; then
+          ((last_wc++))
+          ((counter_int++))
+        else
+          echo "failed test"
+        fi
     done
     iters=$((iters / 2))
     ((counter_ext++))
