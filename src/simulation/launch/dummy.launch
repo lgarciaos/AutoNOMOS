@@ -37,3 +37,8 @@
     output = "screen" />
 
 </launch>
+
+
+<!-- roslaunch simulation dummy.launch stopping_check_in:=1000000
+    planner_in:=RRT kill_on_exit_in:=false gz_plot_lines_in:=true
+    publish_ctrl_path_in:=false ctrl_to_use_in:=BANG_BANG -->

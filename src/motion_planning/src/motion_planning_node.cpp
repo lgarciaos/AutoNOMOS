@@ -550,8 +550,11 @@ int main(int argc, char **argv)
         }
         if (iters == sim_params::sim_iters)
         {
-          std::cout << "Press enter to finish process" << '\n';
-          std::cin >> dummy;
+          if (publish_ctrl_path)
+          {
+            std::cout << "Input something and press enter to finish process" << '\n';
+            //std::cin >> dummy;
+          }
           break;
         }
         else
