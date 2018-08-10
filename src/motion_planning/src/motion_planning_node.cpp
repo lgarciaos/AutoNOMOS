@@ -474,6 +474,12 @@ int main(int argc, char **argv)
 
     nh.param<double>("obstacles_radius",      obstacles_radius,  0);
 
+    std::cout << "Using the following simulation parameters:" << '\n';
+    std::cout << "\tsimulation: " << (sim_params::simulation?"true":"false") << '\n';
+    std::cout << "\tpublish_ctrl_path: " << (sim_params::publish_ctrl_path?"true":"false") << '\n';
+    std::cout << "\tgz_total_lines: " << sim_params::gz_total_lines << '\n';
+    std::cout << "\tplot_lines: " << (sim_params::plot_lines?"true":"false") << '\n';
+    std::cout << "\tsim_iters: " << sim_params::sim_iters << '\n';
 
     params::min_time_steps = min_time_steps_aux;
   	params::max_time_steps = max_time_steps_aux;
@@ -543,6 +549,7 @@ int main(int argc, char **argv)
           create_path();
           if (sim_params::plot_lines)
           {
+            std::cout << "Plotting lines..." << '\n';
             publish_lines(true);
           }
           // std::cin >> dummy;
@@ -550,7 +557,7 @@ int main(int argc, char **argv)
         }
         if (iters == sim_params::sim_iters)
         {
-          if (publish_ctrl_path)
+          if (sim_params::publish_ctrl_path)
           {
             std::cout << "Input something and press enter to finish process" << '\n';
             //std::cin >> dummy;
