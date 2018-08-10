@@ -25,7 +25,7 @@ do
     do
       rosservice call /gazebo/reset_simulation "{}"
       echo $planner" iters: "$iters" count: "$counter_int" using: "$1" to: ("$2", "$3", "$4")."
-      roslaunch simulation dummy.launch
+      roslaunch simulation dummy.launch \
         stopping_check_in:=$iters \
         planner_in:=$planner \
         publish_ctrl_path_in:=false \
@@ -33,8 +33,7 @@ do
         goal_state/x:=$2 \
         goal_state/y:=$3 \
         goal_state/theta:=$4 \
-        gz_plot_lines_in:=false \
-        &>> $home_$file_aux
+        gz_plot_lines_in:=false &>> $home_$file_aux
 
         # add code to check that there is new data after the roslaunch command
         # it could be done using the output of the cmd awk '/Solution Quality'
