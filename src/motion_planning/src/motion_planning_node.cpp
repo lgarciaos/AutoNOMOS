@@ -295,8 +295,8 @@ void rrt_sst_solver()
       checker.time() << "\tIterations:\t" << checker.iterations() << "\tNodes:\t"
       << planner -> number_of_nodes << "\tSolution Quality:\t" << solution_cost
       << "\tcontroller:\t" << ctrl_to_use << std::endl ;
-		planner -> visualize_tree(0);
-		planner -> visualize_nodes(0);
+		// planner -> visualize_tree(0);
+		// planner -> visualize_nodes(0);
 
 	}
 	else
