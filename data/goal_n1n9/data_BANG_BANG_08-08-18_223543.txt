@@ -16,6 +16,8 @@ Planner:	SST	Time:	173.547	Iterations:	500000	Nodes:	7685	Solution Quality:	10.2
 Planner:	SST	Time:	163.577	Iterations:	500000	Nodes:	6819	Solution Quality:	9.944	controller:	BANG_BANG
 Planner:	SST	Time:	181.047	Iterations:	500000	Nodes:	6846	Solution Quality:	9.97	controller:	BANG_BANG
 Planner:	SST	Time:	192.53	Iterations:	500000	Nodes:	7938	Solution Quality:	10.506	controller:	BANG_BANG
+Planner:	SST	Time:	165.012	Iterations:	500000	Nodes:	6894	Solution Quality:	10.094	controller:	BANG_BANG
+Planner:	SST	Time:	169.887	Iterations:	500000	Nodes:	8621	Solution Quality:	11.22	controller:	BANG_BANG
 Planner:	SST	Time:	88.1427	Iterations:	250000	Nodes:	5994	Solution Quality:	11.7	controller:	BANG_BANG
 Planner:	SST	Time:	91.2817	Iterations:	250000	Nodes:	4927	Solution Quality:	10.414	controller:	BANG_BANG
 Planner:	SST	Time:	93.7956	Iterations:	250000	Nodes:	6243	Solution Quality:	11.836	controller:	BANG_BANG
@@ -23,6 +25,9 @@ Planner:	SST	Time:	81.1939	Iterations:	250000	Nodes:	5209	Solution Quality:	10.7
 Planner:	SST	Time:	79.4522	Iterations:	250000	Nodes:	4920	Solution Quality:	10.412	controller:	BANG_BANG
 Planner:	SST	Time:	86.9692	Iterations:	250000	Nodes:	4968	Solution Quality:	10.602	controller:	BANG_BANG
 Planner:	SST	Time:	84.5018	Iterations:	250000	Nodes:	6243	Solution Quality:	11.836	controller:	BANG_BANG
+Planner:	SST	Time:	92.1342	Iterations:	250000	Nodes:	5502	Solution Quality:	11.056	controller:	BANG_BANG
+Planner:	SST	Time:	79.6196	Iterations:	250000	Nodes:	5271	Solution Quality:	11.234	controller:	BANG_BANG
+Planner:	SST	Time:	88.686	Iterations:	250000	Nodes:	5502	Solution Quality:	11.176	controller:	BANG_BANG
 Planner:	SST	Time:	42.1563	Iterations:	125000	Nodes:	4001	Solution Quality:	11.954	controller:	BANG_BANG
 Planner:	SST	Time:	37.1568	Iterations:	125000	Nodes:	3860	Solution Quality:	11.724	controller:	BANG_BANG
 Planner:	SST	Time:	42.1772	Iterations:	125000	Nodes:	4001	Solution Quality:	11.954	controller:	BANG_BANG
@@ -32,6 +37,7 @@ Planner:	SST	Time:	42.6534	Iterations:	125000	Nodes:	3458	Solution Quality:	11.0
 Planner:	SST	Time:	38.947	Iterations:	125000	Nodes:	4081	Solution Quality:	11.954	controller:	BANG_BANG
 Planner:	SST	Time:	39.1673	Iterations:	125000	Nodes:	4081	Solution Quality:	11.954	controller:	BANG_BANG
 Planner:	SST	Time:	43.1018	Iterations:	125000	Nodes:	4081	Solution Quality:	11.954	controller:	BANG_BANG
+Planner:	SST	Time:	39.3028	Iterations:	125000	Nodes:	3457	Solution Quality:	10.954	controller:	BANG_BANG
 Planner:	SST	Time:	18.2036	Iterations:	62500	Nodes:	2483	Solution Quality:	11.74	controller:	BANG_BANG
 Planner:	SST	Time:	21.3604	Iterations:	62500	Nodes:	2516	Solution Quality:	11.954	controller:	BANG_BANG
 Planner:	SST	Time:	20.0347	Iterations:	62500	Nodes:	2417	Solution Quality:	12.004	controller:	BANG_BANG
@@ -40,6 +46,8 @@ Planner:	SST	Time:	18.9673	Iterations:	62500	Nodes:	2417	Solution Quality:	12.00
 Planner:	SST	Time:	23.0001	Iterations:	62500	Nodes:	2221	Solution Quality:	11.716	controller:	BANG_BANG
 Planner:	SST	Time:	20.3728	Iterations:	62500	Nodes:	2344	Solution Quality:	11.792	controller:	BANG_BANG
 Planner:	SST	Time:	18.021	Iterations:	62500	Nodes:	2493	Solution Quality:	11.954	controller:	BANG_BANG
+Planner:	SST	Time:	20.6311	Iterations:	62500	Nodes:	2194	Solution Quality:	11.26	controller:	BANG_BANG
+Planner:	SST	Time:	19.1897	Iterations:	62500	Nodes:	2384	Solution Quality:	11.55	controller:	BANG_BANG
 Planner:	SST	Time:	8.3465	Iterations:	31250	Nodes:	1430	Solution Quality:	11.792	controller:	BANG_BANG
 Planner:	SST	Time:	9.36905	Iterations:	31250	Nodes:	1566	Solution Quality:	11.954	controller:	BANG_BANG
 Planner:	SST	Time:	8.37191	Iterations:	31250	Nodes:	1435	Solution Quality:	12.004	controller:	BANG_BANG
@@ -48,6 +56,8 @@ Planner:	SST	Time:	9.26011	Iterations:	31250	Nodes:	1566	Solution Quality:	11.95
 Planner:	SST	Time:	9.31492	Iterations:	31250	Nodes:	1566	Solution Quality:	11.954	controller:	BANG_BANG
 Planner:	SST	Time:	11.6917	Iterations:	31250	Nodes:	1716	Solution Quality:	11.928	controller:	BANG_BANG
 Planner:	SST	Time:	8.49022	Iterations:	31250	Nodes:	1556	Solution Quality:	11.954	controller:	BANG_BANG
+Planner:	SST	Time:	9.0023	Iterations:	31250	Nodes:	1463	Solution Quality:	11.282	controller:	BANG_BANG
+Planner:	SST	Time:	9.62354	Iterations:	31250	Nodes:	3996	Solution Quality:	0	controller:	BANG_BANG
 Planner:	SST	Time:	3.96677	Iterations:	15625	Nodes:	892	Solution Quality:	12.014	controller:	BANG_BANG
 Planner:	SST	Time:	4.01193	Iterations:	15625	Nodes:	1442	Solution Quality:	0	controller:	BANG_BANG
 Planner:	SST	Time:	3.66507	Iterations:	15625	Nodes:	892	Solution Quality:	12.014	controller:	BANG_BANG
@@ -66,6 +76,8 @@ Planner:	SST	Time:	1.5407	Iterations:	7812	Nodes:	517	Solution Quality:	0	contro
 Planner:	SST	Time:	1.53856	Iterations:	7812	Nodes:	517	Solution Quality:	0	controller:	BANG_BANG
 Planner:	SST	Time:	1.5847	Iterations:	7812	Nodes:	517	Solution Quality:	0	controller:	BANG_BANG
 Planner:	SST	Time:	1.6958	Iterations:	7812	Nodes:	517	Solution Quality:	0	controller:	BANG_BANG
+Planner:	SST	Time:	1.92186	Iterations:	7812	Nodes:	506	Solution Quality:	11.584	controller:	BANG_BANG
+Planner:	SST	Time:	1.63101	Iterations:	7812	Nodes:	699	Solution Quality:	0	controller:	BANG_BANG
 Planner:	SST	Time:	0.855651	Iterations:	3906	Nodes:	338	Solution Quality:	0	controller:	BANG_BANG
 Planner:	SST	Time:	0.857695	Iterations:	3906	Nodes:	338	Solution Quality:	0	controller:	BANG_BANG
 Planner:	SST	Time:	0.869493	Iterations:	3906	Nodes:	338	Solution Quality:	0	controller:	BANG_BANG
@@ -74,6 +86,8 @@ Planner:	SST	Time:	0.959368	Iterations:	3906	Nodes:	338	Solution Quality:	0	cont
 Planner:	SST	Time:	0.871302	Iterations:	3906	Nodes:	338	Solution Quality:	0	controller:	BANG_BANG
 Planner:	SST	Time:	0.881016	Iterations:	3906	Nodes:	338	Solution Quality:	0	controller:	BANG_BANG
 Planner:	SST	Time:	1.05306	Iterations:	3906	Nodes:	345	Solution Quality:	0	controller:	BANG_BANG
+Planner:	SST	Time:	0.958281	Iterations:	3906	Nodes:	393	Solution Quality:	0	controller:	BANG_BANG
+Planner:	SST	Time:	1.03575	Iterations:	3906	Nodes:	393	Solution Quality:	0	controller:	BANG_BANG
 Planner:	SST	Time:	0.489156	Iterations:	1953	Nodes:	227	Solution Quality:	0	controller:	BANG_BANG
 Planner:	SST	Time:	0.540579	Iterations:	1953	Nodes:	227	Solution Quality:	0	controller:	BANG_BANG
 Planner:	SST	Time:	0.54097	Iterations:	1953	Nodes:	227	Solution Quality:	0	controller:	BANG_BANG
@@ -81,6 +95,9 @@ Planner:	SST	Time:	0.530161	Iterations:	1953	Nodes:	227	Solution Quality:	0	cont
 Planner:	SST	Time:	0.489123	Iterations:	1953	Nodes:	227	Solution Quality:	0	controller:	BANG_BANG
 Planner:	SST	Time:	0.491031	Iterations:	1953	Nodes:	227	Solution Quality:	0	controller:	BANG_BANG
 Planner:	SST	Time:	0.499317	Iterations:	1953	Nodes:	227	Solution Quality:	0	controller:	BANG_BANG
+Planner:	SST	Time:	0.572837	Iterations:	1953	Nodes:	234	Solution Quality:	0	controller:	BANG_BANG
+Planner:	SST	Time:	0.561053	Iterations:	1953	Nodes:	230	Solution Quality:	0	controller:	BANG_BANG
+Planner:	SST	Time:	0.513822	Iterations:	1953	Nodes:	230	Solution Quality:	0	controller:	BANG_BANG
 Planner:	SST	Time:	0.265495	Iterations:	976	Nodes:	149	Solution Quality:	0	controller:	BANG_BANG
 Planner:	SST	Time:	0.267667	Iterations:	976	Nodes:	149	Solution Quality:	0	controller:	BANG_BANG
 Planner:	SST	Time:	0.246776	Iterations:	976	Nodes:	149	Solution Quality:	0	controller:	BANG_BANG
@@ -98,6 +115,9 @@ Planner:	SST	Time:	0.133578	Iterations:	488	Nodes:	107	Solution Quality:	0	contr
 Planner:	SST	Time:	0.133847	Iterations:	488	Nodes:	107	Solution Quality:	0	controller:	BANG_BANG
 Planner:	SST	Time:	0.126751	Iterations:	488	Nodes:	107	Solution Quality:	0	controller:	BANG_BANG
 Planner:	SST	Time:	0.141999	Iterations:	488	Nodes:	107	Solution Quality:	0	controller:	BANG_BANG
+Planner:	SST	Time:	0.138991	Iterations:	488	Nodes:	107	Solution Quality:	0	controller:	BANG_BANG
+Planner:	SST	Time:	0.134204	Iterations:	488	Nodes:	107	Solution Quality:	0	controller:	BANG_BANG
+Planner:	SST	Time:	0.12445	Iterations:	488	Nodes:	107	Solution Quality:	0	controller:	BANG_BANG
 Planner:	RRT	Time:	1518.71	Iterations:	1000000	Nodes:	878586	Solution Quality:	11.778	controller:	BANG_BANG
 Planner:	RRT	Time:	1532.31	Iterations:	1000000	Nodes:	878261	Solution Quality:	11.778	controller:	BANG_BANG
 Planner:	RRT	Time:	1533.83	Iterations:	1000000	Nodes:	878276	Solution Quality:	11.794	controller:	BANG_BANG
@@ -107,6 +127,7 @@ Planner:	RRT	Time:	1528.45	Iterations:	1000000	Nodes:	879777	Solution Quality:	1
 Planner:	RRT	Time:	1568.49	Iterations:	1000000	Nodes:	879954	Solution Quality:	11.68	controller:	BANG_BANG
 Planner:	RRT	Time:	1541.95	Iterations:	1000000	Nodes:	880069	Solution Quality:	10.796	controller:	BANG_BANG
 Planner:	RRT	Time:	1551.05	Iterations:	1000000	Nodes:	881444	Solution Quality:	12.01	controller:	BANG_BANG
+Planner:	RRT	Time:	1598.83	Iterations:	1000000	Nodes:	906487	Solution Quality:	11.846	controller:	BANG_BANG
 Planner:	RRT	Time:	543.488	Iterations:	500000	Nodes:	434964	Solution Quality:	11.924	controller:	BANG_BANG
 Planner:	RRT	Time:	537.096	Iterations:	500000	Nodes:	434864	Solution Quality:	11.716	controller:	BANG_BANG
 Planner:	RRT	Time:	531.308	Iterations:	500000	Nodes:	435451	Solution Quality:	11.918	controller:	BANG_BANG
@@ -116,6 +137,7 @@ Planner:	RRT	Time:	542.233	Iterations:	500000	Nodes:	437323	Solution Quality:	11
 Planner:	RRT	Time:	563.628	Iterations:	500000	Nodes:	434442	Solution Quality:	11.86	controller:	BANG_BANG
 Planner:	RRT	Time:	544.287	Iterations:	500000	Nodes:	433622	Solution Quality:	11.708	controller:	BANG_BANG
 Planner:	RRT	Time:	541.868	Iterations:	500000	Nodes:	434358	Solution Quality:	11.714	controller:	BANG_BANG
+Planner:	RRT	Time:	537.096	Iterations:	500000	Nodes:	438202	Solution Quality:	11.914	controller:	BANG_BANG
 Planner:	RRT	Time:	201.054	Iterations:	250000	Nodes:	212261	Solution Quality:	11.828	controller:	BANG_BANG
 Planner:	RRT	Time:	198.649	Iterations:	250000	Nodes:	212305	Solution Quality:	11.778	controller:	BANG_BANG
 Planner:	RRT	Time:	196.325	Iterations:	250000	Nodes:	211903	Solution Quality:	11.964	controller:	BANG_BANG
@@ -135,12 +157,17 @@ Planner:	RRT	Time:	87.3375	Iterations:	125000	Nodes:	104705	Solution Quality:	11
 Planner:	RRT	Time:	76.5697	Iterations:	125000	Nodes:	101829	Solution Quality:	11.806	controller:	BANG_BANG
 Planner:	RRT	Time:	81.8858	Iterations:	125000	Nodes:	101928	Solution Quality:	11.808	controller:	BANG_BANG
 Planner:	RRT	Time:	85.8	Iterations:	125000	Nodes:	101664	Solution Quality:	11.278	controller:	BANG_BANG
+Planner:	RRT	Time:	79.7727	Iterations:	125000	Nodes:	104950	Solution Quality:	11.96	controller:	BANG_BANG
 Planner:	RRT	Time:	32.9017	Iterations:	62500	Nodes:	48717	Solution Quality:	11.79	controller:	BANG_BANG
 Planner:	RRT	Time:	29.7912	Iterations:	62500	Nodes:	46769	Solution Quality:	12.228	controller:	BANG_BANG
 Planner:	RRT	Time:	29.7822	Iterations:	62500	Nodes:	46833	Solution Quality:	12.024	controller:	BANG_BANG
 Planner:	RRT	Time:	29.2404	Iterations:	62500	Nodes:	46742	Solution Quality:	12.228	controller:	BANG_BANG
 Planner:	RRT	Time:	29.5071	Iterations:	62500	Nodes:	46769	Solution Quality:	12.228	controller:	BANG_BANG
 Planner:	RRT	Time:	29.8049	Iterations:	62500	Nodes:	46924	Solution Quality:	12.228	controller:	BANG_BANG
+Planner:	RRT	Time:	31.1582	Iterations:	62500	Nodes:	49295	Solution Quality:	13.424	controller:	BANG_BANG
+Planner:	RRT	Time:	32.2312	Iterations:	62500	Nodes:	50052	Solution Quality:	12.236	controller:	BANG_BANG
+Planner:	RRT	Time:	32.4473	Iterations:	62500	Nodes:	50318	Solution Quality:	11.958	controller:	BANG_BANG
+Planner:	RRT	Time:	32.2163	Iterations:	62500	Nodes:	50187	Solution Quality:	12.066	controller:	BANG_BANG
 Planner:	RRT	Time:	10.8382	Iterations:	31250	Nodes:	19844	Solution Quality:	12.228	controller:	BANG_BANG
 Planner:	RRT	Time:	10.7829	Iterations:	31250	Nodes:	19886	Solution Quality:	12.228	controller:	BANG_BANG
 Planner:	RRT	Time:	10.8678	Iterations:	31250	Nodes:	19844	Solution Quality:	12.228	controller:	BANG_BANG
@@ -148,6 +175,9 @@ Planner:	RRT	Time:	12.0122	Iterations:	31250	Nodes:	21522	Solution Quality:	11.7
 Planner:	RRT	Time:	12.1616	Iterations:	31250	Nodes:	19886	Solution Quality:	12.228	controller:	BANG_BANG
 Planner:	RRT	Time:	12.5245	Iterations:	31250	Nodes:	19844	Solution Quality:	12.228	controller:	BANG_BANG
 Planner:	RRT	Time:	10.7596	Iterations:	31250	Nodes:	19844	Solution Quality:	12.228	controller:	BANG_BANG
+Planner:	RRT	Time:	12.5505	Iterations:	31250	Nodes:	22690	Solution Quality:	12.08	controller:	BANG_BANG
+Planner:	RRT	Time:	12.8026	Iterations:	31250	Nodes:	23056	Solution Quality:	12.128	controller:	BANG_BANG
+Planner:	RRT	Time:	14.5129	Iterations:	31250	Nodes:	23056	Solution Quality:	12.128	controller:	BANG_BANG
 Planner:	RRT	Time:	3.87327	Iterations:	15625	Nodes:	7067	Solution Quality:	12.228	controller:	BANG_BANG
 Planner:	RRT	Time:	3.50084	Iterations:	15625	Nodes:	7067	Solution Quality:	12.228	controller:	BANG_BANG
 Planner:	RRT	Time:	4.01138	Iterations:	15625	Nodes:	7067	Solution Quality:	12.228	controller:	BANG_BANG
@@ -156,6 +186,8 @@ Planner:	RRT	Time:	3.48107	Iterations:	15625	Nodes:	7067	Solution Quality:	12.22
 Planner:	RRT	Time:	3.97042	Iterations:	15625	Nodes:	7067	Solution Quality:	12.228	controller:	BANG_BANG
 Planner:	RRT	Time:	3.47077	Iterations:	15625	Nodes:	7067	Solution Quality:	12.228	controller:	BANG_BANG
 Planner:	RRT	Time:	4.09587	Iterations:	15625	Nodes:	7942	Solution Quality:	11.876	controller:	BANG_BANG
+Planner:	RRT	Time:	4.67284	Iterations:	15625	Nodes:	9449	Solution Quality:	11.96	controller:	BANG_BANG
+Planner:	RRT	Time:	5.40218	Iterations:	15625	Nodes:	9735	Solution Quality:	12.236	controller:	BANG_BANG
 Planner:	RRT	Time:	1.24508	Iterations:	7812	Nodes:	2584	Solution Quality:	12.228	controller:	BANG_BANG
 Planner:	RRT	Time:	1.2425	Iterations:	7812	Nodes:	2584	Solution Quality:	12.228	controller:	BANG_BANG
 Planner:	RRT	Time:	1.2374	Iterations:	7812	Nodes:	2584	Solution Quality:	12.228	controller:	BANG_BANG
@@ -185,6 +217,7 @@ Planner:	RRT	Time:	0.282322	Iterations:	1953	Nodes:	709	Solution Quality:	0	cont
 Planner:	RRT	Time:	0.282532	Iterations:	1953	Nodes:	709	Solution Quality:	0	controller:	BANG_BANG
 Planner:	RRT	Time:	0.30726	Iterations:	1953	Nodes:	709	Solution Quality:	0	controller:	BANG_BANG
 Planner:	RRT	Time:	0.334968	Iterations:	1953	Nodes:	709	Solution Quality:	0	controller:	BANG_BANG
+Planner:	RRT	Time:	0.289059	Iterations:	1953	Nodes:	709	Solution Quality:	0	controller:	BANG_BANG
 Planner:	RRT	Time:	0.163134	Iterations:	976	Nodes:	445	Solution Quality:	0	controller:	BANG_BANG
 Planner:	RRT	Time:	0.173102	Iterations:	976	Nodes:	445	Solution Quality:	0	controller:	BANG_BANG
 Planner:	RRT	Time:	0.171083	Iterations:	976	Nodes:	445	Solution Quality:	0	controller:	BANG_BANG
@@ -194,6 +227,7 @@ Planner:	RRT	Time:	0.160734	Iterations:	976	Nodes:	445	Solution Quality:	0	contr
 Planner:	RRT	Time:	0.173712	Iterations:	976	Nodes:	445	Solution Quality:	0	controller:	BANG_BANG
 Planner:	RRT	Time:	0.185018	Iterations:	976	Nodes:	445	Solution Quality:	0	controller:	BANG_BANG
 Planner:	RRT	Time:	0.176938	Iterations:	976	Nodes:	445	Solution Quality:	0	controller:	BANG_BANG
+Planner:	RRT	Time:	0.175679	Iterations:	976	Nodes:	445	Solution Quality:	0	controller:	BANG_BANG
 Planner:	RRT	Time:	0.10415	Iterations:	488	Nodes:	299	Solution Quality:	0	controller:	BANG_BANG
 Planner:	RRT	Time:	0.100412	Iterations:	488	Nodes:	299	Solution Quality:	0	controller:	BANG_BANG
 Planner:	RRT	Time:	0.103668	Iterations:	488	Nodes:	299	Solution Quality:	0	controller:	BANG_BANG
@@ -202,3 +236,5 @@ Planner:	RRT	Time:	0.097678	Iterations:	488	Nodes:	299	Solution Quality:	0	contr
 Planner:	RRT	Time:	0.107357	Iterations:	488	Nodes:	299	Solution Quality:	0	controller:	BANG_BANG
 Planner:	RRT	Time:	0.107861	Iterations:	488	Nodes:	299	Solution Quality:	0	controller:	BANG_BANG
 Planner:	RRT	Time:	0.100931	Iterations:	488	Nodes:	299	Solution Quality:	0	controller:	BANG_BANG
+Planner:	RRT	Time:	0.105181	Iterations:	488	Nodes:	299	Solution Quality:	0	controller:	BANG_BANG
+Planner:	RRT	Time:	0.117441	Iterations:	488	Nodes:	299	Solution Quality:	0	controller:	BANG_BANG
