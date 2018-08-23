@@ -15,8 +15,7 @@ find_package(
 	sensor_msgs
 	tf
 	message_generation
-	# ignition-math4
-	# ignition-msgs1
+
 )
 # find_package(ignition-msgs1 REQUIRED)
 # find_package(ignition-transport4 REQUIRED)
@@ -58,7 +57,6 @@ find_package(
 add_message_files(
   FILES
   ctrl_path.msg
-  # Message2.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -138,7 +136,7 @@ add_library(${PROJECT_NAME}
 	src/autonomos.cpp
 	src/rrt_ros.cpp
 	src/sst_ros.cpp
-	# ../simulation/include/sim_params.h
+	src/dirt_ros.cpp
 )
 
 ## Add cmake target dependencies of the library
@@ -156,7 +154,8 @@ add_executable(${PROJECT_NAME}_node src/motion_planning_node.cpp)
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
 ## e.g. "rosrun someones_pkg node" instead of "rosrun someones_pkg someones_pkg_node"
-set_target_properties(${PROJECT_NAME}_node PROPERTIES OUTPUT_NAME node PREFIX "")
+set_target_properties(${PROJECT_NAME}_node 
+	PROPERTIES OUTPUT_NAME node PREFIX "")
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
@@ -171,7 +170,6 @@ target_link_libraries(
   	${catkin_LIBRARIES}
 		${PROJECT_NAME}
 		SparseRRT
-		# ${PROJECT_SOURCE_DIR}/sparse_rrt/lib/libSparseRRT.so
 )
 
 #############

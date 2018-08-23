@@ -13,9 +13,10 @@
 #ifndef SPARSE_SYSTEM_HPP
 #define SPARSE_SYSTEM_HPP
 
+#include "motion_planners/tree_node.hpp"
 #include "image_creation/svg_image.hpp"
 #include "utilities/parameter_reader.hpp"
-
+#include <tuple>
 /**
  * @brief A base class for plannable systems.
  * @details A base class for plannable systems. This class implements core functionality
@@ -99,6 +100,35 @@ public:
 	 * @param control The control to modify with random values.
 	 */
 	virtual void random_control(double* control) = 0;
+
+	virtual double heuristic(double* state, double* goal)
+	{
+		return distance(state,goal);
+	}
+
+	virtual std::vector<std::tuple<double*,double,double*>> maneuver_generation(double* start_state,int num_maneuvers)
+	{
+		std::vector<std::tuple<double*,double,double*>> ret;
+		int MAX_TRIES = 3*num_maneuvers;
+		int tries = 0;
+		for(int i=0;i<num_maneuvers && tries<MAX_TRIES;i++,tries++)
+		{
+			double* control = alloc_control_point();
+			double* result_state = alloc_state_point();
+			double duration;
+			random_control(control);
+			bool res = propagate(start_state,control,params::min_time_steps,params::max_time_steps,result_state,duration);
+			if(!res)
+			{
+				delete control;
+				delete result_state;
+				i--;
+				continue;
+			}
+			ret.push_back(std::make_tuple(control,duration,result_state));
+		}
+		return ret;
+	}
 
 	/**
 	 * @brief Finds the distance between two states.

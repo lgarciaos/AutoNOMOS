@@ -3,6 +3,7 @@
 #include "autonomos.hpp"
 #include "rrt_ros.hpp"
 #include "sst_ros.hpp"
+#include "dirt_ros.hpp"
 
 // ros
 #include <geometry_msgs/PoseArray.h>
@@ -27,6 +28,7 @@
 
 #define RRT "RRT"
 #define SST "SST"
+#define DIRT "DIRT"
 
 namespace sim_params
 {
@@ -244,6 +246,13 @@ void create_path()
     planner = new sst_ros_t(system_aux);
     rrt_sst_solver();
   }
+  else if(params::planner == DIRT)
+  {
+    autonomos_t* system_aux = new autonomos_t(ctrl_to_use);
+    system_aux -> set_obstacles(vec_obstacles_poses, vec_obstacles_type, obstacles_radius);
+    planner = new dirt_ros_t(system_aux);
+    rrt_sst_solver();
+  }
   else
   {
     ROS_FATAL_STREAM("parameter not valid: " << params::planner);
@@ -421,6 +430,13 @@ void publish_lines(bool dealloc)
       delete planner;
     }
   }
+  else if (params::planner == DIRT)
+  {
+    dirt_ros_t *dirt_aux = dynamic_cast<dirt_ros_t*>(planner);
+    pub_gazebo_lines_visualizer[0].publish(dirt_aux -> get_vector_path());
+    pub_gazebo_lines_visualizer[1].publish(dirt_aux -> get_vector_tree());
+    
+  }
   pub_target_pose.publish(params_goal_state);
   pub_start_pose.publish(params_start_state);
 }
@@ -560,7 +576,7 @@ int main(int argc, char **argv)
           if (sim_params::publish_ctrl_path)
           {
             std::cout << "Input something and press enter to finish process" << '\n';
-            //std::cin >> dummy;
+            std::cin >> dummy;
           }
           break;
         }
@@ -569,6 +585,7 @@ int main(int argc, char **argv)
           loop_rate.sleep();
         }
     }
+    std::cout << "Finishing motion_planning_node." << std::endl;
     return 0;
 }
 

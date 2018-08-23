@@ -34,7 +34,7 @@ ignition::transport::Node ign_node;
 void get_lines_callback(const std_msgs::Float64MultiArrayConstPtr& msg, const int& lines_num)
 {
   // std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << '\n';
-
+  std::cout << "plotting lines: " << colors[lines_num] << std::endl;
   float pt_x, pt_y, pt_z = 0.01;
   pt_z = pt_z - lines_num * pt_z / gz_total_lines;
   // std::cout << "lines_num: " << lines_num << "\tsize: " << msg -> data.size()
@@ -56,6 +56,7 @@ void get_lines_callback(const std_msgs::Float64MultiArrayConstPtr& msg, const in
   }
   ign_node.Request("/marker", markerMsg);
 
+  std::cout << "ended plotting lines: " << colors[lines_num] << std::endl;
 
 }
 

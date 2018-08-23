@@ -115,6 +115,9 @@ public:
 	 */
     virtual void visualize_obstacles(svg::Document& doc ,svg::Dimensions dims);
 
+
+	virtual std::vector<std::tuple<double*,double,double*>> maneuver_generation(double* start_state,int num_maneuvers);
+
 protected:
 
 	std::vector<Rectangle_t> obstacles;
