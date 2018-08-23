@@ -4,20 +4,20 @@ home_=$(pwd)
 source ../devel/setup.bash
 
 if [[ $3 -gt 0 ]]; then
-  x_p=${2#+}
+  x_p=${3#+}
   x_p="p"$x_p
 else
   echo "neg"
-  x_p=${2#-}
+  x_p=${3#-}
   echo "x_p: "$x_p
   x_p="n$x_p"
 fi
 
 if [[ $4 -gt 0 ]]; then
-  y_p=${3#+}
+  y_p=${4#+}
   y_p="p"$y_p
 else
-  y_p=${3#-}
+  y_p=${4#-}
   y_p="n"$y_p
 fi
 
@@ -67,3 +67,4 @@ echo "Aux file: "$file_aux
 echo "Res file: "$file_
 
 cat $home_$file_aux | awk '/Solution Quality/' >> $home_$file_
+
