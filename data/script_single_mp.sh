@@ -1,23 +1,31 @@
 #!/bin/bash
-echo "Motion planner: "$1", with controller: "$2
 home_=$(pwd)
 source ../devel/setup.bash
 
-if [[ $3 -gt 0 ]]; then
-  x_p=${2#+}
+planner=$1
+ctrl=$2
+x_in=$3
+y_in=$4
+th_in=$5
+
+echo "Motion planner: $planner, with controller: $ctrl"
+
+
+if [[ $x_in -gt 0 ]]; then
+  x_p=${x_in#+}
   x_p="p"$x_p
 else
   echo "neg"
-  x_p=${2#-}
+  x_p=${x_in#-}
   echo "x_p: "$x_p
   x_p="n$x_p"
 fi
 
-if [[ $4 -gt 0 ]]; then
-  y_p=${3#+}
+if [[ $y_in -gt 0 ]]; then
+  y_p=${y_in#+}
   y_p="p"$y_p
 else
-  y_p=${3#-}
+  y_p=${y_in#-}
   y_p="n"$y_p
 fi
 
@@ -26,7 +34,6 @@ file_aux="/data_aux_"$x_p$y_p$t_p"_"$1"_"$date_".txt"
 file_="/data_"$x_p$y_p$t_p"_"$1"_"$date_".txt"
 
 
-planner=$1
 
 
 cont_planner=1
@@ -42,15 +49,15 @@ do
   until [ $counter_int -gt 10 ] # 10
   do
     rosservice call /gazebo/reset_simulation "{}"
-    echo $planner" iters: "$iters" count: "$counter_int" using: "$1"-"$2" to: ("$3", "$4", "$5")."
+    echo $planner" iters: "$iters" count: "$counter_int" using: "$planner"-"$ctrl" to: ("$x_in", "$y_in", "$th_in")."
     roslaunch simulation dummy.launch \
       stopping_check_in:=$iters \
       planner_in:=$planner \
       publish_ctrl_path_in:=false \
-      ctrl_to_use_in:=$2 \
-      goal_state/x:=$3 \
-      goal_state/y:=$4 \
-      goal_state/theta:=$5 \
+      ctrl_to_use_in:=$ctrl \
+      goal_state/x:=$x_in \
+      goal_state/y:=$y_in \
+      goal_state/theta:=$th_in \
       gz_plot_lines_in:=false &>> $home_$file_aux
       if [[ $(cat $home_$file_aux | awk '/Solution Quality/' | wc -l ) -gt last_wc ]]; then
         ((last_wc++))
