@@ -30,8 +30,8 @@ else
 fi
 
 date_=$(date +"%d-%m-%y_%H%M%S")
-file_aux="/data_aux_"$x_p$y_p$t_p"_"$1"_"$date_".txt"
-file_="/data_"$x_p$y_p$t_p"_"$1"_"$date_".txt"
+file_aux="/data_aux_"$x_p$y_p$t_p"_"$planner"-"$ctrl"_"$date_".txt"
+file_="/data_"$x_p$y_p$t_p"_"$planner"-"$ctrl"_"$date_".txt"
 
 
 
