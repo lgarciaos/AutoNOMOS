@@ -8,3 +8,4 @@ devel/lib
 devel/share
 devel/
 src/Gazebo_plugin/build/
+src/motion_planning/sparse_rrt/lib/libSparseRRT.so
