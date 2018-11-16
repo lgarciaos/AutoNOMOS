@@ -22,6 +22,7 @@
 
   <include file="$(find motion_planning)/launch/motion_planning.launch">
     <arg name="stopping_check_arg" default = "$(arg stopping_check_in)" />
+    <arg name="stopping_type_arg" default = "$(arg stopping_type_in)" />
     <arg name="planner_arg" default = "$(arg planner_in)" />
     <arg name="kill_on_exit" default = "$(arg kill_on_exit_in)" />
     <arg name="goal_state/x" default = "$(arg goal_state/x)"/>
