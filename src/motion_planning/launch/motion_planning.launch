@@ -1,5 +1,6 @@
 <launch>
   <arg name="stopping_check_arg" />
+  <arg name="stopping_type_arg" />
   <arg name="planner_arg" />
   <arg name="kill_on_exit" />
   <arg name="ctrl_to_use"/>
@@ -17,8 +18,9 @@
     <param name="final_point_x"              type="double" value="-1"/>
     <param name="final_point_y"              type="double" value="9"/>
     <param name="integration_step"           type="double" value="0.002"/>
-    <param name="stopping_type"              type="string" value="iterations"/>
+    <!-- <param name="stopping_type"              type="string" value="iterations"/> -->
     <!-- <param name="stopping_type"              type="string" value="time"/> -->
+    <param name="stopping_type"              type="string" value="$(arg stopping_type_arg)"/>
     <param name="stopping_check"             type="double" value="$(arg stopping_check_arg)"/>
     <!-- <param name="stats_type"                 type="string" value="time"/> -->
     <!-- <param name="stats_type"                 type="string" value="iterations"/> -->

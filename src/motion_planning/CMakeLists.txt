@@ -15,7 +15,7 @@ find_package(
 	sensor_msgs
 	tf
 	message_generation
-
+	sparse_rrt
 )
 # find_package(ignition-msgs1 REQUIRED)
 # find_package(ignition-transport4 REQUIRED)
@@ -109,10 +109,10 @@ generate_messages(
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
+ INCLUDE_DIRS include
 #  LIBRARIES motion_planning
-	CATKIN_DEPENDS message_runtime
-#  DEPENDS system_lib
+	CATKIN_DEPENDS message_runtime sparse_rrt
+ # DEPENDS sparse_rrt
 )
 
 ###########
@@ -123,12 +123,12 @@ catkin_package(
 ## Your package locations should be listed before other locations
 include_directories(
 include
-sparse_rrt/include
 ${catkin_INCLUDE_DIRS}
+# sparse_rrt/include
 ../simulation/include
 )
 
-LINK_DIRECTORIES(sparse_rrt/lib)
+#LINK_DIRECTORIES(sparse_rrt/lib)
 ## Declare a C++ library
 add_library(${PROJECT_NAME}
   src/a_star.cpp
@@ -167,9 +167,10 @@ set_target_properties(${PROJECT_NAME}_node
 # )
 target_link_libraries(
 	${PROJECT_NAME}_node
+	#sparse_rrt
   	${catkin_LIBRARIES}
 		${PROJECT_NAME}
-		SparseRRT
+		#	SparseRRT
 )
 
 #############
