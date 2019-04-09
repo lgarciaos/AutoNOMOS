@@ -41,12 +41,15 @@
 #define ITERATIONS_LIMIT 10000
 #define ARE_POINTS_EQUAL(A, B) (A.x == B.x & A.y == B.y)
 
-
+// #define POS_X_BOUND +10.0
+// #define NEG_X_BOUND -01.0
+// #define POS_Y_BOUND +07.0
+// #define NEG_Y_BOUND -07.0
 const double tol_dist = 0.1;
-const int grid_init_x = -10;
-const int grid_end_x = 0;
-const int grid_init_y = -10;
-const int grid_end_y = 10;
+const int grid_init_x = 10;
+const int grid_end_x = -1;
+const int grid_init_y = 7;
+const int grid_end_y = -7;
 
 int markers_id = 0;
 std::string autonomos_static_regex("AutoNOMOS_mini_static[_]*\\d*");

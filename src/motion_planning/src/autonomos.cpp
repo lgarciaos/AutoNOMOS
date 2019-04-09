@@ -6,10 +6,10 @@
 
 #define MAX_SPEED -200.0
 
-#define POS_X_BOUND +00.0
-#define NEG_X_BOUND -10.0
-#define POS_Y_BOUND +10.0
-#define NEG_Y_BOUND -10.0
+#define POS_X_BOUND -0.0 //+10.0
+#define NEG_X_BOUND -10.0 //-01.0
+#define POS_Y_BOUND +10.0 //+07.0
+#define NEG_Y_BOUND -10.0 //-07.0
 
 #include <cmath>
 
@@ -19,6 +19,8 @@ autonomos_t::autonomos_t(std::string ctrl_to_use_in)
   control_dimension = 2;
   temp_state = new double[state_dimension];
   collision_detector = new collision_detector_t();
+
+  std::cout << "Bounding rectangle: ( " << POS_X_BOUND << " , " << POS_Y_BOUND << ") , ( " << NEG_X_BOUND << " , " << NEG_Y_BOUND << " )." << std::endl;
 
   if (ctrl_to_use_in == RANDOM_CTRL ||
       ctrl_to_use_in == BANG_BANG)
@@ -55,9 +57,11 @@ void autonomos_t::random_state(double* state)
 
 void autonomos_t::random_control(double* control)
 {
+  // control[0] -> SPEED
+  // control[1] -> STEERING
   if (ctrl_to_use == RANDOM_CTRL)
   {
-    control[0] = uniform_random(0,1);// * MAX_SPEED;
+    control[0] = uniform_random(-1,1);// * MAX_SPEED;
     control[1] = uniform_random(-.5,.5);
   }
   else if (ctrl_to_use == BANG_BANG)
@@ -69,12 +73,16 @@ void autonomos_t::random_control(double* control)
 
 void autonomos_t::bang_bang_ctrl(double* control)
 {
-  int speed_aux = uniform_random(0, 3);
+  int speed_aux = uniform_random(0, 5);
   int steer_aux = uniform_random(0, 3);
   switch (speed_aux) {
     case 0:  control[0] = 1.0 / 3.0;
     break;
     case 1:  control[0] = 2.0 / 3.0;
+    break;
+    case 2:  control[0] = -1.0 / 3.0;
+    break;
+    case 3:  control[0] = -2.0 / 3.0;
     break;
     default: control[0] = 1;
     break;

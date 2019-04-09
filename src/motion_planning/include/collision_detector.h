@@ -25,8 +25,8 @@
 #define CIRCLE 1
 
 // car dimensions
-#define CAR_SIZE_X 0.2 * 2
-#define CAR_SIZE_Y 0.125 * 2
+#define CAR_SIZE_Y 0.2
+#define CAR_SIZE_X 0.125 
 
 /**
  * @brief
