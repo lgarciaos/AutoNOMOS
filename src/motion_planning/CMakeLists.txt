@@ -56,7 +56,7 @@ find_package(
 ## Generate messages in the 'msg' folder
 add_message_files(
   FILES
-  ctrl_path.msg
+  car_trajectory.msg
 )
 
 ## Generate services in the 'srv' folder
