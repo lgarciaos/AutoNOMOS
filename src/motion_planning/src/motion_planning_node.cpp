@@ -1,4 +1,8 @@
 // #define _GLIBCXX_USE_CXX11_ABI 0
+
+// std
+#include <chrono>
+
 #include "a_star.h"
 #include "autonomos.hpp"
 #include "rrt_ros.hpp"
@@ -6,24 +10,25 @@
 #include "dirt_ros.hpp"
 
 // ros
+#include <ros/console.h>
+#include <std_srvs/Empty.h>
 #include <geometry_msgs/PoseArray.h>
 #include <std_msgs/Int64MultiArray.h>
 #include <std_msgs/Float64MultiArray.h>
-#include <std_srvs/Empty.h>
 
 // sparce rrt
-#include "utilities/parameter_reader.hpp"
-#include "utilities/condition_check.hpp"
-#include "utilities/random.hpp"
-#include "utilities/timer.hpp"
-#include "systems/point.hpp"
 #include "systems/car.hpp"
+#include "systems/point.hpp"
+#include "utilities/timer.hpp"
+#include "utilities/random.hpp"
+#include "utilities/condition_check.hpp"
+#include "utilities/parameter_reader.hpp"
 // #include "motion_planners/sst.hpp"
 // #include "motion_planners/rrt.hpp"
 #include "utilities/parameter_reader.hpp"
 
 // own
-#include "motion_planning/ctrl_path.h"
+#include "motion_planning/car_trajectory.h"
 #include "sim_params.h"
 
 #define RRT "RRT"
@@ -36,46 +41,55 @@ namespace sim_params
 	int sim_iters;
 	int gz_total_lines;
   bool plot_lines;
-	bool publish_ctrl_path;
+	bool publish_car_trajectory;
 }
 
-std::vector<geometry_msgs::Pose> model_states;
-std::string algorithm;
-geometry_msgs::Point initial_pt, end_pt;
-std::vector<geometry_msgs::Pose> vec_obstacles_poses;
-std::vector<int> vec_obstacles_type;
+///////////////
+// VARIABLES //
+///////////////
+const int rate_hz = 10;
+
+int dummy;
 int path_counter;
 
-
-geometry_msgs::Pose2D params_start_state, params_goal_state;
-
-// sim_params::simulation = true;
-// sim_params::publish_ctrl_path = true;
-// sim_params::gz_total_lines = 0;
-// sim_params::plot_lines = false;
-
-std::vector<ros::Publisher> pub_gazebo_lines_visualizer;
-ros::Publisher pub_target_pose;
-ros::Publisher pub_start_pose;
-ros::Publisher pub_ctrl_path;
-
-std::string ctrl_to_use;
+std::chrono::high_resolution_clock::time_point start_time;
 
 double obstacles_radius;
+
+std::vector<int> vec_obstacles_type;
+std::vector<geometry_msgs::Pose> model_states;
+std::vector<geometry_msgs::Pose> vec_obstacles_poses;
+std::vector<ros::Publisher> pub_gazebo_lines_visualizer;
+
+std::string algorithm;
+std::string ctrl_to_use;
 
 std_msgs::Float64MultiArray vec_lines_closed;
 std_msgs::Float64MultiArray vec_lines_path;
 std_msgs::Float64MultiArray vec_lines_opened;
 
-int dummy;
+geometry_msgs::Point initial_pt, end_pt;
+geometry_msgs::Pose2D params_start_state, params_goal_state;
+
+ros::Publisher pub_target_pose;
+ros::Publisher pub_start_pose;
+ros::Publisher pub_car_trajectory;
+
 a_star_t* a_star_ptr;
 
 planner_t* planner;
 
+motion_planning::car_trajectory car_trajectory_msg;
 
 
+// sim_params::simulation = true;
+// sim_params::publish_car_trajectory = true;
+// sim_params::gz_total_lines = 0;
+// sim_params::plot_lines = false;
 
-// functions
+///////////////
+// FUNCTIONS //
+///////////////
 void publish_lines(bool dealloc);
 void a_star_solve();
 void create_path();
@@ -83,7 +97,7 @@ void create_path();
 void get_obstacles_poses_callback(const geometry_msgs::PoseArray& msg);
 void get_obstacles_types_callback(const std_msgs::Int64MultiArray& msg);
 void rrt_sst_solver();
-void publish_ctrl_path(std::vector<std::pair<double*,double> >& controls);
+void publish_car_trajectory(std::vector<std::pair<double*,double> >& controls);
 
 
 void a_star_solve()
@@ -264,7 +278,7 @@ void create_path()
 void rrt_sst_solver()
 {
 
-  params::goal_radius = .5;
+  params::goal_radius = .1;
   planner->set_start_state(params::start_state);
 	planner->set_goal_state(params::goal_state, params::goal_radius);
 	planner->setup_planning();
@@ -296,9 +310,9 @@ void rrt_sst_solver()
 		{
 			solution_cost += controls[i].second;
 		}
-    if (sim_params::publish_ctrl_path)
+    if (sim_params::publish_car_trajectory)
     {
-      publish_ctrl_path(controls);
+      publish_car_trajectory(controls);
     }
     std::cout << "Planner:\t" << params::planner << "\tTime:\t" <<
       checker.time() << "\tIterations:\t" << checker.iterations() << "\tNodes:\t"
@@ -332,7 +346,7 @@ void rrt_sst_solver()
 					solution_cost += controls[i].second;
 				}
         // sst_ros_t *sst_aux = dynamic_cast<sst_ros_t*>(planner);
-        publish_ctrl_path(controls);
+        publish_car_trajectory(controls);
 				std::cout << "Time: " << checker.time() << " Iterations: " <<
           checker.iterations() << " Nodes: " << planner -> number_of_nodes <<
           " Solution Quality: " << solution_cost << std::endl ;
@@ -367,18 +381,21 @@ void rrt_sst_solver()
 	std::cout << "Done planning." << std::endl;
 }
 
-void publish_ctrl_path(std::vector<std::pair<double*,double> >& controls)
+void publish_car_trajectory(std::vector<std::pair<double*,double> >& controls)
 {
   std::cout << __PRETTY_FUNCTION__ << '\n';
-  motion_planning::ctrl_path res;
+  // motion_planning::car_trajectory res;
+
+  car_trajectory_msg.path_len = controls.size();
   for(unsigned i = 0; i < controls.size(); i++)
   {
-    res.speed.push_back(controls[i].first[0]);
-    res.steering.push_back(controls[i].first[1]);
-    res.duration.push_back(controls[i].second);
+    car_trajectory_msg.speed.push_back(controls[i].first[0]);
+    car_trajectory_msg.steering.push_back(controls[i].first[1]);
+    car_trajectory_msg.duration.push_back(controls[i].second);
   }
-  pub_ctrl_path.publish(res);
+  pub_car_trajectory.publish(car_trajectory_msg);
 
+  car_trajectory_msg.header.seq++;
 }
 
 void get_obstacles_poses_callback(const geometry_msgs::PoseArray& msg)
@@ -414,6 +431,7 @@ void publish_lines(bool dealloc)
     rrt_ros_t *rrt_aux = dynamic_cast<rrt_ros_t*>(planner);
     pub_gazebo_lines_visualizer[0].publish(rrt_aux -> get_vector_path());
     pub_gazebo_lines_visualizer[1].publish(rrt_aux -> get_vector_tree());
+    
     if (dealloc)
     {
       delete planner;
@@ -441,152 +459,172 @@ void publish_lines(bool dealloc)
   pub_start_pose.publish(params_start_state);
 }
 
+void init_variables()
+{
+  ROS_DEBUG_STREAM_NAMED("MP NODE - ", __FUNCTION__ <<  ": beginning..." );
+
+  // init outgoing control message 
+  // start_time = std::chrono::high_resolution_clock::now();
+  car_trajectory_msg.header.seq = 0;
+  car_trajectory_msg.header.stamp.sec = 0;
+  car_trajectory_msg.header.stamp.nsec = 0;
+  car_trajectory_msg.header.frame_id = params::planner;
+
+  // filling start_state
+  params::start_state = new double[3];
+  params::start_state[0] = params_start_state.x;
+  params::start_state[1] = params_start_state.y;
+  params::start_state[2] = params_start_state.theta;
+
+  // filling goal_state
+  params::goal_state = new double[3];
+  params::goal_state[0] = params_goal_state.x;
+  params::goal_state[1] = params_goal_state.y;
+  params::goal_state[2] = params_goal_state.theta;
+
+  //Parameters for image output.
+  extern double tree_line_width;
+  extern double solution_line_width;
+  extern int image_width;
+  extern int image_height;
+  extern double node_diameter;
+  extern double solution_node_diameter;
+
+  // if using A*, init the planner
+  if(params::planner == CTRL || params::planner == GRID)
+  {
+    a_star_ptr = new a_star_t();
+  }
+  ROS_DEBUG_STREAM_NAMED("MP NODE - ", __FUNCTION__ <<  ": Ended" );
+}
+
 
 int main(int argc, char **argv)
 {
-    int rate_hz = 10;
-    ros::init(argc, argv, "sim_tools_testing_node");
-    ros::NodeHandle nh;
-    ros::NodeHandle nh_priv("~");
-    ros::Rate loop_rate(rate_hz);
-    path_counter = 0;
-    std_srvs::Empty empty;
+  ros::init(argc, argv, "motion_planning_node");
+  // ROS_INFO_STREAM_NAMED("MP NODE - " , __FUNCTION__ << ": node initialized (info)");
+  ROS_DEBUG_STREAM_NAMED("MP NODE - ", __FUNCTION__ << ": node initialized");
+  ros::NodeHandle nh;
+  ros::NodeHandle nh_priv("~");
+  ros::Rate loop_rate(rate_hz);
+  path_counter = 0;
+  std_srvs::Empty empty;
+  ros::service::call("/gazebo/reset_simulation", empty);
+
+
+  int min_time_steps_aux, max_time_steps_aux;
+
+  ROS_DEBUG_STREAM_NAMED("MP NODE: - ", __FUNCTION__ <<  ": Reading parameters");
+  // motion planning parameters
+  nh_priv.param<double>       ("integration_step", params::integration_step, .002);
+  nh_priv.param<std::string>  ("stopping_type",    params::stopping_type, "time");
+  nh_priv.param<double>       ("stopping_check",   params::stopping_check, 15);
+  nh_priv.param<std::string>  ("stats_type",       params::stats_type, "time");
+  nh_priv.param<double>       ("stats_check",      params::stats_check, 0);
+  nh_priv.param<int>          ("min_time_steps",   min_time_steps_aux, 20);
+  nh_priv.param<int>          ("max_time_steps",   max_time_steps_aux, 200);
+  nh_priv.param<int>          ("random_seed",      params::random_seed, 0);
+  nh_priv.param<double>       ("sst_delta_near",   params::sst_delta_near, 0.4);
+  nh_priv.param<double>       ("sst_delta_drain",  params::sst_delta_drain, 0.2);
+  nh_priv.param<std::string>  ("planner",          params::planner, CTRL);
+  nh_priv.param<std::string>  ("system",           params::system, "car");
+  nh_priv.param<double>       ("goal_radius",      params::goal_radius, 0.5);
+  nh_priv.param<bool>         ("intermediate_visualization",
+    params::intermediate_visualization, false);
+  nh_priv.param<double>       ("start_state/x",     params_start_state.x, -10);
+  nh_priv.param<double>       ("start_state/y",     params_start_state.y, -7.5);
+  nh_priv.param<double>       ("start_state/theta", params_start_state.theta, 0);
+  nh_priv.param<double>       ("goal_state/x",      params_goal_state.x, -1);
+  nh_priv.param<double>       ("goal_state/y",      params_goal_state.y, 9);
+  nh_priv.param<double>       ("goal_state/theta",  params_goal_state.theta, 0);
+  nh_priv.param<std::string>  ("ctrl_to_use",  ctrl_to_use, RANDOM_CTRL);
+
+  // global parameters
+  nh.param<bool>  ("simulation/simulation", sim_params::simulation,  true);
+  nh.param<bool>  ("simulation/publish_car_trajectory", sim_params::publish_car_trajectory,  true);
+  nh.param<int>   ("simulation/gz_total_lines", sim_params::gz_total_lines,  0);
+  nh.param<bool>  ("simulation/plot_lines", sim_params::plot_lines,  false);
+  nh.param<int>   ("simulation/iterations", sim_params::sim_iters,  1);
+  nh.param<double>("obstacles_radius",      obstacles_radius,  0);
+
+  ROS_DEBUG_STREAM_NAMED("MP NODE: - ", __FUNCTION__ <<  ": Parameters read");
+  std::cout << "Using the following simulation parameters:" << '\n';
+  std::cout << "\tsimulation: " << (sim_params::simulation?"true":"false") << '\n';
+  std::cout << "\tpublish_car_trajectory: " << (sim_params::publish_car_trajectory?"true":"false") << '\n';
+  std::cout << "\tgz_total_lines: " << sim_params::gz_total_lines << '\n';
+  std::cout << "\tplot_lines: " << (sim_params::plot_lines?"true":"false") << '\n';
+  std::cout << "\tsim_iters: " << sim_params::sim_iters << '\n';
+
+  params::min_time_steps = min_time_steps_aux;
+  params::max_time_steps = max_time_steps_aux;
+
+  ROS_DEBUG_STREAM_NAMED("MP NODE: - ", __FUNCTION__ <<  ": Initializing subscribers");
+  ros::Subscriber sub_obs_poses  = nh.subscribe("/obstacles/poses", 1,
+    &get_obstacles_poses_callback);
+  ros::Subscriber sub_obs_types  = nh.subscribe("/obstacles/types", 1,
+    &get_obstacles_types_callback);
+
+  // publishers
+  ROS_DEBUG_STREAM_NAMED("MP NODE: - ", __FUNCTION__ <<  ": Initializing publishers");
+  pub_target_pose = nh.advertise<geometry_msgs::Pose2D>("/goal_pose", 1, true);
+  pub_start_pose = nh.advertise<geometry_msgs::Pose2D>("/start_pose", 1, true);
+  pub_car_trajectory = nh.advertise<motion_planning::car_trajectory>(
+    "/motion_planning/path", 1, true);
+  if (sim_params::simulation)
+  {
+    for(int i = 0; i < sim_params::gz_total_lines; i++)
+    {
+      std::stringstream i_ss;
+      i_ss << "/gz_visual/lines_" << i;
+      pub_gazebo_lines_visualizer.push_back(
+        nh.advertise<std_msgs::Float64MultiArray>(i_ss.str(), rate_hz, true));
+    }
+  }
+
+  init_variables();
+
+  // ROS_INFO_STREAM("sim_tools_testing_node initiated");
+  ROS_DEBUG_STREAM_NAMED("MP NODE: - ", __FUNCTION__ <<  ": Initializing publishers");
+  // ros::spinOnce();
+
+  loop_rate.sleep();
+
+  int iters = 0;
+
+  ROS_DEBUG_STREAM_NAMED("MP NODE: - ", __FUNCTION__ <<  ": Going into while(ros::ok())");
+  while(ros::ok())
+  {
     ros::service::call("/gazebo/reset_simulation", empty);
+    ros::spinOnce();
 
-    int min_time_steps_aux, max_time_steps_aux;
-
-    // motion planning parameters
-    nh_priv.param<double>      ("integration_step", params::integration_step, .002);
-  	nh_priv.param<std::string> ("stopping_type",    params::stopping_type, "time");
-  	nh_priv.param<double>      ("stopping_check",   params::stopping_check, 15);
-  	nh_priv.param<std::string> ("stats_type",       params::stats_type, "time");
-  	nh_priv.param<double>      ("stats_check",      params::stats_check, 0);
-  	nh_priv.param<int>         ("min_time_steps",   min_time_steps_aux, 20);
-  	nh_priv.param<int>         ("max_time_steps",   max_time_steps_aux, 200);
-  	nh_priv.param<int>         ("random_seed",      params::random_seed, 0);
-  	nh_priv.param<double>      ("sst_delta_near",   params::sst_delta_near, 0.4);
-  	nh_priv.param<double>      ("sst_delta_drain",  params::sst_delta_drain, 0.2);
-  	nh_priv.param<std::string> ("planner",          params::planner, CTRL);
-  	nh_priv.param<std::string> ("system",           params::system, "car");
-  	nh_priv.param<double>      ("goal_radius",      params::goal_radius, 0.5);
-  	nh_priv.param<bool>        ("intermediate_visualization",
-      params::intermediate_visualization, false);
-    nh_priv.param<double>     ("start_state/x",     params_start_state.x, -10);
-    nh_priv.param<double>     ("start_state/y",     params_start_state.y, -7.5);
-    nh_priv.param<double>     ("start_state/theta", params_start_state.theta, 0);
-    nh_priv.param<double>     ("goal_state/x",      params_goal_state.x, -1);
-    nh_priv.param<double>     ("goal_state/y",      params_goal_state.y, 9);
-    nh_priv.param<double>     ("goal_state/theta",  params_goal_state.theta, 0);
-
-    nh_priv.param<std::string>     ("ctrl_to_use",  ctrl_to_use, RANDOM_CTRL);
-
-
-    // global parameters
-    nh.param<bool>  ("simulation/simulation", sim_params::simulation,  true);
-    nh.param<bool>  ("simulation/publish_ctrl_path", sim_params::publish_ctrl_path,  true);
-    nh.param<int>   ("simulation/gz_total_lines", sim_params::gz_total_lines,  0);
-    nh.param<bool>  ("simulation/plot_lines", sim_params::plot_lines,  false);
-    nh.param<int>   ("simulation/iterations", sim_params::sim_iters,  1);
-
-    nh.param<double>("obstacles_radius",      obstacles_radius,  0);
-
-    std::cout << "Using the following simulation parameters:" << '\n';
-    std::cout << "\tsimulation: " << (sim_params::simulation?"true":"false") << '\n';
-    std::cout << "\tpublish_ctrl_path: " << (sim_params::publish_ctrl_path?"true":"false") << '\n';
-    std::cout << "\tgz_total_lines: " << sim_params::gz_total_lines << '\n';
-    std::cout << "\tplot_lines: " << (sim_params::plot_lines?"true":"false") << '\n';
-    std::cout << "\tsim_iters: " << sim_params::sim_iters << '\n';
-
-    params::min_time_steps = min_time_steps_aux;
-  	params::max_time_steps = max_time_steps_aux;
-
-    params::start_state = new double[3];
-    params::start_state[0] = params_start_state.x;
-    params::start_state[1] = params_start_state.y;
-    params::start_state[2] = params_start_state.theta;
-
-    params::goal_state = new double[3];
-    params::goal_state[0] = params_goal_state.x;
-    params::goal_state[1] = params_goal_state.y;
-    params::goal_state[2] = params_goal_state.theta;
-  	// params::goal_state = params_goal_state;
-
-
-  	//Parameters for image output.
-  	extern double tree_line_width;
-  	extern double solution_line_width;
-  	extern int image_width;
-  	extern int image_height;
-  	extern double node_diameter;
-  	extern double solution_node_diameter;
-
-
-    ros::Subscriber sub_obs_poses  = nh.subscribe("/obstacles/poses", 1,
-      &get_obstacles_poses_callback);
-    ros::Subscriber sub_obs_types  = nh.subscribe("/obstacles/types", 1,
-      &get_obstacles_types_callback);
-
-    pub_target_pose = nh.advertise<geometry_msgs::Pose2D>("/goal_pose", 1);
-    pub_start_pose = nh.advertise<geometry_msgs::Pose2D>("/start_pose", 1);
-    pub_ctrl_path = nh.advertise<motion_planning::ctrl_path>(
-      "/motion_planning/path", 1, true);
-
-    if (sim_params::simulation)
+    // std::cout << "iteration: " << iters << "\tobs: " << vec_obstacles_poses.size() << '\n';
+    if (vec_obstacles_poses.size() > 0)
     {
-
-      for(int i = 0; i < sim_params::gz_total_lines; i++)
+      create_path();
+      if (sim_params::plot_lines)
       {
-        std::stringstream i_ss;
-        i_ss << "/gz_visual/lines_" << i;
-	      pub_gazebo_lines_visualizer.push_back(
-          nh.advertise<std_msgs::Float64MultiArray>(i_ss.str(), rate_hz, true));
+        std::cout << "Plotting lines..." << '\n';
+        publish_lines(true);
       }
+      // std::cin >> dummy;
+      iters++;
     }
-
-
-    ROS_INFO_STREAM("sim_tools_testing_node initiated");
-    // ros::spinOnce();
-
-    if(params::planner == CTRL || params::planner == GRID)
+    if (iters == sim_params::sim_iters)
     {
-      a_star_ptr = new a_star_t();
+      if (sim_params::publish_car_trajectory)
+      {
+        std::cout << "Input something and press enter to finish process" << '\n';
+        std::cin >> dummy;
+      }
+      break;
     }
-    // ros::spinOnce();
-    loop_rate.sleep();
-    int iters = 0;
-    while(ros::ok())
+    else
     {
-      ros::service::call("/gazebo/reset_simulation", empty);
-      ros::spinOnce();
-
-      // std::cout << "iteration: " << iters << "\tobs: " << vec_obstacles_poses.size() << '\n';
-        if (vec_obstacles_poses.size() > 0)
-        {
-          create_path();
-          if (sim_params::plot_lines)
-          {
-            std::cout << "Plotting lines..." << '\n';
-            publish_lines(true);
-          }
-          // std::cin >> dummy;
-          iters++;
-        }
-        if (iters == sim_params::sim_iters)
-        {
-          if (sim_params::publish_ctrl_path)
-          {
-            std::cout << "Input something and press enter to finish process" << '\n';
-            std::cin >> dummy;
-          }
-          break;
-        }
-        else
-        {
-          loop_rate.sleep();
-        }
+      loop_rate.sleep();
     }
-    std::cout << "Finishing motion_planning_node." << std::endl;
-    return 0;
+  }
+  std::cout << "Finishing motion_planning_node." << std::endl;
+  return 0;
 }
 
 
