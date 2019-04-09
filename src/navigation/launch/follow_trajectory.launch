@@ -3,7 +3,7 @@
 
 
 
-  <node name = "follow_path_node" pkg = "navigation" type = "follow_path_node"
+  <node name = "follow_trajectory_node" pkg = "navigation" type = "follow_trajectory_node"
     output = "screen"/>
 
 

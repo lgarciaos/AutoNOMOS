@@ -17,7 +17,8 @@
 // #include "msg/pts_array.msg"
 
 // custom msgs
-#include "motion_planning/ctrl_path.h"
+#include "motion_planning/car_trajectory.h"
+#include "navigation/trajectory_segment.h"
 
 
 
@@ -36,7 +37,7 @@ int current_ctrl;
 std_msgs::Int16 ste;
 std_msgs::Int16 vel;
 geometry_msgs::Pose2D next_pose;
-motion_planning::ctrl_path path;
+motion_planning::car_trajectory path;
 
 // ros::Time segment_start;
 // ros::Time now;
@@ -46,7 +47,8 @@ double duration;
 double segment_duration;
 
 
-void get_next_pose(); //De al edo deseado, calcular el siguiente punto obj de acuerdo al ctrl P del exámen :p
+bool get_next_trajectory_segment(navigation::trajectory_segment::Request &req,
+								 navigation::trajectory_segment::Response &res); //De al edo deseado, calcular el siguiente punto obj de acuerdo al ctrl P del exámen :p
 
 
 
