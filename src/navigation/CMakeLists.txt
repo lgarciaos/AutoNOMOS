@@ -14,6 +14,7 @@ find_package(
 	nav_msgs
 	geometry_msgs
 	motion_planning
+	message_generation
 	)
 
 ## System dependencies are found with CMake's conventions
@@ -57,11 +58,11 @@ find_package(
 # )
 
 ## Generate services in the 'srv' folder
-# add_service_files(
-#   FILES
-#   Service1.srv
-#   Service2.srv
-# )
+add_service_files(
+  FILES
+  trajectory_segment.srv
+  # Service2.srv
+)
 
 ## Generate actions in the 'action' folder
 # add_action_files(
@@ -71,10 +72,10 @@ find_package(
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   std_msgs  # Or other packages containing msgs
-# )
+generate_messages(
+  DEPENDENCIES
+  std_msgs  # Or other packages containing msgs
+)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -108,7 +109,7 @@ find_package(
 catkin_package(
  INCLUDE_DIRS include
 #  LIBRARIES navigation
-#  CATKIN_DEPENDS other_catkin_pkg
+ CATKIN_DEPENDS message_runtime
 #  DEPENDS system_lib
 )
 
@@ -138,9 +139,9 @@ ${catkin_INCLUDE_DIRS}
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(lane_states_node src/lane_states.cpp)
 add_executable(gen_next_pose_node src/gen_next_pose.cpp)
-add_executable(follow_path_node src/follow_path.cpp)
+add_executable(follow_trajectory_node src/follow_trajectory.cpp)
 
-add_dependencies(follow_path_node ${catkin_EXPORTED_TARGETS})
+add_dependencies(follow_trajectory_node ${catkin_EXPORTED_TARGETS})
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
@@ -162,7 +163,7 @@ target_link_libraries(
   	${catkin_LIBRARIES}
 )
 target_link_libraries(
-	follow_path_node
+	follow_trajectory_node
 	${catkin_LIBRARIES}
 )
 #############
