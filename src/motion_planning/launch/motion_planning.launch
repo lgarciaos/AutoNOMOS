@@ -7,16 +7,19 @@
   <arg name="goal_state/x"/>
   <arg name="goal_state/y"/>
   <arg name="goal_state/theta"/>
+  <arg name="start_state/x"/>
+  <arg name="start_state/y"/>
+  <arg name="start_state/theta"/>
 
-
+  <env name="ROSCONSOLE_CONFIG_FILE" value="$(find motion_planning)/config/custom_rosconsole.conf"/>
   <node name="node" pkg="motion_planning" type="node" output = "screen"
     required = "$(arg kill_on_exit)">
     <!-- launch-prefix = "valgrind"  -->
 
-    <param name="initial_point_x"            type="double" value="-10"/>
-    <param name="initial_point_y"            type="double" value="-7.5"/>
-    <param name="final_point_x"              type="double" value="-1"/>
-    <param name="final_point_y"              type="double" value="9"/>
+    <!-- <param name="initial_point_x"            type="double" value="-10"/> -->
+    <!-- <param name="initial_point_y"            type="double" value="-7.5"/> -->
+    <!-- <param name="final_point_x"              type="double" value="-1"/> -->
+    <!-- <param name="final_point_y"              type="double" value="9"/> -->
     <param name="integration_step"           type="double" value="0.002"/>
     <!-- <param name="stopping_type"              type="string" value="iterations"/> -->
     <!-- <param name="stopping_type"              type="string" value="time"/> -->
@@ -37,9 +40,9 @@
     <param name="goal_radius"                type="double" value=".4"/>
     <param name="intermediate_visualization" type="bool"   value="false"/>
 
-    <param name="start_state/x"              type="double" value="-10"/>
-    <param name="start_state/y"              type="double" value="-7.5"/>
-    <param name="start_state/theta"          type="double" value="0"/>
+    <param name="start_state/x"              type="double" value="$(arg start_state/x)"/>
+    <param name="start_state/y"              type="double" value="$(arg start_state/y)"/>
+    <param name="start_state/theta"          type="double" value="$(arg start_state/theta)"/>
 
     <param name="goal_state/x"              type="double" value="$(arg goal_state/x)"/>
     <param name="goal_state/y"              type="double" value="$(arg goal_state/y)"/>
