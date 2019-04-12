@@ -400,7 +400,7 @@ void publish_car_trajectory(std::vector<std::pair<double*,double> >& controls)
 
 void get_obstacles_poses_callback(const geometry_msgs::PoseArray& msg)
 {
-  std::cout << "Line: " << __LINE__ << '\n';
+  // std::cout << "Line: " << __LINE__ << '\n';
   for (auto e : msg.poses )
   {
     vec_obstacles_poses.push_back(e);
@@ -584,7 +584,7 @@ int main(int argc, char **argv)
   init_variables();
 
   // ROS_INFO_STREAM("sim_tools_testing_node initiated");
-  ROS_DEBUG_STREAM_NAMED("MP NODE: - ", __FUNCTION__ <<  ": Initializing publishers");
+  // ROS_DEBUG_STREAM_NAMED("MP NODE: - ", __FUNCTION__ <<  ": Initializing publishers");
   // ros::spinOnce();
 
   loop_rate.sleep();
