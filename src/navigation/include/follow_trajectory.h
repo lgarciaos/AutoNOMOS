@@ -20,10 +20,9 @@
 #include "motion_planning/car_trajectory.h"
 #include "navigation/trajectory_segment.h"
 
-
-
-
 #define RATE_HZ 30
+
+bool trajectory_available;
 
 double x_now, y_now, theta_now;
 double x_next, y_next, theta_next;
