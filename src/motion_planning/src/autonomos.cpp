@@ -111,9 +111,14 @@ bool autonomos_t::propagate( double* start_state, double* control, int min_step,
 		double temp0 = temp_state[0];
 		double temp1 = temp_state[1];
 		double temp2 = temp_state[2];
-		temp_state[0] += params::integration_step*cos(temp2)*control[0];
+    temp_state[0] += params::integration_step*cos(temp2)*control[0];
 		temp_state[1] += params::integration_step*sin(temp2)*control[0];
-		temp_state[2] += params::integration_step*control[1];
+    // temp_state[2] += params::integration_step*control[1];
+		temp_state[2] += params::integration_step*tan(control[1])*control[0];
+
+    // temp_state[0] += params::integration_step*cos(control[1])*control[0];
+    // temp_state[1] += params::integration_step*sin(control[1])*control[0];
+    // temp_state[2] += params::integration_step*tan(control[1]) * control[0];
 		enforce_bounds();
 		validity = validity && valid_state();
 	}

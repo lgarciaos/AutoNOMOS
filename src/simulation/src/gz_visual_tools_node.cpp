@@ -51,12 +51,12 @@ void get_lines_callback(const std_msgs::Float64MultiArrayConstPtr& msg, const in
   {
     pt_x = msg -> data[j];
     pt_y = msg -> data[j+1];
-    std::cout << "";
+    // std::cout << "";
     // std::cout << "pt_x: " << pt_x << "\tpt_y: " << pt_y << std::endl;
     ignition::msgs::Set(markerMsg.add_point(),
       ignition::math::Vector3d(pt_x, pt_y, pt_z));
   }
-  std::cout << std::endl;
+  // std::cout << std::endl;
   ign_node.Request("/marker", markerMsg);
 
   std::cout << "ended plotting lines: " << colors[lines_num] << std::endl;

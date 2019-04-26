@@ -11,5 +11,6 @@
         <arg name="debug" value="false"/>
         <arg name="world_name" value="autoNOMOS_parallel_parking.world"/>
     </include>
-
+    
+    <!-- <node name = "gz_visual_tools_node" pkg = "simulation" type = "gz_visual_tools_node" output = "screen"/> -->
 </launch>

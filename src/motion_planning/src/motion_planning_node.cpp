@@ -516,7 +516,7 @@ int main(int argc, char **argv)
 
   ROS_DEBUG_STREAM_NAMED("MP NODE: - ", __FUNCTION__ <<  ": Reading parameters");
   // motion planning parameters
-  nh_priv.param<double>       ("integration_step", params::integration_step, .002);
+  nh_priv.param<double>       ("integration_step", params::integration_step, .001);
   nh_priv.param<std::string>  ("stopping_type",    params::stopping_type, "time");
   nh_priv.param<double>       ("stopping_check",   params::stopping_check, 15);
   nh_priv.param<std::string>  ("stats_type",       params::stats_type, "time");
@@ -598,7 +598,7 @@ int main(int argc, char **argv)
     ros::spinOnce();
 
     // std::cout << "iteration: " << iters << "\tobs: " << vec_obstacles_poses.size() << '\n';
-    if (vec_obstacles_poses.size() > 0)
+    if (vec_obstacles_poses.size() >= 0)
     {
       create_path();
       if (sim_params::plot_lines)

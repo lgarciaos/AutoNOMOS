@@ -10,6 +10,8 @@
         <arg name="gui" value="$(arg gui_in)"/>
         <arg name="debug" value="false"/>
         <arg name="world_name" value="autoNOMOS_parking_lot.world"/>
+        <arg name="extra_gazebo_args" value="--verbose"/>
+        
         <!-- <arg name="world_name" value="autoNOMOS_empty_world.world"/> -->
         <!-- <arg name="world_name" value="autoNOMOS_curved_road.world"/> -->
     <!-- more default parameters can be changed here -->

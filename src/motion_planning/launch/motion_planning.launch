@@ -20,7 +20,7 @@
     <!-- <param name="initial_point_y"            type="double" value="-7.5"/> -->
     <!-- <param name="final_point_x"              type="double" value="-1"/> -->
     <!-- <param name="final_point_y"              type="double" value="9"/> -->
-    <param name="integration_step"           type="double" value="0.002"/>
+    <param name="integration_step"           type="double" value="0.001"/>
     <!-- <param name="stopping_type"              type="string" value="iterations"/> -->
     <!-- <param name="stopping_type"              type="string" value="time"/> -->
     <param name="stopping_type"              type="string" value="$(arg stopping_type_arg)"/>

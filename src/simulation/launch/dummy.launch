@@ -21,7 +21,7 @@
   <param name="simulation/publish_ctrl_path" type="bool" value="$(arg publish_ctrl_path_in)"/>
 
   <node name = "get_obstacles_node" pkg = "simulation" type = "get_obstacles_node"/>
-  <node name = "gz_visual_tools_node" pkg = "simulation" type = "gz_visual_tools_node" output = "screen"/>
+  <!-- <node name = "gz_visual_tools_node" pkg = "simulation" type = "gz_visual_tools_node" output = "screen"/> -->
 
 
 
