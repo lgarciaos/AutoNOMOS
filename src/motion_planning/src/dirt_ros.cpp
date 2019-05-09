@@ -42,7 +42,10 @@ std_msgs::Float64MultiArray dirt_ros_t::get_vector_path()
 
 }
 
-
+void dirt_ros_t::get_last_solution_path(std::vector<tree_node_t*> & last_sln)
+{
+  last_sln = last_solution_path;
+}
 
 std_msgs::Float64MultiArray dirt_ros_t::get_vector_tree()
 {

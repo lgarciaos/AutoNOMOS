@@ -24,6 +24,16 @@ std_msgs::Float64MultiArray rrt_ros_t::get_vector_path()
 
 }
 
+void rrt_ros_t::get_last_solution_path(std::vector<tree_node_t*> & last_sln)
+{
+  last_sln = last_solution_path;
+}
+
+tree_node_t* rrt_ros_t::get_root()
+{
+  return root;
+}
+
 std_msgs::Float64MultiArray rrt_ros_t::get_vector_tree()
 {
   create_floatmultiarray_tree(root);
