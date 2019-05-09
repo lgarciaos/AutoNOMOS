@@ -131,7 +131,7 @@ class a_star_t
       double grid_init_x, double grid_init_y, double grid_end_x,
       double grid_end_y);
 
-    std::vector<geometry_msgs::Point> remove_obst_points(std::vector<geometry_msgs::Point> points_in);
+    void remove_obst_points(std::vector<geometry_msgs::Point> points_in);
 
     int get_total_nodes();
 
@@ -141,7 +141,7 @@ class a_star_t
 
     bool pose_reached();
 
-    int reset_nodes();
+    void reset_nodes();
 
     /**
      * @brief The type of alg: grid or control.
