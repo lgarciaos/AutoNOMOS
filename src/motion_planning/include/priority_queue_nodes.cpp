@@ -58,6 +58,7 @@ bool priority_queue_nodes::nodes_in_vecinity(node_g* n1, node_g* n2)
 bool priority_queue_nodes::point_in_queue()
 {
   std::cout << __PRETTY_FUNCTION__ << '\n';
+  bool res = false;
   for (size_t i = 0; i < nodes.size(); i++)
   {
     for (size_t j = 0; j < nodes.size(); j++) {
@@ -67,9 +68,11 @@ bool priority_queue_nodes::point_in_queue()
         std::cout << "Found equal nodes:" << '\n';
         std::cout << "---n: cost = " << nodes[i] -> cost << " - (" << nodes[i] -> point.x << ", " << nodes[i] -> point.y << "). Parent " << nodes[i] -> parent << std::endl;
         std::cout << "---o: cost = " << nodes[j] -> cost << " - (" << nodes[j] -> point.x << ", " << nodes[j] -> point.y << "). Parent " << nodes[j] -> parent << std::endl;
+        res = true;
       }
     }
   }
+  return res;
 }
 
 void priority_queue_nodes::push(node_g* node)

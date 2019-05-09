@@ -53,7 +53,7 @@ std::vector<geometry_msgs::Point> a_star_t::generate_grid(double x_inc,
   return v;
 }
 
-std::vector<geometry_msgs::Point> a_star_t::remove_obst_points(
+void a_star_t::remove_obst_points(
   std::vector<geometry_msgs::Point> points_in)
 {
   std::vector<int> points_in_obstacles;
@@ -567,7 +567,7 @@ int a_star_t::get_total_nodes()
   return closed.size(); // add the opened nodes?
 }
 
-int a_star_t::reset_nodes()
+void a_star_t::reset_nodes()
 {
   closed.clear();
   open.reset_queue();
