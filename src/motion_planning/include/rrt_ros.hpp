@@ -48,6 +48,9 @@ public:
 
   std_msgs::Float64MultiArray get_vector_path();
   std_msgs::Float64MultiArray get_vector_tree();
+  tree_node_t* get_root();
+
+  void get_last_solution_path(std::vector<tree_node_t*> & last_sln);
 
   // std_msgs::Float64MultiArray get_vector_();
 

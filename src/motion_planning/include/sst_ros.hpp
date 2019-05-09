@@ -47,6 +47,7 @@ public:
   //   std::vector<std::pair<double*,double> >& controls);
 
   // void random_sample();
+  void get_last_solution_path(std::vector<tree_node_t*> & last_sln);
 
   void dealloc_tree();
   // std_msgs::Float64MultiArray get_vector_();
