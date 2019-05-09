@@ -13,14 +13,14 @@
 
 #include <cmath>
 
-autonomos_t::autonomos_t(std::string ctrl_to_use_in)
+autonomos_t::autonomos_t(std::string ctrl_to_use_in, bool global_planning)
 {
   state_dimension = 3;
   control_dimension = 2;
   temp_state = new double[state_dimension];
   collision_detector = new collision_detector_t();
 
-  std::cout << "Bounding rectangle: ( " << POS_X_BOUND << " , " << POS_Y_BOUND << ") , ( " << NEG_X_BOUND << " , " << NEG_Y_BOUND << " )." << std::endl;
+  this -> global = global_planning;
 
   if (ctrl_to_use_in == RANDOM_CTRL ||
       ctrl_to_use_in == BANG_BANG)
@@ -33,11 +33,37 @@ autonomos_t::autonomos_t(std::string ctrl_to_use_in)
 
   }
 
+  set_bounds(POS_X_BOUND, NEG_X_BOUND, POS_Y_BOUND, NEG_Y_BOUND);
+
 }
 
 autonomos_t::~autonomos_t()
 {
   free(temp_state);
+}
+
+void autonomos_t::set_bounds( double pos_x_bound, double neg_x_bound, double pos_y_bound, double neg_y_bound )
+{
+  this -> pos_x_bound = pos_x_bound;
+  this -> neg_x_bound = neg_x_bound;
+  this -> pos_y_bound = pos_y_bound;
+  this -> neg_y_bound = neg_y_bound;
+
+  this -> planning_rad_range = -1;
+  
+  ROS_WARN_STREAM("Bounding rectangle: ( " << pos_x_bound << " , " << pos_y_bound << ") , ( "
+                  << neg_x_bound << " , " << neg_y_bound << " )." );
+}
+
+void autonomos_t::set_bounds( double planning_rad_range )
+{
+  ROS_ASSERT_MSG(planning_rad_range >= 0, "Local planning range radius must be greater than 0.");
+  this -> planning_rad_range = planning_rad_range;
+
+  this -> pos_x_bound = 0;
+  this -> neg_x_bound = 0;
+  this -> pos_y_bound = 0;
+  this -> neg_y_bound = 0;
 }
 
 double autonomos_t::distance(double* point1, double* point2)
@@ -113,8 +139,8 @@ bool autonomos_t::propagate( double* start_state, double* control, int min_step,
 		double temp2 = temp_state[2];
     temp_state[0] += params::integration_step*cos(temp2)*control[0];
 		temp_state[1] += params::integration_step*sin(temp2)*control[0];
-    // temp_state[2] += params::integration_step*control[1];
-		temp_state[2] += params::integration_step*tan(control[1])*control[0];
+    temp_state[2] += params::integration_step*control[1];
+		// temp_state[2] += params::integration_step*tan(control[1])*control[0];
 
     // temp_state[0] += params::integration_step*cos(control[1])*control[0];
     // temp_state[1] += params::integration_step*sin(control[1])*control[0];
@@ -132,22 +158,54 @@ bool autonomos_t::propagate( double* start_state, double* control, int min_step,
 
 void autonomos_t::enforce_bounds()
 {
-	if(temp_state[0] < NEG_X_BOUND)
-		temp_state[0] = NEG_X_BOUND;
-	else if(temp_state[0] > POS_X_BOUND)
-		temp_state[0] = POS_X_BOUND;
-
-	if(temp_state[1] < NEG_Y_BOUND)
-		temp_state[1] = NEG_Y_BOUND;
-	else if(temp_state[1] > POS_Y_BOUND)
-		temp_state[1] = POS_Y_BOUND;
-
-	if(temp_state[2]<-M_PI)
-		temp_state[2]+=2*M_PI;
-	else if(temp_state[2]>M_PI)
-		temp_state[2]-=2*M_PI;
+  in_bounds = true;
+  if (global)
+  {
+    global_rectangular_bound();
+  }
+  else
+  {
+    local_circular_bound();
+  }
 }
 
+void autonomos_t::local_circular_bound()
+{
+  ROS_ASSERT_MSG(planning_rad_range >= 0, "Local planning range radius must be greater than 0.");
+  
+  double dist;
+
+  dist = sqrt( pow(current_loc.x - temp_state[0], 2 ) +  pow(current_loc.y - temp_state[1], 2 ) );
+
+  // if (dist > planning_range )
+    // in_bounds = false;
+
+  in_bounds = dist > planning_rad_range;
+
+  if (temp_state[2]<-M_PI)
+    temp_state[2]+=2*M_PI;
+  else if(temp_state[2]>M_PI)
+    temp_state[2]-=2*M_PI;
+}
+
+void autonomos_t::global_rectangular_bound()
+{
+
+  if(temp_state[0] < NEG_X_BOUND)
+    in_bounds = false;
+  else if(temp_state[0] > POS_X_BOUND)
+    in_bounds = false;
+
+  if(temp_state[1] < NEG_Y_BOUND)
+    in_bounds = false;
+  else if(temp_state[1] > POS_Y_BOUND)
+    in_bounds = false;
+
+  if(temp_state[2]<-M_PI)
+    temp_state[2]+=2*M_PI;
+  else if(temp_state[2]>M_PI)
+    temp_state[2]-=2*M_PI;
+}
 
 bool autonomos_t::valid_state()
 {
@@ -168,11 +226,11 @@ bool autonomos_t::valid_state()
   //   std::cout << "Collision detected!";
   //   std::cout << std::endl;
   // }
-	return  aux_collision &&
-      (temp_state[0] != NEG_X_BOUND) &&
-			(temp_state[0] != POS_X_BOUND) &&
-			(temp_state[1] != NEG_Y_BOUND) &&
-			(temp_state[1] != POS_Y_BOUND);
+	return  aux_collision && in_bounds;
+   //    (temp_state[0] != NEG_X_BOUND) &&
+			// (temp_state[0] != POS_X_BOUND) &&
+			// (temp_state[1] != NEG_Y_BOUND) &&
+			// (temp_state[1] != POS_Y_BOUND);
 }
 
 svg::Point autonomos_t::visualize_point(double* state, svg::Dimensions dims)
