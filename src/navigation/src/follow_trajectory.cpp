@@ -17,18 +17,19 @@ bool get_next_trajectory_segment(navigation::trajectory_segment::Request &req,
 	// current_ctrl++;
 	if (trajectory_available && req.seq < path.path_len)
 	{
-		res.is_valid = 1;
+		res.is_valid = true;
 		res.speed    = path.speed[req.seq];
 		res.steering = path.steering[req.seq];
 		res.duration = path.duration[req.seq];
 	}
 	else 
 	{
-		res.is_valid = 0;
+		res.is_valid = false;
 		res.speed = 0;
 		res.steering = 0;
 		res.duration = -1;
 	}
+	return true;
 }
 
 int main(int argc, char** argv)
