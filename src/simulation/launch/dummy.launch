@@ -13,12 +13,15 @@
   <arg name="start_state/x" default="-5"/>
   <arg name="start_state/y" default="-7.5"/>
   <arg name="start_state/theta" default="0"/>
+  <arg name="model_name_in" default="AutoNOMOS_mini_ideal"/>
 
+  <!-- <env name="ROSCONSOLE_CONFIG_FILE" value="$(find motion_planning)/config/custom_rosconsole.conf"/> -->
 
   <param name="simulation/gz_total_lines" type = "int" value="3" />
   <param name="simulation/iterations" type = "int" value="$(arg simulation_iterations_in)" />
   <param name="simulation/plot_lines" type = "bool" value="$(arg gz_plot_lines_in)"/>
   <param name="simulation/publish_ctrl_path" type="bool" value="$(arg publish_ctrl_path_in)"/>
+  <param name="simulation/model_name" type="string" value="$(arg model_name_in)"/>
 
   <node name = "get_obstacles_node" pkg = "simulation" type = "get_obstacles_node"/>
   <!-- <node name = "gz_visual_tools_node" pkg = "simulation" type = "gz_visual_tools_node" output = "screen"/> -->
