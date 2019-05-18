@@ -15,7 +15,8 @@
 
 #include <string>
 
-#include "utilities/timer.hpp"
+// #include "utilities/timer.hpp"
+#include "utilities/ros_timer.hpp"
 
 /**
  * @brief A class which checks if a condition is met.
@@ -62,12 +63,26 @@ public:
 		return iteration_counter;
 	}
 
+	/**
+	 * @brief Set/change the condition check 
+	 * @details Set/change the condition check 
+	 * 
+	 * @param condition_check The condition check to set
+	 */
+	void set_condition_check(double condition_check);
+
 protected:
 
 	/**
 	 * @brief The timer used for checking times.
 	 */
-	sys_timer_t timer;
+	// sys_timer_t timer;
+
+	/**
+	 * @brief A timer using ros time for checking times.
+	 */
+	sys_ros_timer_t timer;
+
 
 	/**
 	 * @brief A counter for iterations.
