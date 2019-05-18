@@ -32,6 +32,8 @@ double kp, ka, kb;
 
 int current_point;
 int current_ctrl;
+int next;
+int seq;
 
 std_msgs::Int16 ste;
 std_msgs::Int16 vel;

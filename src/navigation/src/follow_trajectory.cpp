@@ -3,33 +3,45 @@
 
 void get_path_callback(const motion_planning::car_trajectory msg)
 {
+	ROS_WARN("getting new path at: %.3f", ros::Time::now().toSec());
 	path = msg;
+	for (int i = 0; i < msg.path_len; ++i)
+	{
+		path.speed[i] 	 = msg.speed[i];		
+		path.steering[i] = msg.steering[i];
+		path.duration[i] = msg.duration[i];		
+		ROS_DEBUG_NAMED("trayectory_callback", "New traj => Seg: %d/%d \tvel: %.3f \tste: %.3f \tt: %.3f", 
+			i, msg.path_len, msg.speed[i], msg.steering[i], msg.duration[i]);
+	}
+	path.path_len = msg.path_len;
 	trajectory_available = msg.path_len > 0;
+	next = 0;
 }
 
 bool get_next_trajectory_segment(navigation::trajectory_segment::Request &req,
 								 navigation::trajectory_segment::Response &res)
 {
-
-	// ste.data = path.steering[current_ctrl] * 180 + 90;
-	// vel.data = path.speed[current_ctrl];
-	// duration = path.duration[current_ctrl];
-	// current_ctrl++;
-	if (trajectory_available && req.seq < path.path_len)
+	bool valid;
+	if (trajectory_available && next < path.path_len)
 	{
-		res.is_valid = true;
-		res.speed    = path.speed[req.seq];
-		res.steering = path.steering[req.seq];
-		res.duration = path.duration[req.seq];
+		valid = true;
+		res.seq 	 = seq;
+		res.speed    = path.speed[next];
+		res.steering = path.steering[next];
+		res.duration = path.duration[next];
+		next++;
+		seq++;
+		ROS_WARN_NAMED("trayectory_service", "%.3f] Seg: %d/%d \tvel: %.3f \tste: %.3f \tt: %.3f", 
+			ros::Time::now().toSec(), next, path.path_len, res.speed, res.steering, res.duration);
 	}
 	else 
 	{
-		res.is_valid = false;
+		valid = false;
 		res.speed = 0;
 		res.steering = 0;
-		res.duration = -1;
+		res.duration = 0;
 	}
-	return true;
+	return valid;
 }
 
 int main(int argc, char** argv)
