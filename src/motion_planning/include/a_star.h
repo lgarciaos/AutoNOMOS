@@ -31,7 +31,7 @@
 #include "motion_planners/planner.hpp"
 
 // own
-#include "node_g.cpp"
+// #include "node_g.cpp"
 #include "priority_queue_nodes.cpp"
 #include "collision_detector.h"
 

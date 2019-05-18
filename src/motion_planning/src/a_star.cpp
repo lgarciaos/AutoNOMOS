@@ -57,7 +57,7 @@ void a_star_t::remove_obst_points(
   std::vector<geometry_msgs::Point> points_in)
 {
   std::vector<int> points_in_obstacles;
-  bool obst_found = false;
+  // bool obst_found = false;
   int car_num = 0;
   int point_num = 0;
   node_g* aux;
@@ -82,13 +82,13 @@ void a_star_t::remove_obst_points(
 
   std::unique(points_in_obstacles.begin(), points_in_obstacles.end());
 
-  int index_point;
+  long unsigned int index_point;
   if(points_in_obstacles.size() > 0)
   {
     index_point = points_in_obstacles.front();
     points_in_obstacles.erase(points_in_obstacles.begin());
   }
-  for (size_t i = 0; i < points_in.size(); i++) {
+  for (long unsigned int i = 0; i < points_in.size(); i++) {
     if (i == index_point)
     {
       if(points_in_obstacles.size() > 0)
@@ -165,13 +165,7 @@ double a_star_t::distance(node_g* n1, node_g* n2)
 {
   double d_x = n1 -> point.x - n2 -> point.x;
   double d_y = n1 -> point.y - n2 -> point.y;
-  double d_theta = n1 -> get_roll() - n2 -> get_roll();
-  // printf("1: (%.1f, %.1f, %.1f)\t2: (%.1f, %.1f, %.1f)", n1 -> point.x,
-  //   n1 -> point.y, n1 -> get_roll(), n2 -> point.x, n2 -> point.y, n2 -> get_roll());
-  // printf("\td_t: %.1f\tdis: %.1f\tdis_a: %.1f\n", d_theta,
-  //   sqrt( d_x * d_x + d_y * d_y), sqrt( d_x * d_x + d_y * d_y + d_theta * d_theta) );
-  // std::cout << "\td_t: " << d_theta << "\tdis: " <<sqrt( d_x * d_x + d_y * d_y)
-  //   << "\tdis_a: " << sqrt( d_x * d_x + d_y * d_y + d_theta * d_theta) << std::endl;
+  // double d_theta = n1 -> get_roll() - n2 -> get_roll();
   // return sqrt( d_x * d_x + d_y * d_y + d_theta * d_theta);
   return sqrt( d_x * d_x + d_y * d_y);
 }
