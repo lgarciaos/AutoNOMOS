@@ -42,6 +42,11 @@ std_msgs::Float64MultiArray sst_ros_t::get_vector_path()
 
 }
 
+tree_node_t* sst_ros_t::get_root()
+{
+  return root;
+}
+
 void sst_ros_t::get_last_solution_path(std::vector<tree_node_t*> & last_sln)
 {
   last_sln = last_solution_path;
