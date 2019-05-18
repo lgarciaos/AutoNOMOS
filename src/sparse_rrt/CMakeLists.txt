@@ -9,7 +9,8 @@ add_definitions(-O3 -std=c++11 )
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED)
+find_package(catkin REQUIRED COMPONENTS
+	roscpp)
 find_package(Boost COMPONENTS program_options REQUIRED)
 
 ## System dependencies are found with CMake's conventions
@@ -130,14 +131,14 @@ file(GLOB_RECURSE SRC_LIB ${PROJECT_SOURCE_DIR}/src/*.cpp ${PROJECT_SOURCE_DIR}/
 # )
 
 add_library(${PROJECT_NAME} SHARED ${SRC_LIB})
-target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES} ${catkin_LIBRARIES})
 
 file(GLOB files ${PROJECT_SOURCE_DIR}/tests/*.cpp)
 
 foreach(f ${files})
-GET_FILENAME_COMPONENT(fname ${f} NAME_WE )
-add_executable(${fname} ${f} )
-target_link_libraries(${fname} ${PROJECT_NAME})
+	GET_FILENAME_COMPONENT(fname ${f} NAME_WE )
+	add_executable(${fname} ${f} )
+	target_link_libraries(${fname} ${PROJECT_NAME} ${catkin_LIBRARIES})
 endforeach()
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
