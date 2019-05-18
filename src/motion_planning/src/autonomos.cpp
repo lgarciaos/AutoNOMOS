@@ -55,6 +55,14 @@ void autonomos_t::set_bounds( double pos_x_bound, double neg_x_bound, double pos
                   << neg_x_bound << " , " << neg_y_bound << " )." );
 }
 
+void autonomos_t::set_current_loc(double x, double y, double theta)
+{
+  current_loc.x = x;
+  current_loc.y = y;
+  current_loc.theta = theta;
+}
+
+
 void autonomos_t::set_bounds( double planning_rad_range )
 {
   ROS_ASSERT_MSG(planning_rad_range >= 0, "Local planning range radius must be greater than 0.");
@@ -76,8 +84,8 @@ double autonomos_t::distance(double* point1, double* point2)
 
 void autonomos_t::random_state(double* state)
 {
-	state[0] = uniform_random(NEG_X_BOUND, POS_X_BOUND);
-	state[1] = uniform_random(NEG_Y_BOUND, POS_Y_BOUND);
+	state[0] = current_loc.x + uniform_random(-planning_rad_range, planning_rad_range);
+	state[1] = current_loc.y + uniform_random(-planning_rad_range, planning_rad_range);
 	state[2] = uniform_random(-M_PI,M_PI);
 }
 
@@ -139,8 +147,8 @@ bool autonomos_t::propagate( double* start_state, double* control, int min_step,
 		double temp2 = temp_state[2];
     temp_state[0] += params::integration_step*cos(temp2)*control[0];
 		temp_state[1] += params::integration_step*sin(temp2)*control[0];
-    temp_state[2] += params::integration_step*control[1];
-		// temp_state[2] += params::integration_step*tan(control[1])*control[0];
+    // temp_state[2] += params::integration_step*control[1];
+		temp_state[2] += params::integration_step * tan(control[1]) * control[0] / 0.25;
 
     // temp_state[0] += params::integration_step*cos(control[1])*control[0];
     // temp_state[1] += params::integration_step*sin(control[1])*control[0];
@@ -176,11 +184,12 @@ void autonomos_t::local_circular_bound()
   double dist;
 
   dist = sqrt( pow(current_loc.x - temp_state[0], 2 ) +  pow(current_loc.y - temp_state[1], 2 ) );
+  // ROS_WARN_STREAM( "X: " << current_loc.x << "\tX_P: " << temp_state[0] << "\tY: " << current_loc.y << "\tY_P: " << temp_state[1] <<  "\tdist: " << dist );
 
   // if (dist > planning_range )
     // in_bounds = false;
 
-  in_bounds = dist > planning_rad_range;
+  in_bounds = dist < planning_rad_range;
 
   if (temp_state[2]<-M_PI)
     temp_state[2]+=2*M_PI;
@@ -227,10 +236,7 @@ bool autonomos_t::valid_state()
   //   std::cout << std::endl;
   // }
 	return  aux_collision && in_bounds;
-   //    (temp_state[0] != NEG_X_BOUND) &&
-			// (temp_state[0] != POS_X_BOUND) &&
-			// (temp_state[1] != NEG_Y_BOUND) &&
-			// (temp_state[1] != POS_Y_BOUND);
+
 }
 
 svg::Point autonomos_t::visualize_point(double* state, svg::Dimensions dims)

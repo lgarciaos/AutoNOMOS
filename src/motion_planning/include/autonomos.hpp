@@ -63,6 +63,7 @@ public:
 	 */
 	void set_bounds( double planning_rad_range );
 
+	void set_current_loc(double x, double y, double theta);
 
 private:
 
