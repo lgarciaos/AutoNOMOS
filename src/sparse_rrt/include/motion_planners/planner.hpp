@@ -8,6 +8,7 @@
  * 
  * Authors: Zakary Littlefield, Kostas Bekris 
  * 
+ * Modified by: Edgar Granados, 2019, ITAM.
  */
 
 #ifndef SPARSE_PLANNER_HPP
@@ -19,6 +20,9 @@
 #include "systems/system.hpp"
 #include "nearest_neighbors/graph_nearest_neighbors.hpp"
 #include "motion_planners/tree_node.hpp"
+
+// ROS
+#include <ros/console.h>
 
 /**
  * @brief The base class for motion planners.
@@ -60,6 +64,14 @@ public:
 	 * @param controls The list of controls and durations which comprise the solution.
 	 */
 	virtual void get_solution(std::vector<std::pair<double*,double> >& controls) = 0;
+
+	/**
+	 * @brief Get the solution path.
+	 * @details Query the tree structure for the solution plan for this given system.
+	 * 
+	 * @param controls The list of controls, durations and point-state which comprise the solution.
+	 */
+	virtual void get_solution(std::vector<std::tuple<double*, double, double*> >& controls) = 0;
 
 	/**
 	 * @brief Perform an iteration of a motion planning algorithm.
@@ -109,6 +121,29 @@ public:
 
 	/** @brief The number of nodes in the tree. */
 	unsigned number_of_nodes;
+
+	/**
+	 * @brief Get the root of the tree
+	 * @details Return the root of the generated tree
+	 * @return The root of the tree
+	 */
+	tree_node_t* get_root();
+
+	/**
+	 * @brief Get the solition path
+	 * @details Get the last solution path
+	 * 
+	 * @param last_sln Variable where to store the path
+	 */
+	void get_last_solution_path(std::vector<tree_node_t*> & last_sln);
+
+	/**
+	 * @brief Update the tree for replanning
+	 * @details Remove old/not valid branches of the tree to be used in the next replanning cycle
+	 * 
+	 * @param delta_t The duration to determine the old/not valid branches
+	 */
+	virtual void replanning_update_tree(double delta_t, double* &new_state_point) = 0;
 
 protected:
 

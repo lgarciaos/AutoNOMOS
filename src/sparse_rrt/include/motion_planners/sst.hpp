@@ -86,9 +86,19 @@ public:
 	virtual void get_solution(std::vector<std::pair<double*,double> >& controls);
 	
 	/**
+	 * @copydoc planner_t::get_solution(std::vector<std::pair<double*,double> >&)
+	 */
+	virtual void get_solution(std::vector<std::tuple<double*,double, double*> >& controls);
+
+	/**
 	 * @copydoc planner_t::step()
 	 */
 	 virtual void step();
+
+	/**
+	* @copydoc planer_t::replanning_update_tree(double delta_t)
+	*/
+	virtual void replanning_update_tree(double delta_t, double* &new_state_point);
 
 protected:
 	

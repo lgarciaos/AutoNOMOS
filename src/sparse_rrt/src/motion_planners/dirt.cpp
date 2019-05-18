@@ -8,6 +8,8 @@
  * 
  * Authors: Zakary Littlefield, Kostas Bekris 
  * 
+ * Modified by: Edgar Granados, 2019, ITAM.
+ * 
  */
 
 #include "motion_planners/dirt.hpp"
@@ -45,6 +47,7 @@ void dirt_t::setup_planning()
 	number_of_nodes++;
 
 }
+
 void dirt_t::get_solution(std::vector<std::pair<double*,double> >& controls)
 {
 	last_solution_path.clear();
@@ -69,6 +72,17 @@ void dirt_t::get_solution(std::vector<std::pair<double*,double> >& controls)
 		controls.back().second = path[i]->parent_edge->duration;
 	}
 }
+
+void dirt_t::get_solution(std::vector<std::tuple<double*,double, double*> >& controls)
+{
+	ROS_FATAL("NOT IMPLEMENTED YET");
+}
+
+void dirt_t::replanning_update_tree(double delta_t, double* &new_state_point)
+{
+	ROS_FATAL("NOT IMPLEMENTED YET");	
+}
+
 void dirt_t::step()
 {
 	nearest_vertex();

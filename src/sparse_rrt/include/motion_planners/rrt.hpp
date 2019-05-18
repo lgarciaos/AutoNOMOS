@@ -8,6 +8,8 @@
  * 
  * Authors: Zakary Littlefield, Kostas Bekris 
  * 
+ * Modified by: Edgar Granados, 2019, ITAM.
+ * 
  */
 
 #ifndef SPARSE_PLANNER_RRT_HPP
@@ -43,10 +45,20 @@ public:
 	virtual void get_solution(std::vector<std::pair<double*,double> >& controls);
 
 	/**
+	 * @copydoc planner_t::get_solution(std::vector<std::tuple<double*,double, double*> >&)
+	 */
+	virtual void get_solution(std::vector<std::tuple<double*,double, double*> >& controls);
+
+	/**
 	 * @copydoc planner_t::step()
 	 */
 	virtual void step();
 
+	/**
+	 * @copydoc planer_t::replanning_update_tree(double delta_t)
+	 */
+	virtual void replanning_update_tree(double delta_t, double* &new_state_point);
+	
 protected:
 	
 	/**

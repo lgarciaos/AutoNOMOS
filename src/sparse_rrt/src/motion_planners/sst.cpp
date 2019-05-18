@@ -8,6 +8,8 @@
  * 
  * Authors: Zakary Littlefield, Kostas Bekris 
  * 
+ * Modified by: Edgar Granados, 2019, ITAM.
+ * 
  */
 
 #include "motion_planners/sst.hpp"
@@ -73,6 +75,17 @@ void sst_t::get_solution(std::vector<std::pair<double*,double> >& controls)
 		controls.back().second = path[i]->parent_edge->duration;
 	}
 }
+
+void sst_t::get_solution(std::vector<std::tuple<double*,double, double*> >& controls)
+{
+	ROS_FATAL("NOT IMPLEMENTED YET");
+}
+
+void sst_t::replanning_update_tree(double delta_t, double* &new_state_point)
+{
+	ROS_FATAL("NOT IMPLEMENTED YET");	
+}
+
 void sst_t::step()
 {
 	random_sample();

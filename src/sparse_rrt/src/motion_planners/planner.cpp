@@ -8,6 +8,8 @@
  * 
  * Authors: Zakary Littlefield, Kostas Bekris 
  * 
+ * Modified by: Edgar Granados, 2019, ITAM.
+ * 
  */
 
 #include "motion_planners/planner.hpp"
@@ -143,8 +145,6 @@ void planner_t::visualize_solution_nodes( svg::Document& doc, svg::Dimensions& d
 	}
 }
 
-
-
 void planner_t::get_max_cost()
 {
 	max_cost = 0;
@@ -162,3 +162,12 @@ void planner_t::get_max_cost(tree_node_t* node)
 	}
 }
 
+void planner_t::get_last_solution_path(std::vector<tree_node_t*> & last_sln)
+{
+  last_sln = last_solution_path;
+}
+
+tree_node_t* planner_t::get_root()
+{
+  return root;
+}
