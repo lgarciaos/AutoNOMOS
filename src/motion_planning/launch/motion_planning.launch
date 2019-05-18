@@ -7,66 +7,50 @@
   <arg name="goal_state/x"/>
   <arg name="goal_state/y"/>
   <arg name="goal_state/theta"/>
-  <arg name="start_state/x"/>
-  <arg name="start_state/y"/>
-  <arg name="start_state/theta"/>
+  <!-- <arg name="start_state/x"/> -->
+  <!-- <arg name="start_state/y"/> -->
+  <!-- <arg name="start_state/theta"/> -->
+  <arg name="global_planning"/>
 
-  <!-- <env name="ROSCONSOLE_CONFIG_FILE" value="$(find motion_planning)/config/custom_rosconsole.conf"/> -->
-  
   <node name="motion_planning_node" pkg="motion_planning" type="motion_planning_node" output = "screen"
     required = "$(arg kill_on_exit)">
     <!-- launch-prefix = "valgrind"  -->
+    <param name="use_sim_time" type="boolean" value="true" />
 
-    <!-- <param name="initial_point_x"            type="double" value="-10"/> -->
-    <!-- <param name="initial_point_y"            type="double" value="-7.5"/> -->
-    <!-- <param name="final_point_x"              type="double" value="-1"/> -->
-    <!-- <param name="final_point_y"              type="double" value="9"/> -->
     <param name="integration_step"           type="double" value="0.001"/>
-    <!-- <param name="stopping_type"              type="string" value="iterations"/> -->
-    <!-- <param name="stopping_type"              type="string" value="time"/> -->
     <param name="stopping_type"              type="string" value="$(arg stopping_type_arg)"/>
     <param name="stopping_check"             type="double" value="$(arg stopping_check_arg)"/>
-    <!-- <param name="stats_type"                 type="string" value="time"/> -->
-    <!-- <param name="stats_type"                 type="string" value="iterations"/> -->
     <param name="stats_check"                type="double" value="0"/>
     <param name="min_time_steps"             type="int"    value="20"/>
     <param name="max_time_steps"             type="int"    value="200"/>
-    <param name="random_seed"                type="int"    value="0"/>
+    <param name="random_seed"                type="int"    value="56435351"/>
     <param name="sst_delta_near"             type="double" value="0.4"/>
     <param name="sst_delta_drain"            type="double" value="0.2"/>
     <param name="planner"                    type="string" value="$(arg planner_arg)"/>
-    <!-- <param name="planner"                    type="string" value="RRT"/> -->
-    <!-- <param name="planner"                    type="string" value="A_STAR_CTRL"/> -->
     <param name="system"                     type="string" value="car"/>
     <param name="goal_radius"                type="double" value=".4"/>
     <param name="intermediate_visualization" type="bool"   value="false"/>
+    <param name="ctrl_to_use"                type="string" value="$(arg ctrl_to_use)"/>
+    <param name="global_planning"            type="bool"   value="$(arg global_planning)"/>
 
-    <param name="start_state/x"              type="double" value="$(arg start_state/x)"/>
-    <param name="start_state/y"              type="double" value="$(arg start_state/y)"/>
-    <param name="start_state/theta"          type="double" value="$(arg start_state/theta)"/>
+    <!-- <param name="start_state/x"              type="double" value="$(arg start_state/x)"/> -->
+    <!-- <param name="start_state/y"              type="double" value="$(arg start_state/y)"/> -->
+    <!-- <param name="start_state/theta"          type="double" value="$(arg start_state/theta)"/> -->
 
+    <!-- GOAL -->
     <param name="goal_state/x"              type="double" value="$(arg goal_state/x)"/>
     <param name="goal_state/y"              type="double" value="$(arg goal_state/y)"/>
-    <!-- <param name="goal_state/theta"          type="double" value="$(eval 3 * 3.14159 / 4)"/> -->
     <param name="goal_state/theta"          type="double" value="$(arg goal_state/theta)"/>
 
-
-    <param name="ctrl_to_use"          type="string" value="$(arg ctrl_to_use)"/>
-<!--
-    <rosparam param="start_state">[-10, -7.5, 0]</rosparam>
-    <rosparam param="goal_state">[-1, 9, 0]</rosparam>
--->
-<!--
-    <param name=""                 type="int"    value="10"/>
-    <param name=""   type="int"    value="49"/>
-    <param name=""              type="int"    value="18"/>
-    <param name=""     type="int"    value="2"/>
-    <param name=""             type="int"    value="200"/>
-    <param name=""                        type="int"    value="155"/>
-    <param name=""                        type="int"    value="145"/>
-    <param name=""                        type="int"    value="130"/>
-    <param name=""                  type="int"    value="999"/>
- -->
+    <!-- BOUNDING -->
+    <param name="bounding/pos_x_bound"       type="double" value="0.0"/>   <!-- NOT USE IF global_planning == FALSE -->
+    <param name="bounding/neg_x_bound"       type="double" value="-10.0"/> <!-- NOT USE IF global_planning == FALSE -->
+    <param name="bounding/pos_y_bound"       type="double" value="+10.0"/> <!-- NOT USE IF global_planning == FALSE -->
+    <param name="bounding/neg_y_bound"       type="double" value="-10.0"/> <!-- NOT USE IF global_planning == FALSE -->
+    <param name="bounding/perception_radius" type="double" value="6"/>     <!-- NOT USE IF global_planning == TRUE  -->
+    
+    <!-- REPLANNING -->
+    <param name="replanning/delta_t"       type="double" value="1"/>
 
   </node>
 
