@@ -77,7 +77,7 @@ bool priority_queue_nodes::point_in_queue()
 
 void priority_queue_nodes::push(node_g* node)
 {
-  double cost = node -> cost;
+  // double cost = node -> cost;
   int i = lookup_node(node);
 
   nodes.insert(nodes.begin()+i, node);
@@ -106,7 +106,7 @@ void priority_queue_nodes::pop()
 
 bool priority_queue_nodes::node_in_queue(node_g* node)
 {
-  int i = lookup_node(node);
+  long unsigned int i = lookup_node(node);
   if (0 < i && i == nodes.size())
   {
     return false;
@@ -120,7 +120,7 @@ bool priority_queue_nodes::node_in_queue(node_g* node)
 void priority_queue_nodes::remove_node_from_queue(node_g* node)
 {
   int i = lookup_node(node);
-  if (node -> cost == nodes[i] -> cost & ARE_NODES_PTR_EQUAL(node, nodes[i]))
+  if ( ( node -> cost == nodes[i] -> cost ) & ARE_NODES_PTR_EQUAL(node, nodes[i]))
   {
     nodes.erase(nodes.begin()+i);
   }

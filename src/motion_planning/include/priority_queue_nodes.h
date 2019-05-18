@@ -10,7 +10,7 @@
 #include <iterator>
 
 // own libraries
-// #include <node_g.cpp>
+#include "node_g.cpp"
 #define TOLERANCE_COST 100
 #define TOLERANCE_RAD 0.1
 
