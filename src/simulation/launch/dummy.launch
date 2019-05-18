@@ -1,27 +1,36 @@
 <launch>
   <arg name="stopping_type_in" default="time"/>
-  <arg name="stopping_check_in" default="100" />
+  <arg name="stopping_check_in" default="15" />
+  <!-- <arg name="stopping_check_in" default="150" /> -->
   <arg name="planner_in" default="RRT" />
+  <!-- <arg name="planner_in" default="SST" /> -->
+  <!-- <arg name="planner_in" default="DIRT" /> -->
   <arg name="kill_on_exit_in" default="true"/>
   <arg name="simulation_iterations_in" default="1"/>
-  <arg name="gz_plot_lines_in" default="true"/>
+  <arg name="publish_sln" default="true"/>
+  <arg name="publish_tree" default="true"/>
   <arg name="publish_ctrl_path_in" default="true"/>
   <arg name="goal_state/x" default="-2"/>
   <arg name="goal_state/y" default="-7.5"/>
   <arg name="goal_state/theta" default="0"/>
   <arg name="ctrl_to_use_in" default="RANDOM_CTRL"/>
-  <arg name="start_state/x" default="-5"/>
-  <arg name="start_state/y" default="-7.5"/>
-  <arg name="start_state/theta" default="0"/>
+  <!-- <arg name="ctrl_to_use_in" default="BANG_BANG"/> -->
+  <!-- <arg name="start_state/x" default="-5"/> -->
+  <!-- <arg name="start_state/y" default="-7.5"/> -->
+  <!-- <arg name="start_state/theta" default="0"/> -->
   <arg name="model_name_in" default="AutoNOMOS_mini_ideal"/>
 
   <!-- <env name="ROSCONSOLE_CONFIG_FILE" value="$(find motion_planning)/config/custom_rosconsole.conf"/> -->
 
   <param name="simulation/gz_total_lines" type = "int" value="3" />
   <param name="simulation/iterations" type = "int" value="$(arg simulation_iterations_in)" />
-  <param name="simulation/plot_lines" type = "bool" value="$(arg gz_plot_lines_in)"/>
   <param name="simulation/publish_ctrl_path" type="bool" value="$(arg publish_ctrl_path_in)"/>
   <param name="simulation/model_name" type="string" value="$(arg model_name_in)"/>
+  <param name="simulation/publish_sln" type = "bool" value="$(arg  publish_sln)"/>
+  <param name="simulation/publish_tree" type = "bool" value="$(arg publish_tree)"/>
+
+
+
 
   <node name = "get_obstacles_node" pkg = "simulation" type = "get_obstacles_node"/>
   <!-- <node name = "gz_visual_tools_node" pkg = "simulation" type = "gz_visual_tools_node" output = "screen"/> -->
@@ -37,9 +46,11 @@
     <arg name="goal_state/y" default = "$(arg goal_state/y)"/>
     <arg name="goal_state/theta" default = "$(arg goal_state/theta)"/>
     <arg name="ctrl_to_use" default="$(arg ctrl_to_use_in)"/>
-    <arg name="start_state/x" default="$(arg start_state/x)"/>
-    <arg name="start_state/y" default="$(arg start_state/y)"/>
-    <arg name="start_state/theta" default="$(arg start_state/theta)"/>
+    <arg name="global_planning" default="false"/>
+    <!-- <arg name="start_state/x" default="$(arg start_state/x)"/> -->
+    <!-- <arg name="start_state/y" default="$(arg start_state/y)"/> -->
+    <!-- <arg name="start_state/theta" default="$(arg start_state/theta)"/> -->
+
   </include>
 
   <include file = "$(find navigation)/launch/follow_trajectory.launch">

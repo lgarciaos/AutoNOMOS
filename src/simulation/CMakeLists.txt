@@ -14,6 +14,7 @@ find_package(
   std_msgs
   sensor_msgs
 	gazebo_msgs
+  motion_planning
 	# ignition-msgs1
 	# ignition-transport4
   # nav_msgs
@@ -183,7 +184,7 @@ link_directories(
 
 add_executable(test_sim_tools_node src/simulation_node.cpp)
 add_executable(get_obstacles_node src/get_obstacles_node.cpp)
-add_executable(gz_visual_tools_node src/gz_visual_tools_node.cpp)
+# add_executable(gz_visual_tools_node src/gz_visual_tools_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -204,12 +205,12 @@ target_link_libraries(get_obstacles_node
   ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES} ${IGNITION-TRANSPORT_LIBRARIES}
 )
 
-target_link_libraries(gz_visual_tools_node
-  ${catkin_LIBRARIES}
-	${GAZEBO_LIBRARIES}
-	${IGNITION-TRANSPORT_LIBRARIES}
+# target_link_libraries(gz_visual_tools_node
+#   ${catkin_LIBRARIES}
+# 	${GAZEBO_LIBRARIES}
+# 	${IGNITION-TRANSPORT_LIBRARIES}
 
-)
+# )
 
 #############
 ## Install ##

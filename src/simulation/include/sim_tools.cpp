@@ -27,8 +27,8 @@
 #include <ignition/msgs.hh>
 
 // own libraries
-#include "../../motion_planning/include/node_g.cpp"
-#include "../../motion_planning/include/priority_queue_nodes.cpp"
+#include "priority_queue_nodes.cpp"
+
 
 #define RADIUS 0.8
 #define GRID "GRID"
@@ -293,7 +293,8 @@ double actual_cost(node_g *last, node_g *next)
 
 double movement_cost(node_g* current, node_g* neighbor)
 {
-
+  ROS_FATAL_STREAM("NOT IMPLEMENTED YET!");
+  return -1;
 }
 
 void print_point(geometry_msgs::Point p)
