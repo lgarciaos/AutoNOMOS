@@ -8,6 +8,8 @@
  * 
  * Authors: Zakary Littlefield, Kostas Bekris 
  * 
+ * Modified by: Edgar Granados, 2019, ITAM.
+ * 
  */
 
 #include "utilities/condition_check.hpp"
@@ -27,9 +29,16 @@ condition_check_t::condition_check_t(std::string type, double check )
 		exit(0);
 	}
 }
+
+void condition_check_t::set_condition_check(double condition_check)
+{
+	this -> condition_check = condition_check;
+	// ROS_WARN("Condition_check_in: %.3f\tNew: %.3f ", condition_check, this -> condition_check );
+}
+
 void condition_check_t::reset()
 {
-	timer.reset();
+	timer.reset();	
 	iteration_counter = 0;
 }
 
@@ -45,6 +54,7 @@ bool condition_check_t::check()
 	{
 		if(timer.measure()>=condition_check)
 		{
+			// std::cout << "Time is: " << timer.measure() << std::endl;
 			return true;
 		}
 	}
