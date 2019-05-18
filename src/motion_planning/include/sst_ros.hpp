@@ -50,6 +50,9 @@ public:
   void get_last_solution_path(std::vector<tree_node_t*> & last_sln);
 
   void dealloc_tree();
+
+  tree_node_t* get_root();
+  
   // std_msgs::Float64MultiArray get_vector_();
 
 protected:

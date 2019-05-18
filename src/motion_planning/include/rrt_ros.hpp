@@ -15,6 +15,7 @@
 
 #include <vector>
 
+// sparse_rrt
 #include "utilities/parameter_reader.hpp"
 #include "systems/system.hpp"
 #include "nearest_neighbors/graph_nearest_neighbors.hpp"

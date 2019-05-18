@@ -51,6 +51,9 @@ public:
   void get_last_solution_path(std::vector<tree_node_t*> & last_sln);
   
   void dealloc_tree();
+
+  tree_node_t* get_root();
+
   // std_msgs::Float64MultiArray get_vector_();
 
 protected:
@@ -58,7 +61,7 @@ protected:
   // using planner_t::last_solution_path;
   // using sst_t::last_solution_path;
 
-
+  
   void create_floatmultiarray_tree(tree_node_t* node);
   void dealloc_tree_aux(tree_node_t* node);
   void dealloc_metric();
