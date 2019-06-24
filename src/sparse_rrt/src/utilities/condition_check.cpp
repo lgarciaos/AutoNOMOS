@@ -52,7 +52,7 @@ bool condition_check_t::check()
 	}
 	else if(condition_type==1)
 	{
-		if(timer.measure()>=condition_check)
+		if(timer.measure() >= condition_check)
 		{
 			// std::cout << "Time is: " << timer.measure() << std::endl;
 			return true;

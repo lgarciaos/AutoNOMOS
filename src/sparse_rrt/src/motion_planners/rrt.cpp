@@ -71,31 +71,21 @@ void rrt_t::replanning_update_tree(double delta_t, double* &new_state_point)
 			path.push_front(aux_nearest);
 			aux_nearest = aux_nearest->parent;
 		}
-		// aux_solution_path.push_back(root);
 		long unsigned int i = 0;
 		double acum_duration = 0;
-		// tree_node_t* root_aux;
 
-		// root_aux = root;
 		std::queue<tree_node_t*> orphans_queue;
 		while(acum_duration < delta_t && i < path.size())
 		{
-			// aux_solution_path.push_back(path[i]);
 			acum_duration += path[i]->parent_edge->duration;
-			// ROS_WARN("i: %d\t#children: %d\tdur: %.3f", i, root_aux -> children.size(), acum_duration);
+			ROS_DEBUG("i: %d\t#children: %d\tdur: %.3f", i, root -> children.size(), acum_duration);
 
 			for(auto & child : root -> children)
 			{
-				// ROS_WARN("exploring children...");
 				if (child == path[i])
 				{
-
-					// delete root;
-					// root = path[i];
-					// delete root -> parent;
 					root = child;
 					root -> parent = NULL;
-
 				}
 				else
 				{
@@ -106,8 +96,6 @@ void rrt_t::replanning_update_tree(double delta_t, double* &new_state_point)
 			}
 			i++;
 		}
-		// root = root_aux;
-		// root -> parent = NULL;
 		ROS_WARN("New root point: (%.3f, %.3f, %.3f)", 
 			root -> point[0], root -> point[1], root -> point[2]);
 		system->copy_state_point(start_state, root -> point);

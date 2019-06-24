@@ -78,12 +78,85 @@ void sst_t::get_solution(std::vector<std::pair<double*,double> >& controls)
 
 void sst_t::get_solution(std::vector<std::tuple<double*,double, double*> >& controls)
 {
-	ROS_FATAL("NOT IMPLEMENTED YET");
+	last_solution_path.clear();
+	if(best_goal==NULL)
+		return;
+	nearest = best_goal;
+	
+	//now nearest should be the closest node to the goal state
+	std::deque<tree_node_t*> path;
+	while(nearest->parent!=NULL)
+	{
+		path.push_front(nearest);
+		nearest = (sst_node_t*)nearest->parent;
+	}
+	last_solution_path.push_back(root);
+	for(unsigned i=0;i<path.size();i++)
+	{
+		last_solution_path.push_back(path[i]);
+		controls.push_back(std::tuple<double*,double, double*>(NULL,0, NULL));
+		std::get<0>(controls.back()) = system -> alloc_control_point();
+		system->copy_control_point(std::get<0>(controls.back()),path[i]->parent_edge->control);
+		std::get<1>(controls.back()) = path[i]->parent_edge->duration;
+		std::get<2>(controls.back()) = path[i] -> point;
+	}
 }
 
 void sst_t::replanning_update_tree(double delta_t, double* &new_state_point)
 {
-	ROS_FATAL("NOT IMPLEMENTED YET");	
+	// ROS_FATAL("NOT IMPLEMENTED YET");	
+
+	// last_solution_path.clear();
+	// ROS_WARN_STREAM("Best goal: " << best_goal);
+	if(best_goal==NULL)
+		return;
+	nearest = best_goal;
+	
+	//now nearest should be the closest node to the goal state
+	std::deque<tree_node_t*> path;
+	while(nearest->parent!=NULL)
+	{
+		path.push_front(nearest);
+		nearest = (sst_node_t*)nearest->parent;
+	}
+
+	// last_solution_path.push_back(root);
+	double acum_duration = 0;
+	long unsigned int i = 0;
+
+	while(acum_duration < delta_t && i < path.size())
+		{
+			acum_duration += path[i]->parent_edge->duration;
+			ROS_DEBUG("i: %d\t#children: %d\tdur: %.3f", i, root -> children.size(), acum_duration);
+
+			for(auto & child : root -> children)
+			{
+				if (child == path[i])
+				{
+					root = child;
+					root -> parent = NULL;
+				}
+				else
+				{
+					// ROS_WARN("deleting child: (%.3f, %.3f, %.3f)",
+						// child -> point[0], child -> point[1], child -> point[2]);
+					// orphans_queue.push(child);
+				}
+			}
+			i++;
+		}
+		system->copy_state_point(start_state, root -> point);
+		system->copy_state_point(new_state_point, root -> point);
+
+	// for(unsigned i=0;i<path.size();i++)
+	// {
+
+		// last_solution_path.push_back(path[i]);
+		// controls.push_back(std::pair<double*,double>(NULL,0));
+		// controls.back().first = system->alloc_control_point();
+		// system->copy_control_point(controls.back().first,path[i]->parent_edge->control);
+		// controls.back().second = path[i]->parent_edge->duration;
+	// }
 }
 
 void sst_t::step()
