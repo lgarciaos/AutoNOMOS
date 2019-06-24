@@ -1,0 +1,20 @@
+<launch>
+
+    <arg name="gui_in" default="true"/>
+
+    
+    <param name="simulation/simulation" type = "bool" value="true" />
+
+    <include file="$(find gazebo_ros)/launch/empty_world.launch">
+        <arg name="paused" value="false"/>
+        <arg name="use_sim_time" value="true"/>
+        <arg name="gui" value="$(arg gui_in)"/>
+        <arg name="debug" value="false"/>
+        <arg name="world_name" value="autoNOMOS_curved_road.world"/>
+        <arg name="extra_gazebo_args" value="--verbose"/>
+        
+    </include>
+
+    <include file="$(find route_planning)/launch/simulation.launch"/>
+
+</launch>

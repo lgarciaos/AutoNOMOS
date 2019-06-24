@@ -1,6 +1,8 @@
 <launch>
   <arg name="stopping_type_in" default="time"/>
-  <arg name="stopping_check_in" default="15" />
+  <!-- <arg name="stopping_check_in" default="1" /> -->
+  <arg name="stopping_check_in" default="25" />
+  <!-- <arg name="stopping_check_in" default="100" /> -->
   <!-- <arg name="stopping_check_in" default="150" /> -->
   <arg name="planner_in" default="RRT" />
   <!-- <arg name="planner_in" default="SST" /> -->
@@ -56,11 +58,7 @@
   <include file = "$(find navigation)/launch/follow_trajectory.launch">
   </include>
 
-  <!-- <node name = "control_low_node" pkg = "control_low" type = "control_low_node" output = "screen" /> -->
+  <include file = "$(find route_planning)/launch/simulation.launch">
+  </include>
 
 </launch>
-
-
-<!-- roslaunch simulation dummy.launch stopping_check_in:=1000000
-    planner_in:=RRT kill_on_exit_in:=false gz_plot_lines_in:=true
-    publish_ctrl_path_in:=false ctrl_to_use_in:=BANG_BANG -->
