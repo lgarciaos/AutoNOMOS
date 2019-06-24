@@ -1,10 +1,54 @@
 #include "collision_detector.h"
 
-void collision_detector_t::set_obstacles(std::vector<geometry_msgs::Pose>
-  in_obstacles_poses, std::vector<int> in_obstacles_types)
+void collision_detector_t::set_obstacles(motion_planning::obstacles_array::Response msg)
 {
-  obstacles_poses = in_obstacles_poses;
-  obstacles_types = in_obstacles_types;
+  // obstacles_poses = in_obstacles_poses;
+  // obstacles_types = in_obstacles_types;
+  for (long unsigned int i = 0; i < msg.names.size(); ++i)
+  {
+    // obstacle_t obs(msg.names[i], msg.poses[i], msg.bounding_boxes[i], msg.is_static[i]);
+    // if(msg.is_static[i])
+    // {
+    //   static_obstacles.insert(obs);
+    // } 
+    // else
+    // {
+    //   dynamic_obstacles.insert(obs);
+    // }
+  }
+
+}
+
+void collision_detector_t::support(const void *_obj, const ccd_vec3_t *_dir, ccd_vec3_t *v)
+{
+    // assume that obj_t is user-defined structure that holds info about
+    // object (in this case box: x, y, z, pos, quat - dimensions of box,
+    // position and rotation)
+    obstacle_t *obj = (obstacle_t *)_obj;
+    ccd_vec3_t dir, pos;
+    ccd_quat_t qinv, q_aux;
+
+    // apply rotation on direction vector
+    // ccdVec3Copy(&dir, _dir);
+    double x, y, z;
+    double dim_x, dim_y, dim_z;
+    double qx, qy, qz, qw;
+    obj -> get_xyz(x, y, z);
+    obj -> get_quat_xyzw(qx, qy, qz, qw);
+    ccdVec3Set(&pos, x, y, z);
+    ccdVec3Copy(&dir, _dir);
+    ccdQuatSet(&q_aux, qx, qy, qz, qw); 
+    ccdQuatInvert2(&qinv, &q_aux);
+    ccdQuatRotVec(&dir, &qinv);
+
+    // // compute support point in specified direction
+    ccdVec3Set(v, ccdSign(ccdVec3X(&dir)) * dim_x * CCD_REAL(0.5),
+                  ccdSign(ccdVec3Y(&dir)) * dim_y * CCD_REAL(0.5),
+                  ccdSign(ccdVec3Z(&dir)) * dim_z * CCD_REAL(0.5));
+
+    // // transform support point according to position and rotation of object
+    ccdQuatRotVec(v, &q_aux);
+    ccdVec3Add(v, &pos);
 }
 
 bool collision_detector_t::is_collision_free(geometry_msgs::Pose2D start_pose,

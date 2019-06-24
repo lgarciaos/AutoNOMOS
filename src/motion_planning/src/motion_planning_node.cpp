@@ -24,6 +24,7 @@
 // own
 #include "motion_planning/car_trajectory.h"
 #include "motion_planning/Line_Segment.h"
+#include "route_planning/route_state.h"
 // #include "sim_params.h"
 
 #define RRT "RRT"
@@ -83,7 +84,7 @@ namespace params
 ///////////////
 // VARIABLES //
 ///////////////
-const int rate_hz = 10;
+const int rate_hz = 1;
 
 std::vector<string> gz_green = {"Gazebo/White", "Gazebo/Yellow", "Gazebo/Grey"};
 std::vector<string> gz_purple = {"Gazebo/Green", "Gazebo/BlueLaser"};//, "Gazebo/Red"};
@@ -91,7 +92,7 @@ std::vector<string> gz_purple = {"Gazebo/Green", "Gazebo/BlueLaser"};//, "Gazebo
 autonomos_t* system_aux;
 condition_check_t* checker;
 condition_check_t* stats_check;
-
+double delta_t_real;
 
 int subscriptions_established;
 int dummy;
@@ -120,8 +121,11 @@ ros::Publisher pub_target_pose;
 ros::Publisher pub_start_pose;
 ros::Publisher pub_car_trajectory;
 ros::Publisher pub_sim_line;
+ros::Publisher pub_next_pose;
 ros::Subscriber sub_robot_pose;
 
+ros::ServiceClient route_planning_client;
+ros::ServiceClient obstacles_client;
 a_star_t* a_star_ptr;
 
 planner_t* planner;
@@ -143,7 +147,7 @@ void publish_sln_tree_1(tree_node_t* node, motion_planning::Line_Segment& ls_tra
 void get_robot_pose_callback(const geometry_msgs::Pose2D& pose);
 void run_planner();
 void replan_setup();
-
+void get_next_state();
 
 void run_planner()
 {
@@ -157,16 +161,59 @@ void run_planner()
   }
 }
 
+void get_next_state()
+{
+  route_planning::route_state call;
+  call.request.current_state.x = params::start_state[0];
+  call.request.current_state.y = params::start_state[1];
+  call.request.current_state.z = params::start_state[2];
+  call.request.distance = 3.0;
+  if (route_planning_client.call(call))
+  {
+    params::goal_state[0] = call.response.next_state.x;
+    params::goal_state[1] = call.response.next_state.y;
+    params::goal_state[2] = call.response.next_state.theta;
+    geometry_msgs::Pose2D p;
+    p.x = call.response.next_state.x;
+    p.y = call.response.next_state.y;
+    p.theta = call.response.next_state.theta;
+    ROS_WARN("p: (%.3f, %.3f, %.3f)", p.x, p.y, p.theta);
+    pub_next_pose.publish(p);
+    subscriptions_established |= 8; 
+  }
+  else
+  {
+    ROS_ERROR("NO NEW STATE RECEIVED");
+  }
+}
+
+void get_obstacles()
+{
+  motion_planning::obstacles_array call;
+  if (obstacles_client.call(call))
+  {
+    system_aux -> set_obstacles(call.response);
+    subscriptions_established |= 16; 
+    ROS_WARN("Obstacles set");
+  }
+  else
+  {
+    ROS_WARN("No obstacles :s"); 
+  }
+
+}
+
 void replan_setup()
 {
-  checker -> set_condition_check(params::delta_t);
-  checker -> reset();
+  // get_next_state();
+  get_obstacles();
 
-  planner -> replanning_update_tree(params::delta_t, params::start_state);
-  planner -> set_goal_state(params::goal_state, params::goal_radius);
-  system_aux -> set_current_loc(params::start_state[0], params::start_state[1], params::start_state[2]);
+  checker -> set_condition_check(delta_t_real);
 
-  system_aux -> set_obstacles(vec_obstacles_poses, vec_obstacles_type, obstacles_radius);
+  // planner -> replanning_update_tree(params::delta_t, params::start_state);
+  // planner -> set_goal_state(params::goal_state, params::goal_radius);
+  // system_aux -> set_current_loc(params::start_state[0], params::start_state[1], params::start_state[2]);
+  // system_aux -> set_obstacles(vec_obstacles_poses, vec_obstacles_type, obstacles_radius);
 
 }
 
@@ -308,9 +355,12 @@ void init_planner()
     {
       stats_check = new condition_check_t(params::stats_type, params::stats_check);
     }
+  
+    get_next_state();
+
     planner -> set_start_state(params::start_state);
     planner -> set_goal_state(params::goal_state, params::goal_radius);
-    system_aux -> set_obstacles(vec_obstacles_poses, vec_obstacles_type, obstacles_radius);
+    // system_aux -> set_obstacles(vec_obstacles_poses, vec_obstacles_type, obstacles_radius);
     planner -> setup_planning();
     checker -> reset();
 
@@ -325,6 +375,8 @@ void rrt_sst_solver()
     params::start_state[0], params::start_state[1], params::start_state[2],
     params::goal_state[0],  params::goal_state[1],  params::goal_state[2]);
 
+  // Reset the checker here so that we dont loose planning time on the setup... 
+  checker -> reset();
 	if(stats_check==NULL)
 	{
 		do
@@ -409,12 +461,12 @@ void rrt_sst_solver()
 			}
 		}
 	}
-	std::cout << "Done planning." << std::endl;
+	ROS_DEBUG("Done planning.");
 }
 
 void publish_car_trajectory(std::vector<std::tuple<double*, double, double*> >& controls)
 {
-  std::cout << __PRETTY_FUNCTION__ << '\n';
+  // std::cout << __PRETTY_FUNCTION__ << '\n';
   // motion_planning::car_trajectory res;
 
   // car_trajectory_msg.path_len = controls.size();
@@ -441,6 +493,7 @@ void publish_car_trajectory(std::vector<std::tuple<double*, double, double*> >& 
     // ROS_WARN("acum_duration: %.3f\tdelta_t: %.3f", acum_duration, params::delta_t);
     i++;
   }
+  delta_t_real = acum_duration;
   car_trajectory_msg.path_len = i;
   car_trajectory_msg.header.seq = iterations;
   car_trajectory_msg.header.stamp = ros::Time::now();;
@@ -575,11 +628,7 @@ void publish_lines()
 void init_variables()
 {
   ROS_WARN_STREAM("MP NODE: " << __FUNCTION__ <<  ": beginning..." );
-
-  // init outgoing control message 
-  // start_time = std::chrono::high_resolution_clock::now();
   
-
   // Keep track of how many subscribers have gotten a callback
   subscriptions_established = 0;
 
@@ -597,7 +646,7 @@ void init_variables()
   }
   else if (params::planner_name == RRT || params::planner_name == SST || params::planner_name == DIRT)
   {
-    system_aux = new autonomos_t(params::ctrl_to_use, params::global_planning);
+    system_aux = new autonomos_t(params::ctrl_to_use, params::global_planning, sim_params::model_name);
     
     if (params::global_planning)
     {
@@ -705,8 +754,12 @@ int main(int argc, char **argv)
     ROS_WARN_STREAM("Initializing sim sub/pub:");
     string pose_topic_name = "/" + sim_params::model_name + "/pose";
     string sim_topic_name = "/" + sim_params::model_name + "/gz_visual/line_segment";
+    string pub_name_next_pose_ = "/" + sim_params::model_name + "/next_state";
     pub_sim_line = nh.advertise<motion_planning::Line_Segment>(sim_topic_name, 100000, true);
     sub_robot_pose = nh.subscribe(pose_topic_name, 1, &get_robot_pose_callback);
+    pub_next_pose = nh.advertise<geometry_msgs::Pose2D>(pub_name_next_pose_, 100000, true);
+    route_planning_client = nh.serviceClient<route_planning::route_state>("/route_planning/next_state");
+    obstacles_client = nh.serviceClient<motion_planning::obstacles_array>("/simulation/get_obstacles/static");
     ROS_WARN_STREAM("\tpublishing to: " << pub_sim_line.getTopic());
     ROS_WARN_STREAM("\tsubscribed to: " << sub_robot_pose.getTopic());
   }
@@ -714,14 +767,14 @@ int main(int argc, char **argv)
 
   // ROS_WARN_STREAM("sim_tools_testing_node initiated");
 
-  loop_rate.sleep();
+  // loop_rate.sleep();
 
   ROS_WARN_STREAM("MP NODE: " <<  __FUNCTION__ <<  ": Going into while(ros::ok())");
   ros::service::call("/gazebo/reset_simulation", empty);
   while(ros::ok())
   {
     ros::spinOnce();
-    if (subscriptions_established == 7)
+    if (subscriptions_established == 31)
     {
       ROS_WARN_STREAM("Iteration: " << iterations);
       if(planner == NULL) // If this is the first iteration, init the planner
@@ -731,10 +784,10 @@ int main(int argc, char **argv)
       else // if is the 2nd or more iteration, do the replaning steps
       {
         replan_setup();
+        // break;
       }
       // run the planner
       run_planner();
-
       publish_lines();
       
       iterations++;
@@ -742,8 +795,12 @@ int main(int argc, char **argv)
     else
     {
       ROS_WARN_STREAM("not enough subscriptions established: " << subscriptions_established);
+      loop_rate.sleep();
+      get_next_state();
+      get_obstacles();
+
     }
-    std::cout << "Input something and press enter to continue..." << '\n';
+    // std::cout << "Input something and press enter to continue..." << '\n';
     // std::cin >> dummy;
   }
   std::cout << "Finishing motion_planning_node." << std::endl;

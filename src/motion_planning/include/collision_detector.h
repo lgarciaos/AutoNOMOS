@@ -19,7 +19,12 @@
 #include <geometry_msgs/Point.h>
 #include <std_msgs/Float64MultiArray.h>
 
-
+// libccd
+#include <ccd/ccd.h>
+#include <ccd/quat.h>
+// own
+#include "obstacle_t.hpp"
+#include "motion_planning/obstacles_array.h"
 // types of obstacles
 #define RECTANGLE 0
 #define CIRCLE 1
@@ -39,14 +44,17 @@ class collision_detector_t
     std::vector<geometry_msgs::Pose> obstacles_poses;
     std::vector<int> obstacles_types;
 
+    std::set<obstacle_t> static_obstacles;
+    std::set<obstacle_t> dynamic_obstacles;
+
     collision_detector_t()
     {
     }
     ~collision_detector_t(){};
 
-    void set_obstacles(std::vector<geometry_msgs::Pose> in_obstacle_poses,
-      std::vector<int> in_obstacles_type);
+    void support(const void *obj, const ccd_vec3_t *dir, ccd_vec3_t *vec);
 
+    void set_obstacles(motion_planning::obstacles_array::Response msg);
 
     bool is_collision_free(geometry_msgs::Pose2D start_node, geometry_msgs::Pose2D end_node);
 

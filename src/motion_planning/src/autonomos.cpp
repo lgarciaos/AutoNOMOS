@@ -13,12 +13,14 @@
 
 #include <cmath>
 
-autonomos_t::autonomos_t(std::string ctrl_to_use_in, bool global_planning)
+using std::string;
+
+autonomos_t::autonomos_t(std::string ctrl_to_use_in, bool global_planning, string name)
 {
   state_dimension = 3;
   control_dimension = 2;
   temp_state = new double[state_dimension];
-  collision_detector = new collision_detector_t();
+  // collision_detector = new collision_detector_t();
 
   this -> global = global_planning;
 
@@ -35,6 +37,47 @@ autonomos_t::autonomos_t(std::string ctrl_to_use_in, bool global_planning)
 
   set_bounds(POS_X_BOUND, NEG_X_BOUND, POS_Y_BOUND, NEG_Y_BOUND);
 
+  CCD_INIT(&ccd); // initialize ccd_t struct
+
+      // set up ccd_t struct
+  ccd.support1       = autonomos_t::support; // support function for first object
+  ccd.support2       = autonomos_t::support; // support function for second object
+  ccd.max_iterations = 100; 
+  autonomos_name = name;
+  // allow_reverse = false;
+}
+
+void autonomos_t::support(const void *_obj, const ccd_vec3_t *_dir, ccd_vec3_t *v)
+{
+    // assume that obj_t is user-defined structure that holds info about
+    // object (in this case box: x, y, z, pos, quat - dimensions of box,
+    // position and rotation)
+    obstacle_t *obj = (obstacle_t *)_obj;
+    ccd_vec3_t dir, pos;
+    ccd_quat_t qinv, q_aux;
+
+    // apply rotation on direction vector
+    // ccdVec3Copy(&dir, _dir);
+    double x, y, z;
+    double dim_x, dim_y, dim_z;
+    double qx, qy, qz, qw;
+    obj -> get_xyz(x, y, z);
+    obj -> get_quat_xyzw(qx, qy, qz, qw);
+    obj -> get_bounding_box_dimensions(dim_x, dim_y, dim_z);
+    ccdVec3Set(&pos, x, y, z);
+    ccdVec3Copy(&dir, _dir);
+    ccdQuatSet(&q_aux, qx, qy, qz, qw); 
+    ccdQuatInvert2(&qinv, &q_aux);
+    ccdQuatRotVec(&dir, &qinv);
+
+    // // compute support point in specified direction
+    ccdVec3Set(v, ccdSign(ccdVec3X(&dir)) * dim_x * CCD_REAL(0.5),
+                  ccdSign(ccdVec3Y(&dir)) * dim_y * CCD_REAL(0.5),
+                  ccdSign(ccdVec3Z(&dir)) * dim_z * CCD_REAL(0.5));
+
+    // // transform support point according to position and rotation of object
+    ccdQuatRotVec(v, &q_aux);
+    ccdVec3Add(v, &pos);
 }
 
 autonomos_t::~autonomos_t()
@@ -89,7 +132,7 @@ void autonomos_t::random_state(double* state)
 	state[2] = uniform_random(-M_PI,M_PI);
 }
 
-void autonomos_t::random_control(double* control)
+void autonomos_t::random_control(double* control, bool allow_reverse)
 {
   // control[0] -> SPEED
   // control[1] -> STEERING
@@ -101,6 +144,11 @@ void autonomos_t::random_control(double* control)
   else if (ctrl_to_use == BANG_BANG)
   {
     bang_bang_ctrl(control);
+  }
+
+  if (!allow_reverse)
+  {
+    control[0] = abs(control[0]);
   }
 
 }
@@ -142,8 +190,8 @@ bool autonomos_t::propagate( double* start_state, double* control, int min_step,
 	bool validity = true;
 	for(int i=0;i<num_steps;i++)
 	{
-		double temp0 = temp_state[0];
-		double temp1 = temp_state[1];
+		// double temp0 = temp_state[0];
+		// double temp1 = temp_state[1];
 		double temp2 = temp_state[2];
     temp_state[0] += params::integration_step*cos(temp2)*control[0];
 		temp_state[1] += params::integration_step*sin(temp2)*control[0];
@@ -226,29 +274,52 @@ bool autonomos_t::valid_state()
   p2.x = temp_state[0];
   p2.y = temp_state[1];
   p2.theta = temp_state[2];
-  bool aux_collision = true;
-  aux_collision =  collision_detector -> is_collision_free(p1, p2);
-  // std::string aux_str = aux_collision?"true":"false";
-  // std::cout << "is_collision_free: " << aux_str ;
-  // if (!aux_collision)
-  // {
-  //   std::cout << "Collision detected!";
-  //   std::cout << std::endl;
-  // }
-	return  aux_collision && in_bounds;
+  bool collision = true;
+
+  obstacle_t robot_temp = robot_obj;
+  robot_temp.set_pose2D(temp_state[0], temp_state[1], temp_state[2]);
+  // std::cout << "original: " << robot_obj << std::endl;
+  // std::cout << "new: " << robot_temp << std::endl;
+  for( auto obs : static_obstacles)
+  {
+    collision = ccdGJKIntersect(&robot_temp, &obs, &ccd);
+    if (collision)
+    {
+      // ROS_WARN_STREAM("robot: " << robot_temp << "\nobs: " << obs << "\nintersection: " << collision);
+      break;
+    }
+  }
+
+	return  !collision && in_bounds;
 
 }
 
 svg::Point autonomos_t::visualize_point(double* state, svg::Dimensions dims)
 {
-	double x = (state[0]+10)/(20) * dims.width;
-	double y = (state[1]+10)/(20) * dims.height;
+	double x = ( state[0] + 10 ) / (20) * dims.width;
+	double y = ( state[1] + 10 ) / (20) * dims.height;
 	return svg::Point(x,y);
 }
 
-void autonomos_t::set_obstacles(std::vector<geometry_msgs::Pose> vec_obstacles_poses,
-  std::vector<int> vec_obstacles_type, double in_obstacles_radius)
+void autonomos_t::set_obstacles(motion_planning::obstacles_array::Response msg)
 {
-  collision_detector -> set_obstacles(vec_obstacles_poses, vec_obstacles_type);
-  collision_detector -> set_obstacles_radius(in_obstacles_radius);
+  for (long unsigned int i = 0; i < msg.names.size(); ++i)
+  {
+    // obstacle_t obs(msg.names[i], msg.poses[i], msg.bounding_boxes[i], msg.is_static[i]);
+    obstacle_t obs(msg.names[i], msg.poses[i], msg.bounding_boxes[i], 
+        msg.is_static[i], msg.bounding_boxes_dimensions[i]);
+    std::cout << "obs " << obs << std::endl;
+    if (msg.names[i] == autonomos_name)
+    {
+      robot_obj = obs;
+    }
+    else if (msg.is_static[i])
+    {
+      static_obstacles.insert(obs);
+    } 
+    else
+    {
+      dynamic_obstacles.insert(obs);
+    }
+  }
 }

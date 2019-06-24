@@ -13,13 +13,20 @@
 #include <ros/console.h>
 #include <ros/assert.h>
 
+// libccd
+#include <ccd/ccd.h>
+#include <ccd/quat.h>
+#include <ccd/vec3.h>
+
 #define RANDOM_CTRL "RANDOM_CTRL"
 #define BANG_BANG   "BANG_BANG"
+
+using std::string;
 
 class autonomos_t : public system_t
 {
 public:
-	autonomos_t(std::string ctrl_to_use_in, bool global_planning);
+	autonomos_t(std::string ctrl_to_use_in, bool global_planning, string name);
 
 	virtual ~autonomos_t();
 
@@ -27,7 +34,8 @@ public:
 
 	void random_state(double* state);
 
-	void random_control(double* control);
+	void random_control(double* control){random_control(control, false);};
+	void random_control(double* control, bool allow_reverse = false);
 
 	bool propagate(double* start_state, double* control, int min_step,
     int max_step, double* result_state, double& duration );
@@ -38,8 +46,7 @@ public:
 
 	svg::Point visualize_point(double* state, svg::Dimensions dims);
 
-	void set_obstacles(std::vector<geometry_msgs::Pose> vec_obstacles_poses,
-	  std::vector<int> vec_obstacles_type, double in_obstacles_radius);
+	void set_obstacles(motion_planning::obstacles_array::Response msg);
 
 
 	void bang_bang_ctrl(double* control);
@@ -65,7 +72,11 @@ public:
 
 	void set_current_loc(double x, double y, double theta);
 
+	// void set_allow_reverse(bool allow_reverse){allow_reverse = allow_reverse;}
+
 private:
+
+	static void support(const void *_obj, const ccd_vec3_t *_dir, ccd_vec3_t *v);
 
 	/**
 	 * @brief Enforce global rectangular bound
@@ -97,6 +108,14 @@ private:
 	 */
 	geometry_msgs::Pose2D current_loc;
 
+	// bool allow_reverse;
+
+  	ccd_t ccd;
+  	obstacle_t robot_obj;
+
+    std::set<obstacle_t> static_obstacles;
+    std::set<obstacle_t> dynamic_obstacles;
+
 	double pos_x_bound; ///< rectangular bounds 
 	double neg_x_bound; ///< rectangular bounds 
 	double pos_y_bound; ///< rectangular bounds 
@@ -104,9 +123,11 @@ private:
 
 	double planning_rad_range; ///< circular radius bound
 
-	collision_detector_t* collision_detector;
+	// collision_detector_t* collision_detector;
 	double obstacles_radius;
 	std::string ctrl_to_use;
+
+	string autonomos_name;
 };
 
 

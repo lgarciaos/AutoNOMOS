@@ -24,6 +24,7 @@
     <param name="min_time_steps"             type="int"    value="20"/>
     <param name="max_time_steps"             type="int"    value="200"/>
     <param name="random_seed"                type="int"    value="56435351"/>
+    <!-- <param name="random_seed"                type="int"    value="19921123"/> -->
     <param name="sst_delta_near"             type="double" value="0.4"/>
     <param name="sst_delta_drain"            type="double" value="0.2"/>
     <param name="planner"                    type="string" value="$(arg planner_arg)"/>
@@ -47,7 +48,7 @@
     <param name="bounding/neg_x_bound"       type="double" value="-10.0"/> <!-- NOT USE IF global_planning == FALSE -->
     <param name="bounding/pos_y_bound"       type="double" value="+10.0"/> <!-- NOT USE IF global_planning == FALSE -->
     <param name="bounding/neg_y_bound"       type="double" value="-10.0"/> <!-- NOT USE IF global_planning == FALSE -->
-    <param name="bounding/perception_radius" type="double" value="6"/>     <!-- NOT USE IF global_planning == TRUE  -->
+    <param name="bounding/perception_radius" type="double" value="50"/>     <!-- NOT USE IF global_planning == TRUE  -->
     
     <!-- REPLANNING -->
     <param name="replanning/delta_t"       type="double" value="1"/>

@@ -16,7 +16,7 @@ void a_star_t::setup_planning()
 void a_star_t::set_obstacles(std::vector<geometry_msgs::Pose> vec_obstacles_poses,
   std::vector<int> vec_obstacles_type, double in_obstacles_radius)
 {
-  collision_detector -> set_obstacles(vec_obstacles_poses, vec_obstacles_type);
+  // collision_detector -> set_obstacles(vec_obstacles_poses, vec_obstacles_type);
   collision_detector -> set_obstacles_radius(in_obstacles_radius);
   // obstacles_poses = vec_obstacles_poses;
   // obstacles_type = vec_obstacles_type;

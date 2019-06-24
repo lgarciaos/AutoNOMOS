@@ -17,6 +17,7 @@ find_package(
 	message_generation
 	sparse_rrt
 )
+find_package(CCD REQUIRED)
 # find_package(ignition-msgs1 REQUIRED)
 # find_package(ignition-transport4 REQUIRED)
 
@@ -61,11 +62,11 @@ add_message_files(
 )
 
 ## Generate services in the 'srv' folder
-# add_service_files(
-#   FILES
-#   Service1.srv
-#   Service2.srv
-# )
+add_service_files(
+  FILES
+  obstacles_array.srv
+  # Service2.srv
+)
 
 ## Generate actions in the 'action' folder
 # add_action_files(
@@ -129,13 +130,15 @@ ${catkin_INCLUDE_DIRS}
 # sparse_rrt/include
 # ../simulation/include
 )
+include_directories(${CCD_INCLUDE_DIRS})
 
 #LINK_DIRECTORIES(sparse_rrt/lib)
 ## Declare a C++ library
-add_library(${PROJECT_NAME}
+add_library(${PROJECT_NAME} SHARED
   src/a_star.cpp
 	src/collision_detector.cpp
 	src/autonomos.cpp
+	# include/obstacle_t.hpp
 )
 
 ## Add cmake target dependencies of the library
@@ -148,6 +151,7 @@ add_library(${PROJECT_NAME}
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME}_node src/motion_planning_node.cpp)
 add_executable(${PROJECT_NAME}_node src/motion_planning_node.cpp)
+add_executable(ccd_test src/cd_test.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -159,6 +163,7 @@ add_executable(${PROJECT_NAME}_node src/motion_planning_node.cpp)
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(ccd_test ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
 # target_link_libraries(${PROJECT_NAME}_node
@@ -168,7 +173,17 @@ target_link_libraries(
 	${PROJECT_NAME}_node
 	#sparse_rrt
   	${catkin_LIBRARIES}
-		${PROJECT_NAME}
+	${PROJECT_NAME}
+	${CCD_LIBRARIES}
+		#	SparseRRT
+)
+
+target_link_libraries(
+	ccd_test
+	#sparse_rrt
+  	${catkin_LIBRARIES}
+  	${PROJECT_NAME}
+  	${CCD_LIBRARIES}
 		#	SparseRRT
 )
 
