@@ -1,0 +1,7 @@
+<launch>
+
+ 	<node name = "sim_node" pkg = "route_planning" type = "sim_node" output = "screen">
+ 		<param name="points_file_name"   type="string" value="$(find route_planning)/input/points_1.txt"/>
+	</node>
+
+</launch>
