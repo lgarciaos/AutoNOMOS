@@ -145,6 +145,8 @@ public:
 	 */
 	virtual void replanning_update_tree(double delta_t, double* &new_state_point) = 0;
 
+	
+
 protected:
 
 	/**
@@ -237,6 +239,7 @@ protected:
 	 * @brief The maximum cost found in the tree.
 	 */
 	double max_cost;
+
 
 };
 

@@ -86,6 +86,24 @@ public:
 	}
 
 	/**
+	 * @brief Creates a string with the content of the state or point given
+	 * @details Creates a string with the content of the state or point given
+	 * 
+	 * @param state_point The state or point to get the string representation from
+	 * @return A string with the contents of the state or point
+	 */
+	std::string state_point_to_str(double* state_point)
+	{
+		std::stringstream ss;
+		for(unsigned i=0;i<control_dimension;i++)
+		{
+			ss << state_point[i];
+		}
+		return ss.str();
+
+	}
+
+	/**
 	 * @brief Performs a random sampling for a new state.
 	 * @details Performs a random sampling for a new state.
 	 * 

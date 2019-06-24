@@ -15,6 +15,7 @@
 
 #include <list>
 #include <cstddef>
+#include <iostream>
 
 class proximity_node_t;
 
