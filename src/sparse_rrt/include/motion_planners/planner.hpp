@@ -23,6 +23,10 @@
 
 // ROS
 #include <ros/console.h>
+#include <ros/assert.h>
+
+
+#define SMALL_EPSILON 0.0001
 
 /**
  * @brief The base class for motion planners.
@@ -71,7 +75,7 @@ public:
 	 * 
 	 * @param controls The list of controls, durations and point-state which comprise the solution.
 	 */
-	virtual void get_solution(std::vector<std::tuple<double*, double, double*> >& controls) = 0;
+	virtual void get_solution(std::vector<std::tuple<double*, double, double*, double> >& controls) = 0;
 
 	/**
 	 * @brief Perform an iteration of a motion planning algorithm.
@@ -145,7 +149,17 @@ public:
 	 */
 	virtual void replanning_update_tree(double delta_t, double* &new_state_point) = 0;
 
+	/**
+	 * @brief Set the dynamic obstacles for this iteration
+	 * @details Set the dynamic obstacles for this iteration
+	 */
+	virtual void set_dynamic_obstacles() = 0;
 	
+	/**
+	 * @brief Update node risks
+	 * @details Update node risks according to the dynamic obstacles (eventually to the static also?)
+	 */
+	virtual void update_tree_risks() = 0;
 
 protected:
 
@@ -194,6 +208,13 @@ protected:
 	 * @param dim The size of the image.
 	 */
 	virtual void visualize_node(tree_node_t* node, svg::Document& doc, svg::Dimensions& dim);
+
+	virtual void propagate_risk_backwards(tree_node_t* node, int parent_num) = 0;
+	
+	virtual void propagate_risk_forward(tree_node_t* node) = 0;
+	
+	double propagating_function(double parent_risk, double current_risk, double gamma);
+
 
  	/**
  	 * @brief The stored solution from previous call to get_solution.

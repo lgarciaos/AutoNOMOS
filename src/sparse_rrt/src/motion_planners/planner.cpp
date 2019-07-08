@@ -172,3 +172,35 @@ tree_node_t* planner_t::get_root()
   return root;
 }
 
+double planner_t::propagating_function(double parent_risk, double current_risk, double gamma)
+{
+	ROS_ASSERT_MSG(parent_risk > 1.0, "PARENT RISK GREATER THAN 1");
+
+	// double res;
+	double current, parent;
+	current = 1 - exp(-gamma * current_risk);
+	if (parent_risk >= 1.0)
+	{
+		parent = 0; // 1 - exp(-gamma * 0) should equal 0
+		// ROS_WARN("parent_risk: %f\tcurrent_risk: %f\tcurrent: %f", parent_risk, current_risk, current);
+	}
+	else 
+	{
+		parent = 1 - exp(-gamma * parent_risk);
+	}
+
+	if (parent_risk > 1.0 || ( current + parent ) / gamma > 1.0)
+	{
+		ROS_ERROR("parent_risk: %f\tcurrent_risk: %f\tcurrent: %f", parent_risk, current_risk, current);
+		ROS_ERROR("\tparent: %f\tsum: %f\tgamma: %.0f\tres: %f", parent, current + parent, gamma, ( current + parent ) / gamma);
+	}
+	if (parent_risk == 1.0 || ( current + parent ) / gamma == 1.0)
+	{
+		ROS_WARN("parent_risk: %f\tcurrent_risk: %f\tcurrent: %f", parent_risk, current_risk, current);
+		ROS_WARN("\tparent: %f\tsum: %f\tgamma: %.0f\tres: %f", parent, current + parent, gamma, ( current + parent ) / gamma);
+	}
+	return ( current + parent ) / gamma ;
+	// return (current_risk * ( 1 - exp(-gamma)));
+	// return (pow(parent_risk, gamma) + pow(current_risk, gamma) ) / 2;
+	// return ( parent_risk + current_risk ) / 2;
+}
