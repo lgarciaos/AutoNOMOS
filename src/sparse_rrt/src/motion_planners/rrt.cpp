@@ -104,7 +104,7 @@ void rrt_t::replanning_update_tree(double delta_t, double* &new_state_point)
 	}
 }
 
-void rrt_t::get_solution(std::vector<std::tuple<double*,double, double*> >& controls)
+void rrt_t::get_solution(std::vector<std::tuple<double*,double, double*, double> >& controls)
 {
 	last_solution_path.clear();
 	system->copy_state_point(sample_state,goal_state);
@@ -136,11 +136,12 @@ void rrt_t::get_solution(std::vector<std::tuple<double*,double, double*> >& cont
 		for(unsigned i=0;i<path.size();i++)
 		{
 			last_solution_path.push_back(path[i]);
-			controls.push_back(std::tuple<double*,double, double*>(NULL,0, NULL));
+			controls.push_back(std::tuple<double*,double, double*, double>(NULL,0, NULL, 0));
 			std::get<0>(controls.back()) = system->alloc_control_point();
 			system->copy_control_point(std::get<0>(controls.back()) ,path[i]->parent_edge->control);
 			std::get<1>(controls.back()) = path[i]->parent_edge->duration;
 			std::get<2>(controls.back()) = path[i] -> point;
+			std::get<3>(controls.back()) = path[i] -> risk;
 		}
 	}
 }
@@ -234,6 +235,71 @@ void rrt_t::add_to_tree()
 	nearest->children.insert(nearest->children.begin(),new_node);
 	add_point_to_metric(new_node);
 	number_of_nodes++;
+
+}
+
+void rrt_t::set_dynamic_obstacles()
+{
+	ROS_ERROR("NOT IMPLEMENTED YET: %s", __PRETTY_FUNCTION__);
+}
+
+void rrt_t::update_tree_risks()
+{
+
+	//system->copy_state_point(sample_state, goal_state);
+	sample_state[0] = -5;
+	sample_state[1] = -5;
+	sample_state[2] = -M_PI / 2;
+
+	// auto dyn_obs = system -> get_dynamic_obstacles();
+
+	// for (auto obs : dyn_obs )
+	// {
+		
+	// }
+	int i_dyn_obs = 0;
+	while (system -> get_next_dynamic_state( sample_state , i_dyn_obs))
+	{
+		ROS_WARN("Obst num: %d: ( %.2f, %.2f, %.2f )", i_dyn_obs, sample_state[0], sample_state[1], sample_state[2]);
+		system->copy_state_point(metric_query->point, sample_state);
+		int val = metric -> find_delta_close( metric_query, close_nodes, distances, 1, true );
+	
+			for (int i = 0; i < val; ++i)
+			{
+				tree_node_t* v = (tree_node_t*)(close_nodes[i]->get_state());
+	    	    // double temp = v->cost ;
+	    	    // ROS_WARN("Point: ( %.3f, %.3f, %.3f )", v -> point[0], v -> point[1], v -> point[2]);
+	    	    v -> risk = 1;
+	    	    propagate_risk_backwards(v, 2);
+	    	    // propagate_risk_forward(v);
+		}
+
+		i_dyn_obs++;
+	}
+
+}
+
+void rrt_t::propagate_risk_backwards(tree_node_t* node, int parent_num)
+{
+	if (node -> parent != NULL && ( node -> risk > SMALL_EPSILON) )
+	{
+		node -> parent -> risk = propagating_function(node -> parent -> risk, node -> risk, parent_num);
+		ROS_WARN("Duration: %.3f", node -> parent_edge -> duration);
+		// ROS_WARN("node risk: %s\t parent risk: %.2f\tparent num: %d",
+		// 	boost::lexical_cast<std::string>(node -> risk).c_str(), node -> parent -> risk, parent_num);
+		propagate_risk_backwards( node -> parent, ++parent_num);
+	}
+}
+void rrt_t::propagate_risk_forward(tree_node_t* node)
+{
+	for (auto &child : node -> children)
+	{
+		if ( node -> risk > SMALL_EPSILON)
+		{
+			child -> risk = ( node -> risk + child -> risk ) / 2;
+			propagate_risk_forward( child );
+		}
+	}
 
 }
 

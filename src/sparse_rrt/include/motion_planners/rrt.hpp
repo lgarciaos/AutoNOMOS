@@ -18,6 +18,9 @@
 #include "systems/system.hpp"
 #include "motion_planners/planner.hpp"
 
+#include <boost/lexical_cast.hpp>
+
+
 /**
  * @brief The motion planning algorithm RRT (Rapidly-exploring Random Tree)
  * @details The motion planning algorithm RRT (Rapidly-exploring Random Tree)
@@ -47,7 +50,7 @@ public:
 	/**
 	 * @copydoc planner_t::get_solution(std::vector<std::tuple<double*,double, double*> >&)
 	 */
-	virtual void get_solution(std::vector<std::tuple<double*,double, double*> >& controls);
+	virtual void get_solution(std::vector<std::tuple<double*,double, double*, double> >& controls);
 
 	/**
 	 * @copydoc planner_t::step()
@@ -58,6 +61,16 @@ public:
 	 * @copydoc planer_t::replanning_update_tree(double delta_t)
 	 */
 	virtual void replanning_update_tree(double delta_t, double* &new_state_point);
+
+	/**
+	 * @copydoc planer_t::set_dynamic_obstacles()
+	 */
+	virtual void set_dynamic_obstacles();
+	
+	/**
+	 * @copydoc planer_t::update_tree_risks()
+	 */
+	virtual void update_tree_risks();
 	
 protected:
 	
@@ -128,6 +141,12 @@ protected:
 	 * @param node The node to add.
 	 */
 	void add_point_to_metric(tree_node_t* node);
+
+
+	void propagate_risk_backwards(tree_node_t* node, int parent_num);
+
+	void propagate_risk_forward(tree_node_t* node);
+
 
 
 };
