@@ -39,9 +39,9 @@ bool route_next_state(route_planning::route_state::Request &req,
     seg = get_segment_num(req.current_state.x, req.current_state.y);
     // set_next_state(req);
 
-    res.next_state.x = -6;
-    res.next_state.y = 7.5;
-    res.next_state.theta = M_PI;
+    res.next_state.x = -2;
+    res.next_state.y = -6.35;
+    res.next_state.theta = M_PI/2;
     return true;
 
     while (distance < req.distance)
