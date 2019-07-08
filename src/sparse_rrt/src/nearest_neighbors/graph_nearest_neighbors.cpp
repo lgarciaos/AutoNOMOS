@@ -29,14 +29,14 @@ proximity_node_t::~proximity_node_t()
     free( neighbors );
 }
 
-double proximity_node_t::distance ( const tree_node_t* st )
+double proximity_node_t::distance ( const tree_node_t* st, bool only_geometric )
 {
-    return system->distance(state->point,st->point);
+    return system->distance(state->point, st->point, only_geometric);
 }
 
-double proximity_node_t::distance ( const proximity_node_t* other )
+double proximity_node_t::distance ( const proximity_node_t* other, bool only_geometric )
 {
-    return system->distance(state->point,other->state->point);
+    return system->distance(state->point, other->state->point, only_geometric);
 }
 
 const tree_node_t* proximity_node_t::get_state( )
@@ -461,7 +461,8 @@ int graph_nearest_neighbors_t::find_delta_close_and_closest( tree_node_t* state,
     return nr_points;
 }
 
-int graph_nearest_neighbors_t::find_delta_close( tree_node_t* state, proximity_node_t** close_nodes, double* distances, double delta )
+int graph_nearest_neighbors_t::find_delta_close( 
+	tree_node_t* state, proximity_node_t** close_nodes, double* distances, double delta, bool only_geometric )
 {
     if( nr_nodes == 0 )
         return 0;
@@ -473,7 +474,7 @@ int graph_nearest_neighbors_t::find_delta_close( tree_node_t* state, proximity_n
     for( int i=0; i<nr_samples; i++ )
     {
 		int index = rand() % nr_nodes;
-		double distance = nodes[index]->distance( state );
+		double distance = nodes[index]->distance( state, only_geometric );
 		if( distance < min_distance )
 		{
 		    min_distance = distance;
@@ -489,7 +490,7 @@ int graph_nearest_neighbors_t::find_delta_close( tree_node_t* state, proximity_n
 	unsigned int* neighbors = nodes[min_index]->get_neighbors( &nr_neighbors );
 	for( int j=0; j<nr_neighbors; j++ )
 	{
-	    double distance = nodes[ neighbors[j] ]->distance( state );
+	    double distance = nodes[ neighbors[j] ]->distance( state, only_geometric );
 	    if( distance < min_distance )
 	    {
 			min_distance = distance;
@@ -515,7 +516,7 @@ int graph_nearest_neighbors_t::find_delta_close( tree_node_t* state, proximity_n
 		    {
 				if( does_node_exist( nodes[ neighbors[j] ], close_nodes, nr_points ) == false )
 				{
-				    double distance = nodes[ neighbors[j] ]->distance( state );
+				    double distance = nodes[ neighbors[j] ]->distance( state, only_geometric );
 				    if( distance < delta && nr_points < MAX_KK)
 				    {
 						close_nodes[ nr_points ] = nodes[ neighbors[j] ];
