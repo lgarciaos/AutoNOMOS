@@ -1,5 +1,7 @@
 <launch>
 
+    <!-- <machine name="ek_tests_44" address="kripton.itam.mx" user="ek_tests" env-loader="/home/ek_tests/autonomos_project/AutoNOMOS/devel/env.sh" default="true" /> -->
+
     <arg name="gui_in" default="true"/>
 
     
