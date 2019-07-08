@@ -73,7 +73,7 @@ void dirt_t::get_solution(std::vector<std::pair<double*,double> >& controls)
 	}
 }
 
-void dirt_t::get_solution(std::vector<std::tuple<double*,double, double*> >& controls)
+void dirt_t::get_solution(std::vector<std::tuple<double*,double, double*, double> >& controls)
 {
 	last_solution_path.clear();
 	if(best_goal==NULL)
@@ -91,11 +91,12 @@ void dirt_t::get_solution(std::vector<std::tuple<double*,double, double*> >& con
 	for(unsigned i=0;i<path.size();i++)
 	{
 		last_solution_path.push_back(path[i]);
-		controls.push_back(std::tuple<double*, double, double*>(NULL, 0, NULL));
+		controls.push_back(std::tuple<double*, double, double*, double>(NULL, 0, NULL, 0));
 		std::get<0>(controls.back()) = system->alloc_control_point();
 		system->copy_control_point(std::get<0>(controls.back()), path[i]->parent_edge->control);
 		std::get<1>(controls.back()) = path[i]->parent_edge->duration;
 		std::get<2>(controls.back()) = path[i] -> point;
+		std::get<3>(controls.back()) = path[i] -> risk;
 	}
 }
 
@@ -357,3 +358,22 @@ bool dirt_t::is_best_goal(tree_node_t* v)
 
 }
 
+void dirt_t::set_dynamic_obstacles()
+{
+	ROS_ERROR("NOT IMPLEMENTED YET: %s", __PRETTY_FUNCTION__);
+}
+
+void dirt_t::update_tree_risks()
+{
+	ROS_ERROR("NOT IMPLEMENTED YET: %s", __PRETTY_FUNCTION__);
+}
+
+void dirt_t::propagate_risk_backwards(tree_node_t* node, int parent_num)
+{
+	ROS_ERROR("NOT IMPLEMENTED YET: %s", __PRETTY_FUNCTION__);
+}
+
+void dirt_t::propagate_risk_forward(tree_node_t* node)
+{
+	ROS_ERROR("NOT IMPLEMENTED YET: %s", __PRETTY_FUNCTION__);
+}
