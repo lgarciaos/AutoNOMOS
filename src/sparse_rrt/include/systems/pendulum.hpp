@@ -29,7 +29,7 @@ public:
 	/**
 	 * @copydoc system_t::distance(double*, double*)
 	 */
-	virtual double distance(double* point1, double* point2);
+	virtual double distance(double* point1, double* point2, bool only_geometric = false);
 
 	/**
 	 * @copydoc system_t::random_state(double*)
@@ -60,6 +60,9 @@ public:
 	 * @copydoc system_t::visualize_point(double*, svg::Dimensions)
 	 */
 	svg::Point visualize_point(double* state, svg::Dimensions dims);
+
+	bool get_next_dynamic_state(double *state, int i){return false;}
+	
 };
 
 

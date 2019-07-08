@@ -40,7 +40,7 @@ public:
 	/**
 	 * @copydoc system_t::distance(double*, double*)
 	 */
-	virtual double distance(double* point1, double* point2);
+	virtual double distance(double* point1, double* point2, bool only_geometric = false);
 
 	/**
 	 * @copydoc system_t::random_state(double*)
@@ -77,6 +77,8 @@ public:
 	 */
     virtual void visualize_obstacles(svg::Document& doc ,svg::Dimensions dims);
 
+	bool get_next_dynamic_state(double *state, int i){return false;}
+    
 protected:
 	double* deriv;
 	void update_derivative(double* control);

@@ -18,7 +18,7 @@
 
 #include <cmath>
 
-double car_t::distance(double* point1,double* point2)
+double car_t::distance(double* point1,double* point2, bool only_geometric)
 {
 	double val = fabs(point1[2]-point2[2]);
 	if(val > M_PI)
