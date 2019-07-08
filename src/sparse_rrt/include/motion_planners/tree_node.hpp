@@ -51,6 +51,7 @@ public:
 		parent_edge = NULL;
 		children.clear();
 		cost = 0;
+        risk = 0;
 	}
 
     /**
@@ -83,6 +84,10 @@ public:
      */
     double cost;
 
+    /**
+     *  @brief The risk associated to this node
+     */
+    double risk;
 };
 
 #endif
