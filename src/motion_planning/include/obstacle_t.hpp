@@ -29,7 +29,7 @@ class obstacle_t
   public:
     obstacle_t(){};
     obstacle_t(string obs_name, geometry_msgs::Pose pose_msg, geometry_msgs::Polygon polygon_msg, 
-      bool is_static, geometry_msgs::Point dimensions)
+    bool is_static, geometry_msgs::Point dimensions)
     {
       // tf::poseMsgToTF(pose_msg, pose);
       pose = pose_msg;
@@ -89,7 +89,7 @@ class obstacle_t
       is_static = value;
     }
 
-    void get_xyz(double &x, double &y, double &z)
+    void get_xyz(double &x, double &y, double &z) const
     {
       x = pose.position.x;
       y = pose.position.y;
@@ -104,7 +104,7 @@ class obstacle_t
       qw = pose.orientation.w;
     }
 
-    string get_name(){return name;}
+    string get_name() const {return name;}
 
   friend bool operator< (const obstacle_t& o1, const obstacle_t &o2)
   {
