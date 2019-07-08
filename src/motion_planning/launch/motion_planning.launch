@@ -48,7 +48,7 @@
     <param name="bounding/neg_x_bound"       type="double" value="-10.0"/> <!-- NOT USE IF global_planning == FALSE -->
     <param name="bounding/pos_y_bound"       type="double" value="+10.0"/> <!-- NOT USE IF global_planning == FALSE -->
     <param name="bounding/neg_y_bound"       type="double" value="-10.0"/> <!-- NOT USE IF global_planning == FALSE -->
-    <param name="bounding/perception_radius" type="double" value="50"/>     <!-- NOT USE IF global_planning == TRUE  -->
+    <param name="bounding/perception_radius" type="double" value="5"/>     <!-- NOT USE IF global_planning == TRUE  -->
     
     <!-- REPLANNING -->
     <param name="replanning/delta_t"       type="double" value="1"/>
