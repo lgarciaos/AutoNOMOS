@@ -76,7 +76,7 @@ void sst_t::get_solution(std::vector<std::pair<double*,double> >& controls)
 	}
 }
 
-void sst_t::get_solution(std::vector<std::tuple<double*,double, double*, double> >& controls)
+void sst_t::get_solution(std::vector<std::tuple<double*,double, double*, double> >& controls, bool asses_risk)
 {
 	last_solution_path.clear();
 	if(best_goal==NULL)
