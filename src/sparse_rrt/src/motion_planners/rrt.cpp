@@ -104,7 +104,7 @@ void rrt_t::replanning_update_tree(double delta_t, double* &new_state_point)
 	}
 }
 
-void rrt_t::get_solution(std::vector<std::tuple<double*,double, double*, double> >& controls)
+void rrt_t::get_solution(std::vector<std::tuple<double*,double, double*, double> >& controls, bool asses_risk)
 {
 	last_solution_path.clear();
 	system->copy_state_point(sample_state,goal_state);
