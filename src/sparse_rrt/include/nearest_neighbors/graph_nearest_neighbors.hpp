@@ -215,7 +215,7 @@ class graph_nearest_neighbors_t
          * @param delta The radius to search within.
          * @return The number of nodes returned.
          */
-        int find_delta_close_and_closest( tree_node_t* state, proximity_node_t** close_nodes, double* distances, double delta );
+        int find_delta_close_and_closest( tree_node_t* state, proximity_node_t** close_nodes, double* distances, double delta, bool only_geometric = false );
         
         /**
          * Find all nodes within a radius. 

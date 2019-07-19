@@ -393,7 +393,8 @@ int graph_nearest_neighbors_t::find_k_close( tree_node_t* state, proximity_node_
     }
 }
 
-int graph_nearest_neighbors_t::find_delta_close_and_closest( tree_node_t* state, proximity_node_t** close_nodes, double* distances, double delta )
+int graph_nearest_neighbors_t::find_delta_close_and_closest( 
+	tree_node_t* state, proximity_node_t** close_nodes, double* distances, double delta, bool only_geometric)
 {
     if( nr_nodes == 0 )
         return 0;
