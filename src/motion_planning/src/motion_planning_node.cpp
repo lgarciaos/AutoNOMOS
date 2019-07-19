@@ -79,6 +79,7 @@ namespace params
   double pos_y_bound;
   double neg_y_bound;
   double delta_t;
+  double risk_aversion;
 }
 
 ///////////////
@@ -149,14 +150,16 @@ void run_planner();
 void replan_setup();
 void get_next_state();
 void eval_dynamic_obstacles();
+void get_solution();
+
 
 void eval_dynamic_obstacles()
 {
-   std::vector<std::tuple<double*, double, double*, double> > controls;
+   // std::vector<std::tuple<double*, double, double*, double> > controls;
 
-  planner -> set_dynamic_obstacles();
+  // planner -> set_dynamic_obstacles();
   planner -> update_tree_risks();
-  planner -> get_solution(controls);
+  // planner -> get_solution(controls);
 }
 
 void run_planner()
@@ -372,6 +375,7 @@ void init_planner()
     planner -> set_goal_state(params::goal_state, params::goal_radius);
     // system_aux -> set_obstacles(vec_obstacles_poses, vec_obstacles_type, obstacles_radius);
     planner -> setup_planning();
+    planner -> set_risk_aversion(params::risk_aversion);
     checker -> reset();
 
   }
@@ -394,24 +398,24 @@ void rrt_sst_solver()
 			planner->step();
 		}
 		while(!checker -> check());
-		std::vector<std::tuple<double*, double, double*, double> > controls;
-		planner -> get_solution(controls);
-		double solution_cost = 0;
+		// std::vector<std::tuple<double*, double, double*, double> > controls;
+		// planner -> get_solution(controls, params::risk_aversion > 0);
+		// double solution_cost = 0;
 
-		for(unsigned i = 0; i < controls.size(); i++)
-		{
-			solution_cost += std::get<1>(controls[i]);
-		}
-    if (sim_params::publish_car_trajectory)
-    {
-      publish_car_trajectory(controls);
-    }
-    std::cout << GREEN_BOLD << "Planner:\t" << GREEN << params::planner_name <<
-      "\tTime:\t" << GREEN << checker -> time() << GREEN_BOLD <<  "\tIterations:\t" << 
-      GREEN << checker -> iterations() << GREEN_BOLD << "\tNodes:\t" << GREEN << 
-      planner -> number_of_nodes << GREEN_BOLD << "\tSln_Quality:\t" << GREEN << 
-      solution_cost << GREEN_BOLD << "\tcontroller:\t" << GREEN << params::ctrl_to_use << 
-      OUT_RESET << std::endl ;
+		// for(unsigned i = 0; i < controls.size(); i++)
+		// {
+		// 	solution_cost += std::get<1>(controls[i]);
+		// }
+  //   if (sim_params::publish_car_trajectory)
+  //   {
+  //     publish_car_trajectory(controls);
+  //   }
+  //   std::cout << GREEN_BOLD << "Planner:\t" << GREEN << params::planner_name <<
+  //     "\tTime:\t" << GREEN << checker -> time() << GREEN_BOLD <<  "\tIterations:\t" << 
+  //     GREEN << checker -> iterations() << GREEN_BOLD << "\tNodes:\t" << GREEN << 
+  //     planner -> number_of_nodes << GREEN_BOLD << "\tSln_Quality:\t" << GREEN << 
+  //     solution_cost << GREEN_BOLD << "\tcontroller:\t" << GREEN << params::ctrl_to_use << 
+  //     OUT_RESET << std::endl ;
 	}
 	else
 	{
@@ -432,7 +436,7 @@ void rrt_sst_solver()
 			if(stats_print)
 			{
 				std::vector<std::tuple<double*,double, double*, double> > controls;
-				planner -> get_solution(controls);
+				planner -> get_solution(controls, params::risk_aversion > 0);
 				double solution_cost = 0;
 				for(unsigned i=0;i<controls.size();i++)
 				{
@@ -472,6 +476,30 @@ void rrt_sst_solver()
 		}
 	}
 	ROS_DEBUG("Done planning.");
+}
+
+void get_solution()
+{
+  std::vector<std::tuple<double*, double, double*, double> > controls;
+  planner -> get_solution(controls, params::risk_aversion > 0);
+  double solution_cost = 0;
+
+  for(unsigned i = 0; i < controls.size(); i++)
+  {
+    solution_cost += std::get<1>(controls[i]);
+  }
+  if (sim_params::publish_car_trajectory)
+  {
+    publish_car_trajectory(controls);
+  }
+  std::cout << GREEN_BOLD << "Planner:\t" << GREEN << params::planner_name <<
+    "\tTime:\t" << GREEN << checker -> time() << GREEN_BOLD <<  "\tIterations:\t" << 
+    GREEN << checker -> iterations() << GREEN_BOLD << "\tNodes:\t" << GREEN << 
+    planner -> number_of_nodes << GREEN_BOLD << "\tSln_Quality:\t" << GREEN << 
+    solution_cost << GREEN_BOLD << "\tcontroller:\t" << GREEN << params::ctrl_to_use << 
+    OUT_RESET << std::endl ;
+
+
 }
 
 void publish_car_trajectory(std::vector<std::tuple<double*, double, double*, double> >& controls)
@@ -526,8 +554,8 @@ void get_obstacles_poses_callback(const geometry_msgs::PoseArray& msg)
 
 void get_obstacles_types_callback(const std_msgs::Int64MultiArray& msg)
 {
+  // ROS_WARN_STREAM(__PRETTY_FUNCTION__);
   subscriptions_established |= 2; 
-  ROS_WARN_STREAM(__PRETTY_FUNCTION__);
   for (auto e: msg.data )
   {
     vec_obstacles_type.push_back(e);
@@ -674,6 +702,7 @@ void init_variables()
     ROS_FATAL_STREAM("Not a valid planner: " << params::planner_name);
     ros::shutdown();
   }
+
   ROS_WARN_STREAM("MP NODE: " << __FUNCTION__ <<  ": Ended" );
 }
 
@@ -713,6 +742,7 @@ int main(int argc, char **argv)
   nh_priv.param<double>       ("goal_state/theta",  params::goal_state[2], 0);
   nh_priv.param<bool>         ("global_planning",   params::global_planning, true);
   nh_priv.param<string>       ("ctrl_to_use",       params::ctrl_to_use, RANDOM_CTRL);
+  nh_priv.param<double>       ("risk_aversion",     params::risk_aversion, 0);
   nh_priv.param<double>       ("replanning/delta_t",         params::delta_t, 1);
   nh_priv.param<double>       ("bounding/pos_x_bound",       params::pos_x_bound, -0.0);
   nh_priv.param<double>       ("bounding/neg_x_bound",       params::neg_x_bound, -10.0);
@@ -792,22 +822,34 @@ int main(int argc, char **argv)
       if(planner == NULL) // If this is the first iteration, init the planner
       {
         init_planner();
-        run_planner();
+        // run_planner();
       }
       else // if is the 2nd or more iteration, do the replaning steps
       {
-        std::cout << "Input something and press enter to continue..." << '\n';
-        std::cin >> dummy;
+        // std::cout << "Input something and press enter to continue..." << '\n';
+        // std::cin >> dummy;
         replan_setup();
 
 
         // break;
       }
+      run_planner();
       eval_dynamic_obstacles();
-      // run the planner
+
       publish_lines();
-      
+      // std::cout << "Input something and press enter to continue..." << '\n';
+      // std::cin >> dummy;
+      get_solution();
+
+      publish_lines();
+      // std::cout << "Input something and press enter to continue..." << '\n';
+      // std::cin >> dummy;
+      planner -> forward_risk_propagation();
       iterations++;
+
+      // publish_lines();
+      // std::cout << "Input something and press enter to continue..." << '\n';
+      // std::cin >> dummy;
     }
     else
     {
@@ -827,29 +869,3 @@ int main(int argc, char **argv)
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-///////////////////////////////////////////////////////////////////////////////
-//                                  TODO
-///////////////////////////////////////////////////////////////////////////////
-// TODO:  Change theparams::ctrl_to_use from int to string and use an array at autonomos
-//
