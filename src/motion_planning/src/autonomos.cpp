@@ -122,15 +122,15 @@ double autonomos_t::distance(double* point1, double* point2, bool only_geometric
 	double val = fabs(point1[2]-point2[2]), res;
 	if(val > M_PI)
 		val = 2*M_PI-val;
+  only_geometric = true;
   if (only_geometric)
   {
-   res = std::sqrt( pow( point1[1] - point2[1], 2) + pow( point1[0] - point2[0], 2));
-
-  }
+    res = std::sqrt( pow( point1[1] - point2[1], 2) + pow( point1[0] - point2[0], 2));
+  } 
   else
   {
-	 res = std::sqrt( val * val + 
-    (point1[1]-point2[1]) * (point1[1]-point2[1])+(point1[0]-point2[0]) * (point1[0]-point2[0]) );
+	  res = std::sqrt( val * val + 
+      (point1[1]-point2[1]) * (point1[1]-point2[1])+(point1[0]-point2[0]) * (point1[0]-point2[0]) );
   }
   return res;
 }
