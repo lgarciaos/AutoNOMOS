@@ -1,7 +1,7 @@
 <launch>
   <arg name="stopping_type_in" default="time"/>
   <!-- <arg name="stopping_check_in" default="1" /> -->
-  <arg name="stopping_check_in" default="10" />
+  <arg name="stopping_check_in" default="5" />
   <!-- <arg name="stopping_check_in" default="100" /> -->
   <!-- <arg name="stopping_check_in" default="600" /> -->
   <arg name="planner_in" default="RRT" />
@@ -15,8 +15,8 @@
   <arg name="goal_state/x" default="-2"/>
   <arg name="goal_state/y" default="-7.5"/>
   <arg name="goal_state/theta" default="0"/>
-  <arg name="ctrl_to_use_in" default="RANDOM_CTRL"/>
-  <!-- <arg name="ctrl_to_use_in" default="BANG_BANG"/> -->
+  <!-- <arg name="ctrl_to_use_in" default="RANDOM_CTRL"/> -->
+  <arg name="ctrl_to_use_in" default="BANG_BANG"/>
   <!-- <arg name="start_state/x" default="-5"/> -->
   <!-- <arg name="start_state/y" default="-7.5"/> -->
   <!-- <arg name="start_state/theta" default="0"/> -->
@@ -55,8 +55,8 @@
 
   </include>
 
-  <include file = "$(find navigation)/launch/follow_trajectory.launch">
-  </include>
+  <!-- <include file = "$(find navigation)/launch/follow_trajectory.launch">  -->
+  <!-- </include> -->
 
   <include file = "$(find route_planning)/launch/simulation.launch">
   </include>
