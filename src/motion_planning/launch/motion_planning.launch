@@ -34,6 +34,7 @@
     <param name="ctrl_to_use"                type="string" value="$(arg ctrl_to_use)"/>
     <param name="global_planning"            type="bool"   value="$(arg global_planning)"/>
 
+    <param name="risk_aversion"              type="double" value=".8"/>
     <!-- <param name="start_state/x"              type="double" value="$(arg start_state/x)"/> -->
     <!-- <param name="start_state/y"              type="double" value="$(arg start_state/y)"/> -->
     <!-- <param name="start_state/theta"          type="double" value="$(arg start_state/theta)"/> -->
@@ -51,7 +52,7 @@
     <param name="bounding/perception_radius" type="double" value="5"/>     <!-- NOT USE IF global_planning == TRUE  -->
     
     <!-- REPLANNING -->
-    <param name="replanning/delta_t"       type="double" value="1"/>
+    <param name="replanning/delta_t"       type="double" value=".3"/>
 
   </node>
 
