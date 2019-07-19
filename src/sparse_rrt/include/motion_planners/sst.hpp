@@ -88,7 +88,7 @@ public:
 	/**
 	 * @copydoc planner_t::get_solution(std::vector<std::pair<double*,double> >&)
 	 */
-	virtual void get_solution(std::vector<std::tuple<double*,double, double*, double> >& controls);
+	virtual void get_solution(std::vector<std::tuple<double*,double, double*, double> >& controls, bool asses_risk = false);
 
 	/**
 	 * @copydoc planner_t::step()
@@ -104,7 +104,7 @@ public:
 	 * @brief Set the dynamic obstacles for this iteration
 	 * @details Set the dynamic obstacles for this iteration
 	 */
-	virtual void set_dynamic_obstacles();
+	virtual void forward_risk_propagation();
 	
 	/**
 	 * @brief Update node risks
@@ -244,7 +244,7 @@ protected:
 	void branch_and_bound(sst_node_t* node);
 
 	void propagate_risk_backwards(tree_node_t* node, int parent_num);
-	void propagate_risk_forward(tree_node_t* node);
+	void propagate_risk_forward(tree_node_t* node, int node_num);
 	/**
 	 * The nearest neighbor structure for witness samples.
 	 */

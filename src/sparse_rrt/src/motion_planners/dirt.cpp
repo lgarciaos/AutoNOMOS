@@ -358,7 +358,7 @@ bool dirt_t::is_best_goal(tree_node_t* v)
 
 }
 
-void dirt_t::set_dynamic_obstacles()
+void dirt_t::forward_risk_propagation()
 {
 	ROS_ERROR("NOT IMPLEMENTED YET: %s", __PRETTY_FUNCTION__);
 }
@@ -373,7 +373,7 @@ void dirt_t::propagate_risk_backwards(tree_node_t* node, int parent_num)
 	ROS_ERROR("NOT IMPLEMENTED YET: %s", __PRETTY_FUNCTION__);
 }
 
-void dirt_t::propagate_risk_forward(tree_node_t* node)
+void dirt_t::propagate_risk_forward(tree_node_t* node, int node_num)
 {
 	ROS_ERROR("NOT IMPLEMENTED YET: %s", __PRETTY_FUNCTION__);
 }

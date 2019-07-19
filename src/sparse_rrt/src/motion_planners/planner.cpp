@@ -188,19 +188,34 @@ double planner_t::propagating_function(double parent_risk, double current_risk, 
 	{
 		parent = 1 - exp(-gamma * parent_risk);
 	}
-
-	if (parent_risk > 1.0 || ( current + parent ) / gamma > 1.0)
-	{
-		ROS_ERROR("parent_risk: %f\tcurrent_risk: %f\tcurrent: %f", parent_risk, current_risk, current);
-		ROS_ERROR("\tparent: %f\tsum: %f\tgamma: %.0f\tres: %f", parent, current + parent, gamma, ( current + parent ) / gamma);
-	}
-	if (parent_risk == 1.0 || ( current + parent ) / gamma == 1.0)
-	{
-		ROS_WARN("parent_risk: %f\tcurrent_risk: %f\tcurrent: %f", parent_risk, current_risk, current);
-		ROS_WARN("\tparent: %f\tsum: %f\tgamma: %.0f\tres: %f", parent, current + parent, gamma, ( current + parent ) / gamma);
-	}
+	current = current > 1 ? 1 : current;
+	parent = parent > 1 ? 1 : parent;
+	// if (parent_risk > 1.0 || ( current + parent ) / gamma > 1.0)
+	// {
+	// 	ROS_ERROR("parent_risk: %f\tcurrent_risk: %f\tcurrent: %f", parent_risk, current_risk, current);
+	// 	ROS_ERROR("\tparent: %f\tsum: %f\tgamma: %.0f\tres: %f", parent, current + parent, gamma, ( current + parent ) / gamma);
+	// }
+	// if (parent_risk == 1.0 || ( current + parent ) / gamma == 1.0)
+	// {
+	// 	ROS_WARN("parent_risk: %f\tcurrent_risk: %f\tcurrent: %f", parent_risk, current_risk, current);
+	// 	ROS_WARN("\tparent: %f\tsum: %f\tgamma: %.0f\tres: %f", parent, current + parent, gamma, ( current + parent ) / gamma);
+	// }
 	return ( current + parent ) / gamma ;
 	// return (current_risk * ( 1 - exp(-gamma)));
 	// return (pow(parent_risk, gamma) + pow(current_risk, gamma) ) / 2;
 	// return ( parent_risk + current_risk ) / 2;
+}
+
+void planner_t::set_risk_aversion(double risk_aversion)
+{
+	// assert( ( "Risk aversion should be greater than 0!", risk_aversion > 0 ) );
+	this -> risk_aversion = risk_aversion;
+	if ( risk_aversion > 0 )
+	{
+		inv_risk_aversion = 1 / risk_aversion;
+	}
+	else 
+	{
+		inv_risk_aversion = 9999999999;
+	}
 }

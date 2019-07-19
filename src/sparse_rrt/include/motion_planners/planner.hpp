@@ -15,6 +15,7 @@
 #define SPARSE_PLANNER_HPP
 
 #include <vector>
+#include <assert.h>
 
 #include "utilities/parameter_reader.hpp"
 #include "systems/system.hpp"
@@ -26,7 +27,8 @@
 #include <ros/assert.h>
 
 
-#define SMALL_EPSILON 0.0001
+#define SMALL_EPSILON 0.01
+#define PROP_NUM 100
 
 /**
  * @brief The base class for motion planners.
@@ -75,7 +77,7 @@ public:
 	 * 
 	 * @param controls The list of controls, durations and point-state which comprise the solution.
 	 */
-	virtual void get_solution(std::vector<std::tuple<double*, double, double*, double> >& controls) = 0;
+	virtual void get_solution(std::vector<std::tuple<double*, double, double*, double> >& controls, bool asses_risk = false ) = 0;
 
 	/**
 	 * @brief Perform an iteration of a motion planning algorithm.
@@ -142,6 +144,14 @@ public:
 	void get_last_solution_path(std::vector<tree_node_t*> & last_sln);
 
 	/**
+	 * @brief Set the risk aversion
+	 * @details Set the risk aversion parameter
+	 * 
+	 * @param risk_aversion Risk aversion value in (0, 1]
+	 */
+	void set_risk_aversion(double risk_aversion);
+
+	/**
 	 * @brief Update the tree for replanning
 	 * @details Remove old/not valid branches of the tree to be used in the next replanning cycle
 	 * 
@@ -153,7 +163,7 @@ public:
 	 * @brief Set the dynamic obstacles for this iteration
 	 * @details Set the dynamic obstacles for this iteration
 	 */
-	virtual void set_dynamic_obstacles() = 0;
+	virtual void forward_risk_propagation() = 0;
 	
 	/**
 	 * @brief Update node risks
@@ -211,7 +221,7 @@ protected:
 
 	virtual void propagate_risk_backwards(tree_node_t* node, int parent_num) = 0;
 	
-	virtual void propagate_risk_forward(tree_node_t* node) = 0;
+	virtual void propagate_risk_forward(tree_node_t* node, int node_num) = 0;
 	
 	double propagating_function(double parent_risk, double current_risk, double gamma);
 
@@ -260,6 +270,16 @@ protected:
 	 * @brief The maximum cost found in the tree.
 	 */
 	double max_cost;
+
+	/**
+	 * @brief The user-defined risk aversion
+	 */
+	double risk_aversion;
+
+	/**
+	 * @brief The inverse of risk_aversion
+	 */
+	double inv_risk_aversion;
 
 
 };

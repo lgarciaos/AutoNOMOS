@@ -50,7 +50,7 @@ public:
 	/**
 	 * @copydoc planner_t::get_solution(std::vector<std::tuple<double*,double, double*> >&)
 	 */
-	virtual void get_solution(std::vector<std::tuple<double*,double, double*, double> >& controls);
+	virtual void get_solution(std::vector<std::tuple<double*,double, double*, double> >& controls, bool asses_risk = false);
 
 	/**
 	 * @copydoc planner_t::step()
@@ -63,9 +63,9 @@ public:
 	virtual void replanning_update_tree(double delta_t, double* &new_state_point);
 
 	/**
-	 * @copydoc planer_t::set_dynamic_obstacles()
+	 * @copydoc planer_t::forward_risk_propagation()
 	 */
-	virtual void set_dynamic_obstacles();
+	virtual void forward_risk_propagation();
 	
 	/**
 	 * @copydoc planer_t::update_tree_risks()
@@ -145,8 +145,19 @@ protected:
 
 	void propagate_risk_backwards(tree_node_t* node, int parent_num);
 
-	void propagate_risk_forward(tree_node_t* node);
-
+	void propagate_risk_forward(tree_node_t* node, int node_num);
+	
+private:
+	/**
+	 * @brief aux recursive function to get the total cost with risk
+	 * @details Auxiliary function to use recursivly to compute the cost when using risk nodes
+	 * 
+	 * @param node The current node from which the risk and cost are going to be evaluated
+	 * @param node_num The number of the current node backwards (the root would be the ith node)
+	 * 
+	 * @return If the trajectory is feasable given the risk parameters
+	 */
+	bool get_solution_1(tree_node_t* node, int node_num, double& cost);
 
 
 };
