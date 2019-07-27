@@ -179,31 +179,18 @@ double planner_t::propagating_function(double parent_risk, double current_risk, 
 	// double res;
 	double current, parent;
 	current = 1 - exp(-gamma * current_risk);
-	if (parent_risk >= 1.0)
-	{
-		parent = 0; // 1 - exp(-gamma * 0) should equal 0
-		// ROS_WARN("parent_risk: %f\tcurrent_risk: %f\tcurrent: %f", parent_risk, current_risk, current);
-	}
-	else 
-	{
+	// if (parent_risk >= 1.0)
+	// {
+	// 	parent = 1 - exp(-gamma * pare);// should equal 0
+	// 	// ROS_WARN("parent_risk: %f\tcurrent_risk: %f\tcurrent: %f", parent_risk, current_risk, current);
+	// }
+	// else 
+	// {
 		parent = 1 - exp(-gamma * parent_risk);
-	}
-	current = current > 1 ? 1 : current;
-	parent = parent > 1 ? 1 : parent;
-	// if (parent_risk > 1.0 || ( current + parent ) / gamma > 1.0)
-	// {
-	// 	ROS_ERROR("parent_risk: %f\tcurrent_risk: %f\tcurrent: %f", parent_risk, current_risk, current);
-	// 	ROS_ERROR("\tparent: %f\tsum: %f\tgamma: %.0f\tres: %f", parent, current + parent, gamma, ( current + parent ) / gamma);
 	// }
-	// if (parent_risk == 1.0 || ( current + parent ) / gamma == 1.0)
-	// {
-	// 	ROS_WARN("parent_risk: %f\tcurrent_risk: %f\tcurrent: %f", parent_risk, current_risk, current);
-	// 	ROS_WARN("\tparent: %f\tsum: %f\tgamma: %.0f\tres: %f", parent, current + parent, gamma, ( current + parent ) / gamma);
-	// }
+	// current = current > 1 ? 1 : current;
+	// parent = parent > 1 ? 1 : parent;
 	return ( current + parent ) / gamma ;
-	// return (current_risk * ( 1 - exp(-gamma)));
-	// return (pow(parent_risk, gamma) + pow(current_risk, gamma) ) / 2;
-	// return ( parent_risk + current_risk ) / 2;
 }
 
 void planner_t::set_risk_aversion(double risk_aversion)

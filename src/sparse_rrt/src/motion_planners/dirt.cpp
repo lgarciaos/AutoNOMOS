@@ -373,7 +373,8 @@ void dirt_t::propagate_risk_backwards(tree_node_t* node, int parent_num)
 	ROS_ERROR("NOT IMPLEMENTED YET: %s", __PRETTY_FUNCTION__);
 }
 
-void dirt_t::propagate_risk_forward(tree_node_t* node, int node_num)
+bool dirt_t::propagate_risk_forward(tree_node_t* node, int node_num)
 {
 	ROS_ERROR("NOT IMPLEMENTED YET: %s", __PRETTY_FUNCTION__);
+	return false;
 }

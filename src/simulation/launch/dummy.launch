@@ -21,6 +21,7 @@
   <!-- <arg name="start_state/y" default="-7.5"/> -->
   <!-- <arg name="start_state/theta" default="0"/> -->
   <arg name="model_name_in" default="AutoNOMOS_mini_ideal"/>
+  <arg name="motion_planning_seed" default="123456"/>
 
   <!-- <env name="ROSCONSOLE_CONFIG_FILE" value="$(find motion_planning)/config/custom_rosconsole.conf"/> -->
 
@@ -49,6 +50,7 @@
     <arg name="goal_state/theta" default = "$(arg goal_state/theta)"/>
     <arg name="ctrl_to_use" default="$(arg ctrl_to_use_in)"/>
     <arg name="global_planning" default="false"/>
+    <arg name="mp_random_seed" default="$(arg motion_planning_seed)"/>
     <!-- <arg name="start_state/x" default="$(arg start_state/x)"/> -->
     <!-- <arg name="start_state/y" default="$(arg start_state/y)"/> -->
     <!-- <arg name="start_state/theta" default="$(arg start_state/theta)"/> -->

@@ -3,11 +3,9 @@
 // std
 #include <chrono>
 
-#include "a_star.h"
-#include "autonomos.hpp"
-#include "motion_planners/rrt.hpp"
-#include "motion_planners/sst.hpp"
-#include "motion_planners/dirt.hpp"
+//boost
+#include <boost/timer/timer.hpp>
+#include <boost/chrono.hpp>
   
 // ros
 #include <ros/console.h>
@@ -22,9 +20,14 @@
 #include "utilities/condition_check.hpp"
 
 // own
-#include "motion_planning/car_trajectory.h"
-#include "motion_planning/Line_Segment.h"
+#include "a_star.h"
+#include "autonomos.hpp"
+#include "motion_planners/rrt.hpp"
+#include "motion_planners/sst.hpp"
+#include "motion_planners/dirt.hpp"
 #include "route_planning/route_state.h"
+#include "motion_planning/Line_Segment.h"
+#include "motion_planning/car_trajectory.h"
 // #include "sim_params.h"
 
 #define RRT "RRT"
@@ -131,6 +134,11 @@ a_star_t* a_star_ptr;
 
 planner_t* planner;
 
+
+boost::chrono::nanoseconds sumGlobal;
+boost::chrono::high_resolution_clock::time_point t1 ;
+boost::chrono::high_resolution_clock::time_point t2 ;
+std::stringstream ss_timers;
 
 ///////////////
 // FUNCTIONS //
@@ -481,7 +489,13 @@ void rrt_sst_solver()
 void get_solution()
 {
   std::vector<std::tuple<double*, double, double*, double> > controls;
+  
+  t1 = boost::chrono::high_resolution_clock::now();
   planner -> get_solution(controls, params::risk_aversion > 0);
+  t2 = boost::chrono::high_resolution_clock::now();
+  sumGlobal = (boost::chrono::duration_cast<boost::chrono::nanoseconds>(t2-t1)); 
+  ss_timers << sumGlobal.count() << "\t";
+
   double solution_cost = 0;
 
   for(unsigned i = 0; i < controls.size(); i++)
@@ -813,12 +827,15 @@ int main(int argc, char **argv)
 
   ROS_WARN_STREAM("MP NODE: " <<  __FUNCTION__ <<  ": Going into while(ros::ok())");
   // ros::service::call("/gazebo/reset_simulation", empty);
+
   while(ros::ok())
   {
     ros::spinOnce();
     if (subscriptions_established == 31)
     {
-      ROS_WARN_STREAM("Iteration: " << iterations);
+
+      // ROS_WARN_STREAM("Iteration: " << iterations);
+      // t1 = boost::chrono::high_resolution_clock::now();
       if(planner == NULL) // If this is the first iteration, init the planner
       {
         init_planner();
@@ -834,22 +851,46 @@ int main(int argc, char **argv)
         // break;
       }
       run_planner();
+      // t2 = boost::chrono::high_resolution_clock::now();
+      // sumGlobal = (boost::chrono::duration_cast<boost::chrono::nanoseconds>(t2-t1)); 
+      // ss_timers << sumGlobal.count() << "\t";
+
+      // t1 = boost::chrono::high_resolution_clock::now();
       eval_dynamic_obstacles();
-
-      publish_lines();
-      // std::cout << "Input something and press enter to continue..." << '\n';
-      // std::cin >> dummy;
+      // t2 = boost::chrono::high_resolution_clock::now();
+      // sumGlobal = (boost::chrono::duration_cast<boost::chrono::nanoseconds>(t2-t1)); 
+      // ss_timers << sumGlobal.count() << "\t";
+      
+      // publish_lines();
+      std::cout << "Input something and press enter to continue..." << '\n';
+      std::cin >> dummy;
       get_solution();
-
       publish_lines();
+
       // std::cout << "Input something and press enter to continue..." << '\n';
       // std::cin >> dummy;
+      // t1 = boost::chrono::high_resolution_clock::now();
       planner -> forward_risk_propagation();
-      iterations++;
+      // t2 = boost::chrono::high_resolution_clock::now();
+      // sumGlobal = (boost::chrono::duration_cast<boost::chrono::nanoseconds>(t2-t1)); 
+      // ss_timers << sumGlobal.count() << "\t";
 
       // publish_lines();
-      // std::cout << "Input something and press enter to continue..." << '\n';
-      // std::cin >> dummy;
+
+      // while (true)
+      // {
+      //   std::cout << "Input something and press enter to continue..." << '\n';
+      //   std::cin >> dummy;
+      //   planner -> forward_risk_propagation();
+      //   publish_lines();
+      // }
+
+      // ROS_WARN_STREAM("Iterations\tplanner_time\tbackward_time\teval_time\tforward_time");
+      // ROS_WARN_STREAM(iterations << "\t" << ss_timers.str());
+
+      // ss_timers.str("");
+      // ss_timers.clear();
+      iterations++;
     }
     else
     {

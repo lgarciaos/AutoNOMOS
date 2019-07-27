@@ -244,7 +244,7 @@ protected:
 	void branch_and_bound(sst_node_t* node);
 
 	void propagate_risk_backwards(tree_node_t* node, int parent_num);
-	void propagate_risk_forward(tree_node_t* node, int node_num);
+	bool propagate_risk_forward(tree_node_t* node, int node_num);
 	/**
 	 * The nearest neighbor structure for witness samples.
 	 */

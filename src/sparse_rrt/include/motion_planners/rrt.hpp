@@ -145,8 +145,8 @@ protected:
 
 	void propagate_risk_backwards(tree_node_t* node, int parent_num);
 
-	void propagate_risk_forward(tree_node_t* node, int node_num);
-	
+	bool propagate_risk_forward(tree_node_t* node, int node_num);
+
 private:
 	/**
 	 * @brief aux recursive function to get the total cost with risk

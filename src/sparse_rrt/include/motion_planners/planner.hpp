@@ -221,7 +221,7 @@ protected:
 
 	virtual void propagate_risk_backwards(tree_node_t* node, int parent_num) = 0;
 	
-	virtual void propagate_risk_forward(tree_node_t* node, int node_num) = 0;
+	virtual bool propagate_risk_forward(tree_node_t* node, int node_num) = 0;
 	
 	double propagating_function(double parent_risk, double current_risk, double gamma);
 

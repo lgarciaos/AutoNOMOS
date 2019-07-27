@@ -338,6 +338,7 @@ void autonomos_t::set_obstacles(motion_planning::obstacles_array::Response msg)
 // std::set<obstacle_t> autonomos_t::get_dynamic_obstacles()
 bool autonomos_t::get_next_dynamic_state(double* state, int i)
 {
+  
   if ( i >= 0 && i < dynamic_obstacles.size() )
   {
     auto it_aux = dynamic_obstacles.begin();//
