@@ -545,7 +545,7 @@ void publish_car_trajectory(std::vector<std::tuple<double*, double, double*, dou
     // ROS_WARN("acum_duration: %.3f\tdelta_t: %.3f", acum_duration, params::delta_t);
     i++;
   }
-  delta_t_real = acum_duration;
+  delta_t_real = acum_duration > 0 ? acum_duration : params::delta_t;
   car_trajectory_msg.path_len = i;
   car_trajectory_msg.header.seq = iterations;
   car_trajectory_msg.header.stamp = ros::Time::now();;
@@ -835,7 +835,7 @@ int main(int argc, char **argv)
     {
 
       // ROS_WARN_STREAM("Iteration: " << iterations);
-      // t1 = boost::chrono::high_resolution_clock::now();
+      t1 = boost::chrono::high_resolution_clock::now();
       if(planner == NULL) // If this is the first iteration, init the planner
       {
         init_planner();
@@ -851,29 +851,29 @@ int main(int argc, char **argv)
         // break;
       }
       run_planner();
-      // t2 = boost::chrono::high_resolution_clock::now();
-      // sumGlobal = (boost::chrono::duration_cast<boost::chrono::nanoseconds>(t2-t1)); 
-      // ss_timers << sumGlobal.count() << "\t";
+      t2 = boost::chrono::high_resolution_clock::now();
+      sumGlobal = (boost::chrono::duration_cast<boost::chrono::nanoseconds>(t2-t1)); 
+      ss_timers << sumGlobal.count() << "\t";
 
-      // t1 = boost::chrono::high_resolution_clock::now();
+      t1 = boost::chrono::high_resolution_clock::now();
       eval_dynamic_obstacles();
-      // t2 = boost::chrono::high_resolution_clock::now();
-      // sumGlobal = (boost::chrono::duration_cast<boost::chrono::nanoseconds>(t2-t1)); 
-      // ss_timers << sumGlobal.count() << "\t";
+      t2 = boost::chrono::high_resolution_clock::now();
+      sumGlobal = (boost::chrono::duration_cast<boost::chrono::nanoseconds>(t2-t1)); 
+      ss_timers << sumGlobal.count() << "\t";
       
       // publish_lines();
-      std::cout << "Input something and press enter to continue..." << '\n';
-      std::cin >> dummy;
+      // std::cout << "Input something and press enter to continue..." << '\n';
+      // std::cin >> dummy;
       get_solution();
       publish_lines();
 
       // std::cout << "Input something and press enter to continue..." << '\n';
       // std::cin >> dummy;
-      // t1 = boost::chrono::high_resolution_clock::now();
+      t1 = boost::chrono::high_resolution_clock::now();
       planner -> forward_risk_propagation();
-      // t2 = boost::chrono::high_resolution_clock::now();
-      // sumGlobal = (boost::chrono::duration_cast<boost::chrono::nanoseconds>(t2-t1)); 
-      // ss_timers << sumGlobal.count() << "\t";
+      t2 = boost::chrono::high_resolution_clock::now();
+      sumGlobal = (boost::chrono::duration_cast<boost::chrono::nanoseconds>(t2-t1)); 
+      ss_timers << sumGlobal.count() << "\t";
 
       // publish_lines();
 
@@ -885,11 +885,11 @@ int main(int argc, char **argv)
       //   publish_lines();
       // }
 
-      // ROS_WARN_STREAM("Iterations\tplanner_time\tbackward_time\teval_time\tforward_time");
-      // ROS_WARN_STREAM(iterations << "\t" << ss_timers.str());
+      ROS_WARN_STREAM("Iterations\tplanner_time\tbackward_time\teval_time\tforward_time");
+      ROS_WARN_STREAM(iterations << "\t" << ss_timers.str());
 
-      // ss_timers.str("");
-      // ss_timers.clear();
+      ss_timers.str("");
+      ss_timers.clear();
       iterations++;
     }
     else
