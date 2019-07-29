@@ -1,11 +1,11 @@
 <launch>
   <arg name="stopping_type_in" default="time"/>
   <!-- <arg name="stopping_check_in" default="1" /> -->
-  <arg name="stopping_check_in" default="5" />
+  <arg name="stopping_check_in" default="25" />
   <!-- <arg name="stopping_check_in" default="100" /> -->
   <!-- <arg name="stopping_check_in" default="600" /> -->
-  <arg name="planner_in" default="RRT" />
-  <!-- <arg name="planner_in" default="SST" /> -->
+  <!-- <arg name="planner_in" default="RRT" /> -->
+  <arg name="planner_in" default="SST" />
   <!-- <arg name="planner_in" default="DIRT" /> -->
   <arg name="kill_on_exit_in" default="true"/>
   <arg name="simulation_iterations_in" default="1"/>
