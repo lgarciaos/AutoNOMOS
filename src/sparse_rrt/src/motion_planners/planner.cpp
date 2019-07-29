@@ -206,3 +206,61 @@ void planner_t::set_risk_aversion(double risk_aversion)
 		inv_risk_aversion = 9999999999;
 	}
 }
+
+
+bool planner_t::propagate_risk_forward(tree_node_t* node, int node_num)
+{
+
+	bool all_zero = node -> risk <= SMALL_EPSILON;
+
+	for (auto child : node -> children)
+	{
+		if ( child -> risk > SMALL_EPSILON)
+		{
+			all_zero = false;
+			propagate_risk_forward(child, ++node_num);
+		}
+		else if (child -> risk > 0.0)
+		{
+			all_zero &= propagate_risk_forward(child, ++node_num);
+		}
+
+	}
+
+	// ROS_WARN("Risk: %.3f\tAll zero: %s\ti: %d", node -> risk, all_zero ? "TRUE" : "FALSE", node_num );
+	if ( all_zero)
+	{
+		node -> risk = 0;
+	}
+	else
+	{
+		// ROS_WARN("Old risk: %.3f", node -> risk);
+		node -> risk = log(1 + node -> risk) / node_num;
+		// ROS_WARN("\tNew risk: %.3f", node -> risk);
+	}
+	return all_zero;
+
+}
+
+void planner_t::propagate_risk_backwards(tree_node_t* node, int parent_num)
+{
+	// if (node -> parent == NULL)
+	// {
+	// 	node -> risk = 0;
+	// }
+	// else if (node -> risk > SMALL_EPSILON )
+	// {
+	if ( node -> parent != NULL && node -> parent -> risk < risk_aversion )
+	{
+		node -> parent -> risk = propagating_function(node -> parent -> risk, node -> risk, (double)parent_num);
+		// ROS_WARN("Duration: %.3f", node -> parent_edge -> duration);
+		// ROS_WARN("node risk: %s\t parent risk: %.2f\tparent num: %d",
+		// 	boost::lexical_cast<std::string>(node -> risk).c_str(), node -> parent -> risk, parent_num);
+		propagate_risk_backwards( node -> parent, ++parent_num);
+	}
+}
+
+void planner_t::forward_risk_propagation()
+{
+	propagate_risk_forward(root, 1);
+}

@@ -163,7 +163,7 @@ public:
 	 * @brief Set the dynamic obstacles for this iteration
 	 * @details Set the dynamic obstacles for this iteration
 	 */
-	virtual void forward_risk_propagation() = 0;
+	void forward_risk_propagation();
 	
 	/**
 	 * @brief Update node risks
@@ -219,9 +219,9 @@ protected:
 	 */
 	virtual void visualize_node(tree_node_t* node, svg::Document& doc, svg::Dimensions& dim);
 
-	virtual void propagate_risk_backwards(tree_node_t* node, int parent_num) = 0;
+	void propagate_risk_backwards(tree_node_t* node, int parent_num);
 	
-	virtual bool propagate_risk_forward(tree_node_t* node, int node_num) = 0;
+	bool propagate_risk_forward(tree_node_t* node, int node_num);
 	
 	double propagating_function(double parent_risk, double current_risk, double gamma);
 
