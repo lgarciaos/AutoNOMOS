@@ -97,7 +97,7 @@ public:
 	 * @brief Set the dynamic obstacles for this iteration
 	 * @details Set the dynamic obstacles for this iteration
 	 */
-	virtual void forward_risk_propagation();
+	// virtual void forward_risk_propagation();
 	
 	/**
 	 * @brief Update node risks
@@ -214,8 +214,8 @@ protected:
 
 	void branch_and_bound(dirt_node_t* node);
 
-	void propagate_risk_backwards(tree_node_t* node, int parent_num);
-	bool propagate_risk_forward(tree_node_t* node, int node_num);
+	// void propagate_risk_backwards(tree_node_t* node, int parent_num);
+	// bool propagate_risk_forward(tree_node_t* node, int node_num);
 
 
 };

@@ -358,23 +358,38 @@ bool dirt_t::is_best_goal(tree_node_t* v)
 
 }
 
-void dirt_t::forward_risk_propagation()
-{
-	ROS_ERROR("NOT IMPLEMENTED YET: %s", __PRETTY_FUNCTION__);
-}
+// void dirt_t::forward_risk_propagation()
+// {
+// 	ROS_ERROR("NOT IMPLEMENTED YET: %s", __PRETTY_FUNCTION__);
+// }
 
 void dirt_t::update_tree_risks()
 {
-	ROS_ERROR("NOT IMPLEMENTED YET: %s", __PRETTY_FUNCTION__);
+	int i_dyn_obs = 0;
+	while (system -> get_next_dynamic_state( sample_state , i_dyn_obs))
+	{
+		system->copy_state_point(metric_query->point, sample_state);
+		int val = metric -> find_delta_close_and_closest( metric_query, close_nodes, distances, goal_radius, true );
+	
+		for (int i = 0; i < val; ++i)
+		{
+			tree_node_t* v = (tree_node_t*)(close_nodes[i]->get_state());
+	        v -> risk = 1;
+	        propagate_risk_backwards(v, 2);
+		}
+
+		i_dyn_obs++;
+	}
+
 }
 
-void dirt_t::propagate_risk_backwards(tree_node_t* node, int parent_num)
-{
-	ROS_ERROR("NOT IMPLEMENTED YET: %s", __PRETTY_FUNCTION__);
-}
+// void dirt_t::propagate_risk_backwards(tree_node_t* node, int parent_num)
+// {
+// 	ROS_ERROR("NOT IMPLEMENTED YET: %s", __PRETTY_FUNCTION__);
+// }
 
-bool dirt_t::propagate_risk_forward(tree_node_t* node, int node_num)
-{
-	ROS_ERROR("NOT IMPLEMENTED YET: %s", __PRETTY_FUNCTION__);
-	return false;
-}
+// bool dirt_t::propagate_risk_forward(tree_node_t* node, int node_num)
+// {
+// 	ROS_ERROR("NOT IMPLEMENTED YET: %s", __PRETTY_FUNCTION__);
+// 	return false;
+// }
