@@ -159,7 +159,7 @@ public:
 	 * 
 	 * @return The distance between point1 and point2.
 	 */
-	virtual double distance(double* point1, double* point2, bool only_geometric = false) = 0;
+	virtual double distance(double* point1, double* point2 ) = 0;
 
 	/**
 	 * @brief Performs a local propagation using simple numerical integration.

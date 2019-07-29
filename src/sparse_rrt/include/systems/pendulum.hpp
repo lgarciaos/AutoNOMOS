@@ -29,7 +29,7 @@ public:
 	/**
 	 * @copydoc system_t::distance(double*, double*)
 	 */
-	virtual double distance(double* point1, double* point2, bool only_geometric = false);
+	virtual double distance(double* point1, double* point2);
 
 	/**
 	 * @copydoc system_t::random_state(double*)

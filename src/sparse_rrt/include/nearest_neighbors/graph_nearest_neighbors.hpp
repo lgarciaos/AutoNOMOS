@@ -43,7 +43,7 @@ class proximity_node_t
          * @param st The node to determine distance with.
          * @return The distance value.
          */
-        double distance ( const tree_node_t* st, bool only_geometric = false ); 
+        double distance ( const tree_node_t* st); 
         
         /**
          * Determines distance with another node.
@@ -51,7 +51,7 @@ class proximity_node_t
          * @param other The node to determine distance with.
          * @return The distance value.
          */
-        double distance ( const proximity_node_t* other, bool only_geometric = false );
+        double distance ( const proximity_node_t* other);
 
         /**
          * Gets the internal node that is represented.
@@ -215,7 +215,7 @@ class graph_nearest_neighbors_t
          * @param delta The radius to search within.
          * @return The number of nodes returned.
          */
-        int find_delta_close_and_closest( tree_node_t* state, proximity_node_t** close_nodes, double* distances, double delta, bool only_geometric = false );
+        int find_delta_close_and_closest( tree_node_t* state, proximity_node_t** close_nodes, double* distances, double delta);
         
         /**
          * Find all nodes within a radius. 
@@ -226,7 +226,7 @@ class graph_nearest_neighbors_t
          * @param delta The radius to search within.
          * @return The number of nodes returned.
          */
-        int find_delta_close( tree_node_t* state, proximity_node_t** close_nodes, double* distances, double delta, bool only_geometric = false);
+        int find_delta_close( tree_node_t* state, proximity_node_t** close_nodes, double* distances, double delta );
 
 
         void set_system(system_t* new_system)

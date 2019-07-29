@@ -40,7 +40,7 @@
 #define MIN_W -2
 #define MAX_W 2
 
-double cart_pole_t::distance(double* point1,double* point2, bool only_geometric)
+double cart_pole_t::distance(double* point1,double* point2)
 {
         double val = fabs(point1[STATE_THETA]-point2[STATE_THETA]);
         if(val > M_PI)

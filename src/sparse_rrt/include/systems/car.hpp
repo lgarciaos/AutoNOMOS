@@ -26,7 +26,7 @@ public:
 	}
 	virtual ~car_t(){}
 
-	virtual double distance(double* point1, double* point2, bool only_geometric = false);
+	virtual double distance(double* point1, double* point2);
 
 	virtual void random_state(double* state);
 

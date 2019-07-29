@@ -54,7 +54,7 @@
 #define MIN_Y -35
 #define MAX_Y 25
 
-double rally_car_t::distance(double* point1,double* point2, bool only_geometric)
+double rally_car_t::distance(double* point1,double* point2)
 {
         double val = fabs(point1[4]-point2[4]);
         if(val > M_PI)

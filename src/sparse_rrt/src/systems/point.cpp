@@ -50,7 +50,7 @@ std::vector<std::tuple<double*,double,double*>> point_t::maneuver_generation(dou
 	return ret;
 }
 
-double point_t::distance(double* point1,double* point2, bool only_geometric)
+double point_t::distance(double* point1,double* point2)
 {
 	return std::sqrt( (point1[0]-point2[0]) * (point1[0]-point2[0]) + (point1[1]-point2[1]) * (point1[1]-point2[1]) );
 }

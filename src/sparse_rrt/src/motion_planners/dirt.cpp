@@ -369,7 +369,7 @@ void dirt_t::update_tree_risks()
 	while (system -> get_next_dynamic_state( sample_state , i_dyn_obs))
 	{
 		system->copy_state_point(metric_query->point, sample_state);
-		int val = metric -> find_delta_close_and_closest( metric_query, close_nodes, distances, goal_radius, true );
+		int val = metric -> find_delta_close_and_closest( metric_query, close_nodes, distances, goal_radius );
 	
 		for (int i = 0; i < val; ++i)
 		{

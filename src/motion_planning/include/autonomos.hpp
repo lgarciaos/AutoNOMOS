@@ -30,7 +30,7 @@ public:
 
 	virtual ~autonomos_t();
 
-	double distance(double* point1, double* point2, bool only_geometric = false);
+	double distance(double* point1, double* point2 );
 
 	void random_state(double* state);
 

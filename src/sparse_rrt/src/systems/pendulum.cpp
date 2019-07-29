@@ -28,7 +28,7 @@
 #define MASS 1
 #define DAMPING .05
 
-double pendulum_t::distance(double* point1,double* point2, bool only_geometric)
+double pendulum_t::distance(double* point1,double* point2)
 {
 	double val = fabs(point1[0]-point2[0]);
 	if(val > M_PI)
