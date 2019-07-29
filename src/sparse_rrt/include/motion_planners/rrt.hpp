@@ -65,7 +65,7 @@ public:
 	/**
 	 * @copydoc planer_t::forward_risk_propagation()
 	 */
-	virtual void forward_risk_propagation();
+	// virtual void forward_risk_propagation();
 	
 	/**
 	 * @copydoc planer_t::update_tree_risks()
@@ -143,9 +143,9 @@ protected:
 	void add_point_to_metric(tree_node_t* node);
 
 
-	void propagate_risk_backwards(tree_node_t* node, int parent_num);
+	// void propagate_risk_backwards(tree_node_t* node, int parent_num);
 
-	bool propagate_risk_forward(tree_node_t* node, int node_num);
+	// bool propagate_risk_forward(tree_node_t* node, int node_num);
 
 private:
 	/**

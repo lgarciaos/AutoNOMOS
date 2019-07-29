@@ -315,37 +315,23 @@ void rrt_t::add_to_tree()
 
 }
 
-void rrt_t::forward_risk_propagation()
-{
-	propagate_risk_forward(root, 1);
-}
+// void rrt_t::forward_risk_propagation()
+// {
+// 	propagate_risk_forward(root, 1);
+// }
 
 void rrt_t::update_tree_risks()
 {
 
-	//system->copy_state_point(sample_state, goal_state);
-	sample_state[0] = -5;
-	sample_state[1] = -5;
-	sample_state[2] = -M_PI / 2;
-
-	// auto dyn_obs = system -> get_dynamic_obstacles();
-
-	// for (auto obs : dyn_obs )
-	// {
-		
-	// }
 	int i_dyn_obs = 0;
 	while (system -> get_next_dynamic_state( sample_state , i_dyn_obs))
 	{
-		// ROS_WARN("Obst num: %d: ( %.2f, %.2f, %.2f )", i_dyn_obs, sample_state[0], sample_state[1], sample_state[2]);
 		system->copy_state_point(metric_query->point, sample_state);
 		int val = metric -> find_delta_close_and_closest( metric_query, close_nodes, distances, goal_radius, true );
 	
 		for (int i = 0; i < val; ++i)
 		{
 			tree_node_t* v = (tree_node_t*)(close_nodes[i]->get_state());
-	        // double temp = v->cost ;
-	        // ROS_WARN("Point: ( %.3f, %.3f, %.3f)\tdist: %.3f", v -> point[0], v -> point[1], v -> point[2], distances[i]);
 	        v -> risk = 1;
 	        propagate_risk_backwards(v, 2);
 		}
@@ -353,57 +339,56 @@ void rrt_t::update_tree_risks()
 		i_dyn_obs++;
 	}
 
-	// propagate_risk_forward(root, 1);
 }
 
-void rrt_t::propagate_risk_backwards(tree_node_t* node, int parent_num)
-{
-	// if (node -> parent == NULL)
-	// {
-	// 	node -> risk = 0;
-	// }
-	// else if (node -> risk > SMALL_EPSILON )
-	// {
-	if ( node -> parent != NULL && node -> parent -> risk < risk_aversion )
-	{
-		node -> parent -> risk = propagating_function(node -> parent -> risk, node -> risk, (double)parent_num);
-		// ROS_WARN("Duration: %.3f", node -> parent_edge -> duration);
-		// ROS_WARN("node risk: %s\t parent risk: %.2f\tparent num: %d",
-		// 	boost::lexical_cast<std::string>(node -> risk).c_str(), node -> parent -> risk, parent_num);
-		propagate_risk_backwards( node -> parent, ++parent_num);
-	}
-}
-bool rrt_t::propagate_risk_forward(tree_node_t* node, int node_num)
-{
+// void rrt_t::propagate_risk_backwards(tree_node_t* node, int parent_num)
+// {
+// 	// if (node -> parent == NULL)
+// 	// {
+// 	// 	node -> risk = 0;
+// 	// }
+// 	// else if (node -> risk > SMALL_EPSILON )
+// 	// {
+// 	if ( node -> parent != NULL && node -> parent -> risk < risk_aversion )
+// 	{
+// 		node -> parent -> risk = propagating_function(node -> parent -> risk, node -> risk, (double)parent_num);
+// 		// ROS_WARN("Duration: %.3f", node -> parent_edge -> duration);
+// 		// ROS_WARN("node risk: %s\t parent risk: %.2f\tparent num: %d",
+// 		// 	boost::lexical_cast<std::string>(node -> risk).c_str(), node -> parent -> risk, parent_num);
+// 		propagate_risk_backwards( node -> parent, ++parent_num);
+// 	}
+// }
+// bool rrt_t::propagate_risk_forward(tree_node_t* node, int node_num)
+// {
 
-	bool all_zero = node -> risk <= SMALL_EPSILON;
+// 	bool all_zero = node -> risk <= SMALL_EPSILON;
 
-	for (auto child : node -> children)
-	{
-		if ( child -> risk > SMALL_EPSILON)
-		{
-			all_zero = false;
-			propagate_risk_forward(child, ++node_num);
-		}
-		else if (child -> risk > 0.0)
-		{
-			all_zero &= propagate_risk_forward(child, ++node_num);
-		}
+// 	for (auto child : node -> children)
+// 	{
+// 		if ( child -> risk > SMALL_EPSILON)
+// 		{
+// 			all_zero = false;
+// 			propagate_risk_forward(child, ++node_num);
+// 		}
+// 		else if (child -> risk > 0.0)
+// 		{
+// 			all_zero &= propagate_risk_forward(child, ++node_num);
+// 		}
 
-	}
+// 	}
 
-	// ROS_WARN("Risk: %.3f\tAll zero: %s\ti: %d", node -> risk, all_zero ? "TRUE" : "FALSE", node_num );
-	if ( all_zero)
-	{
-		node -> risk = 0;
-	}
-	else
-	{
-		// ROS_WARN("Old risk: %.3f", node -> risk);
-		node -> risk = log(1 + node -> risk) / node_num;
-		// ROS_WARN("\tNew risk: %.3f", node -> risk);
-	}
-	return all_zero;
+// 	// ROS_WARN("Risk: %.3f\tAll zero: %s\ti: %d", node -> risk, all_zero ? "TRUE" : "FALSE", node_num );
+// 	if ( all_zero)
+// 	{
+// 		node -> risk = 0;
+// 	}
+// 	else
+// 	{
+// 		// ROS_WARN("Old risk: %.3f", node -> risk);
+// 		node -> risk = log(1 + node -> risk) / node_num;
+// 		// ROS_WARN("\tNew risk: %.3f", node -> risk);
+// 	}
+// 	return all_zero;
 
-}
+// }
 
