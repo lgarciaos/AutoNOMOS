@@ -217,11 +217,18 @@ void sst_t::add_to_tree()
 	//check to see if a sample exists within the vicinity of the new node
 	check_for_witness();
 
+			// ROS_WARN_STREAM(__PRETTY_FUNCTION__ << ": " << __LINE__);
+	// ROS_WARN_STREAM("witness_sample: " << witness_sample->rep << "\twitness_cost: " <<  witness_sample->rep->cost
+		// << "\tc+d: " << nearest->cost + duration);
+
 	if(witness_sample->rep==NULL || witness_sample->rep->cost > nearest->cost + duration)
 	{
+			ROS_WARN_STREAM(__PRETTY_FUNCTION__ << ": " << __LINE__);
+
 		if(best_goal==NULL || nearest->cost + duration <= best_goal->cost)
 		{
 			//create a new tree node
+			ROS_WARN_STREAM(__PRETTY_FUNCTION__ << ": " << __LINE__);
 			sst_node_t* new_node = new sst_node_t();
 			new_node->point = system->alloc_state_point();
 			system->copy_state_point(new_node->point,sample_state);
@@ -350,22 +357,37 @@ bool sst_t::is_best_goal(tree_node_t* v)
 
 }
 
-void sst_t::forward_risk_propagation()
-{
-	ROS_ERROR("NOT IMPLEMENTED YET: %s", __PRETTY_FUNCTION__);
-}
+// void sst_t::forward_risk_propagation()
+// {
+// 	ROS_ERROR("NOT IMPLEMENTED YET: %s", __PRETTY_FUNCTION__);
+// }
 
 void sst_t::update_tree_risks()
 {
-	ROS_ERROR("NOT IMPLEMENTED YET: %s", __PRETTY_FUNCTION__);
+	int i_dyn_obs = 0;
+	while (system -> get_next_dynamic_state( sample_state , i_dyn_obs))
+	{
+		system->copy_state_point(metric_query->point, sample_state);
+		int val = metric -> find_delta_close_and_closest( metric_query, close_nodes, distances, goal_radius, true );
+	
+		for (int i = 0; i < val; ++i)
+		{
+			tree_node_t* v = (tree_node_t*)(close_nodes[i]->get_state());
+	        v -> risk = 1;
+	        propagate_risk_backwards(v, 2);
+		}
+
+		i_dyn_obs++;
+	}
+
 }
 
-void sst_t::propagate_risk_backwards(tree_node_t* node, int parent_num)
-{
-	ROS_ERROR("NOT IMPLEMENTED YET: %s", __PRETTY_FUNCTION__);
-}
+// void sst_t::propagate_risk_backwards(tree_node_t* node, int parent_num)
+// {
+// 	ROS_ERROR("NOT IMPLEMENTED YET: %s", __PRETTY_FUNCTION__);
+// }
 
-bool sst_t::propagate_risk_forward(tree_node_t* node, int node_num)
-{
-	ROS_ERROR("NOT IMPLEMENTED YET: %s", __PRETTY_FUNCTION__);
-}
+// bool sst_t::propagate_risk_forward(tree_node_t* node, int node_num)
+// {
+// 	ROS_ERROR("NOT IMPLEMENTED YET: %s", __PRETTY_FUNCTION__);
+// }
