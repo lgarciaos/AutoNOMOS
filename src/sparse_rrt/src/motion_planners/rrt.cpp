@@ -78,7 +78,6 @@ void rrt_t::replanning_update_tree(double delta_t, double* &new_state_point)
 		while(acum_duration < delta_t && i < path.size())
 		{
 			acum_duration += path[i]->parent_edge->duration;
-			// ROS_DEBUG("i: %d\t#children: %d\tdur: %.3f", i, root -> children.size(), acum_duration);
 
 			for(auto & child : root -> children)
 			{
@@ -96,61 +95,41 @@ void rrt_t::replanning_update_tree(double delta_t, double* &new_state_point)
 			}
 			i++;
 		}
-		// ROS_WARN("New root point: (%.3f, %.3f, %.3f)", 
-			// root -> point[0], root -> point[1], root -> point[2]);
 		system->copy_state_point(start_state, root -> point);
 		system->copy_state_point(new_state_point, root -> point);
 
 	}
 }
 
-bool rrt_t::get_solution_1(tree_node_t* node, int node_num, double& total_cost)
-{
-	// ROS_WARN("Num: %d\tCost: %.3f\trisk: %.3f\ttotal_cost: %.3f", node_num, node -> cost, node -> risk, total_cost);
-	double r_k = node -> risk;
-	double risk_mult = 1;
+// bool rrt_t::get_solution_1(tree_node_t* node, int node_num, double& total_cost)
+// {
+// 	// ROS_WARN("Num: %d\tCost: %.3f\trisk: %.3f\ttotal_cost: %.3f", node_num, node -> cost, node -> risk, total_cost);
+// 	double r_k = node -> risk;
+// 	double risk_mult = 1;
 
-	if ( r_k >= SMALL_EPSILON )
-	{
-		risk_mult = pow(1 + r_k, log(node_num));
-	}
+// 	if ( r_k >= SMALL_EPSILON )
+// 	{
+// 		risk_mult = pow(1 + r_k, log(node_num));
+// 	}
 
-
-	if (  r_k > risk_aversion )
-	{
-		ROS_WARN("\tAT: ( %.3f, %.3f, %.3f )", node -> point[0], node -> point[1], node -> point[2]);
-		ROS_WARN("\tr_k: %.3f\tnode_num: %d\trisk_mult: %.3f", r_k, node_num, risk_mult);
-		ROS_WARN("\tEXITING ==> risk_mult: %.3f\t inverse: %.3f", risk_mult, inv_risk_aversion);
-		return false;
-	}
+// 	if (  r_k > risk_aversion )
+// 	{ 
+// 		ROS_DEBUG("\tAT: ( %.3f, %.3f, %.3f )", node -> point[0], node -> point[1], node -> point[2]);
+// 		ROS_DEBUG("\tr_k: %.3f\tnode_num: %d\trisk_mult: %.3f", r_k, node_num, risk_mult);
+// 		ROS_DEBUG("\tEXITING ==> risk_mult: %.3f\t inverse: %.3f", risk_mult, inv_risk_aversion);
+// 		return false;
+// 	}
 	
-	total_cost += node -> cost * risk_mult;
+// 	total_cost += node -> cost * risk_mult;
 	
-	if (node -> parent == NULL)
-	{
-		return true;
-	}
+// 	if (node -> parent == NULL)
+// 	{
+// 		return true;
+// 	}
 	
-	return get_solution_1(node -> parent, ++node_num, total_cost);
-	// bool res;
-	// if ( r_k >= risk_aversion)
-	// {
-	// 	return false;
-	// }
-	// else if (node -> parent != NULL)
-	// {
-	// 	res = get_solution_1(node -> parent, ++node_num, total_cost);
-	// }
-	// // else
-	// // {
-	// 	// total_cost = node -> cost * risk_mult;
-	// 	// return true;
-	// // }
-	// total_cost += node -> cost * risk_mult;
-	// return res;
+// 	return get_solution_1(node -> parent, ++node_num, total_cost);
 
-
-}
+// }
 
 void rrt_t::get_solution(std::vector<std::tuple<double*,double, double*, double> >& controls, bool asses_risk)
 {
@@ -329,11 +308,17 @@ void rrt_t::update_tree_risks()
 		system->copy_state_point(metric_query->point, sample_state);
 		int val = metric -> find_delta_close_and_closest( metric_query, close_nodes, distances, goal_radius );
 	
+		// ROS_WARN("dist <?> rad");
 		for (int i = 0; i < val; ++i)
 		{
-			tree_node_t* v = (tree_node_t*)(close_nodes[i]->get_state());
-	        v -> risk = 1;
-	        propagate_risk_backwards(v, 2);
+			// ROS_WARN("%.3f <?> %.3f", distances[i], goal_radius);
+			if (distances[i] <= goal_radius)
+			{
+				// ROS_WARN("\tDistance is less");
+				tree_node_t* v = (tree_node_t*)(close_nodes[i]->get_state());
+	        	v -> risk = 1;
+	        	propagate_risk_backwards(v, 2);
+	        }
 		}
 
 		i_dyn_obs++;

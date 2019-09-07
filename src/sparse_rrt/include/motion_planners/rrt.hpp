@@ -157,7 +157,7 @@ private:
 	 * 
 	 * @return If the trajectory is feasable given the risk parameters
 	 */
-	bool get_solution_1(tree_node_t* node, int node_num, double& cost);
+	// bool get_solution_1(tree_node_t* node, int node_num, double& cost);
 
 
 };

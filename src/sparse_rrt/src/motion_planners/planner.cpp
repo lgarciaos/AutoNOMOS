@@ -264,3 +264,33 @@ void planner_t::forward_risk_propagation()
 {
 	propagate_risk_forward(root, 1);
 }
+
+bool planner_t::get_solution_1(tree_node_t* node, int node_num, double& total_cost)
+{
+	// ROS_WARN("Num: %d\tCost: %.3f\trisk: %.3f\ttotal_cost: %.3f", node_num, node -> cost, node -> risk, total_cost);
+	double r_k = node -> risk;
+	double risk_mult = 1;
+
+	if ( r_k >= SMALL_EPSILON )
+	{
+		risk_mult = pow(1 + r_k, log(node_num));
+	}
+
+	if (  r_k > risk_aversion )
+	{ 
+		ROS_DEBUG("\tAT: ( %.3f, %.3f, %.3f )", node -> point[0], node -> point[1], node -> point[2]);
+		ROS_DEBUG("\tr_k: %.3f\tnode_num: %d\trisk_mult: %.3f", r_k, node_num, risk_mult);
+		ROS_DEBUG("\tEXITING ==> risk_mult: %.3f\t inverse: %.3f", risk_mult, inv_risk_aversion);
+		return false;
+	}
+	
+	total_cost += node -> cost * risk_mult;
+	
+	if (node -> parent == NULL)
+	{
+		return true;
+	}
+	
+	return get_solution_1(node -> parent, ++node_num, total_cost);
+
+}

@@ -225,6 +225,7 @@ protected:
 	
 	double propagating_function(double parent_risk, double current_risk, double gamma);
 
+	bool get_solution_1(tree_node_t* node, int node_num, double& total_cost);
 
  	/**
  	 * @brief The stored solution from previous call to get_solution.
@@ -280,6 +281,7 @@ protected:
 	 * @brief The inverse of risk_aversion
 	 */
 	double inv_risk_aversion;
+
 
 
 };

@@ -27,7 +27,7 @@
     <param name="random_seed"                type="int"    value="$(arg mp_random_seed)"/>
     <!-- <param name="random_seed"                type="int"    value="19921123"/> -->
     <param name="sst_delta_near"             type="double" value="0.4"/>
-    <param name="sst_delta_drain"            type="double" value="0.2"/>
+    <param name="sst_delta_drain"            type="double" value="0.1"/>
     <param name="planner"                    type="string" value="$(arg planner_arg)"/>
     <param name="system"                     type="string" value="car"/>
     <param name="goal_radius"                type="double" value=".4"/>
@@ -50,7 +50,7 @@
     <param name="bounding/neg_x_bound"       type="double" value="-10.0"/> <!-- NOT USE IF global_planning == FALSE -->
     <param name="bounding/pos_y_bound"       type="double" value="+10.0"/> <!-- NOT USE IF global_planning == FALSE -->
     <param name="bounding/neg_y_bound"       type="double" value="-10.0"/> <!-- NOT USE IF global_planning == FALSE -->
-    <param name="bounding/perception_radius" type="double" value="5"/>     <!-- NOT USE IF global_planning == TRUE  -->
+    <param name="bounding/perception_radius" type="double" value="20"/>     <!-- NOT USE IF global_planning == TRUE  -->
     
     <!-- REPLANNING -->
     <param name="replanning/delta_t"       type="double" value=".3"/>

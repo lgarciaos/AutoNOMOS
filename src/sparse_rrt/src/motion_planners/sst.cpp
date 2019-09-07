@@ -78,28 +78,56 @@ void sst_t::get_solution(std::vector<std::pair<double*,double> >& controls)
 
 void sst_t::get_solution(std::vector<std::tuple<double*,double, double*, double> >& controls, bool asses_risk)
 {
-	last_solution_path.clear();
-	if(best_goal==NULL)
-		return;
-	nearest = best_goal;
+
+	if (asses_risk)
+	{
+		last_solution_path.clear();
+		system->copy_state_point(sample_state,goal_state);
+		system->copy_state_point(metric_query->point,sample_state);
+		unsigned val = metric->find_delta_close_and_closest(metric_query,close_nodes,distances,goal_radius);
 	
-	//now nearest should be the closest node to the goal state
-	std::deque<tree_node_t*> path;
-	while(nearest->parent!=NULL)
-	{
-		path.push_front(nearest);
-		nearest = (sst_node_t*)nearest->parent;
+    	double length = 999999999;
+		double temp_cost;
+		bool valid_sln;
+		for (unsigned i = 0; i < val; ++i)
+		{
+    	    sst_node_t* v = (sst_node_t*)(close_nodes[i]->get_state());
+			temp_cost = 0;
+
+    	    valid_sln = get_solution_1(v, 1, temp_cost);
+			if ( valid_sln && temp_cost < length )
+			{
+				// ROS_WARN("New length: %.3f", temp_cost);
+				length = temp_cost;
+				nearest = v;
+			}
+		}
 	}
-	last_solution_path.push_back(root);
-	for(unsigned i=0;i<path.size();i++)
+	else
 	{
-		last_solution_path.push_back(path[i]);
-		controls.push_back(std::tuple<double*,double, double*, double>(NULL,0, NULL, 0));
-		std::get<0>(controls.back()) = system -> alloc_control_point();
-		system->copy_control_point(std::get<0>(controls.back()),path[i]->parent_edge->control);
-		std::get<1>(controls.back()) = path[i]->parent_edge->duration;
-		std::get<2>(controls.back()) = path[i] -> point;
-		std::get<3>(controls.back()) = path[i] -> risk;
+		last_solution_path.clear();
+		if(best_goal==NULL)
+			return;
+		nearest = best_goal;
+		
+		//now nearest should be the closest node to the goal state
+		std::deque<tree_node_t*> path;
+		while(nearest->parent!=NULL)
+		{
+			path.push_front(nearest);
+			nearest = (sst_node_t*)nearest->parent;
+		}
+		last_solution_path.push_back(root);
+		for(unsigned i=0;i<path.size();i++)
+		{
+			last_solution_path.push_back(path[i]);
+			controls.push_back(std::tuple<double*,double, double*, double>(NULL,0, NULL, 0));
+			std::get<0>(controls.back()) = system -> alloc_control_point();
+			system->copy_control_point(std::get<0>(controls.back()),path[i]->parent_edge->control);
+			std::get<1>(controls.back()) = path[i]->parent_edge->duration;
+			std::get<2>(controls.back()) = path[i] -> point;
+			std::get<3>(controls.back()) = path[i] -> risk;
+		}
 	}
 }
 
@@ -223,12 +251,12 @@ void sst_t::add_to_tree()
 
 	if(witness_sample->rep==NULL || witness_sample->rep->cost > nearest->cost + duration)
 	{
-			ROS_WARN_STREAM(__PRETTY_FUNCTION__ << ": " << __LINE__);
+			// ROS_WARN_STREAM(__PRETTY_FUNCTION__ << ": " << __LINE__);
 
 		if(best_goal==NULL || nearest->cost + duration <= best_goal->cost)
 		{
 			//create a new tree node
-			ROS_WARN_STREAM(__PRETTY_FUNCTION__ << ": " << __LINE__);
+			// ROS_WARN_STREAM(__PRETTY_FUNCTION__ << ": " << __LINE__);
 			sst_node_t* new_node = new sst_node_t();
 			new_node->point = system->alloc_state_point();
 			system->copy_state_point(new_node->point,sample_state);
@@ -372,9 +400,12 @@ void sst_t::update_tree_risks()
 	
 		for (int i = 0; i < val; ++i)
 		{
-			tree_node_t* v = (tree_node_t*)(close_nodes[i]->get_state());
-	        v -> risk = 1;
-	        propagate_risk_backwards(v, 2);
+			if (distances[i] <= goal_radius)
+			{
+				tree_node_t* v = (tree_node_t*)(close_nodes[i]->get_state());
+        		v -> risk = 1;
+        		propagate_risk_backwards(v, 2);
+			}
 		}
 
 		i_dyn_obs++;
