@@ -17,7 +17,44 @@ find_package(
 	message_generation
 	sparse_rrt
 )
-find_package(CCD REQUIRED)
+# find_package(CCD REQUIRED)
+find_package(ccd QUIET)
+
+# If ccd-config.cmake is not found, use pkg-config and/or find_path() and
+# find_library()
+if(NOT ccd_FOUND)
+  if(PKG_CONFIG_FOUND)
+    pkg_check_modules(PC_CCD ccd)
+    pkg_check_modules(PC_LIBCCD libccd)
+  endif()
+
+  find_path(CCD_INCLUDE_DIR ccd/ccd.h
+    HINTS "${PC_CCD_INCLUDE_DIRS}" "${PC_LIBCCD_INCLUDE_DIRS}")
+
+  # Using find_library() even if pkg-config is available ensures that the full
+  # path to the ccd library is available in CCD_LIBRARIES
+  find_library(CCD_LIBRARY ccd
+    HINTS "${PC_CCD_LIBRARY_DIRS}" "${PC_LIBCCD_LIBRARY_DIRS}")
+
+  # libccd links to LibM on UNIX.
+  if(CYGWIN OR NOT WIN32)
+    find_library(M_LIBRARY m)
+  endif()
+
+  if(CCD_INCLUDE_DIR AND CCD_LIBRARY)
+    set(CCD_INCLUDE_DIRS "${CCD_INCLUDE_DIR}")
+    set(CCD_LIBRARIES "${CCD_LIBRARY}" "${M_LIBRARY}")
+    set(ccd_FOUND ON)
+
+    mark_as_advanced(CCD_INCLUDE_DIR CCD_LIBRARY)
+  endif()
+endif()
+
+if(NOT ccd_FOUND)
+  message(FATAL_ERROR "CCD is required by FCL")
+endif()
+
+
 # find_package(ignition-msgs1 REQUIRED)
 # find_package(ignition-transport4 REQUIRED)
 
