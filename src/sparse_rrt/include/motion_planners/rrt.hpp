@@ -18,6 +18,9 @@
 #include "systems/system.hpp"
 #include "motion_planners/planner.hpp"
 
+#include <boost/lexical_cast.hpp>
+
+
 /**
  * @brief The motion planning algorithm RRT (Rapidly-exploring Random Tree)
  * @details The motion planning algorithm RRT (Rapidly-exploring Random Tree)
@@ -47,7 +50,7 @@ public:
 	/**
 	 * @copydoc planner_t::get_solution(std::vector<std::tuple<double*,double, double*> >&)
 	 */
-	virtual void get_solution(std::vector<std::tuple<double*,double, double*> >& controls);
+	virtual void get_solution(std::vector<std::tuple<double*,double, double*, double> >& controls, bool asses_risk = false);
 
 	/**
 	 * @copydoc planner_t::step()
@@ -58,6 +61,16 @@ public:
 	 * @copydoc planer_t::replanning_update_tree(double delta_t)
 	 */
 	virtual void replanning_update_tree(double delta_t, double* &new_state_point);
+
+	/**
+	 * @copydoc planer_t::forward_risk_propagation()
+	 */
+	// virtual void forward_risk_propagation();
+	
+	/**
+	 * @copydoc planer_t::update_tree_risks()
+	 */
+	virtual void update_tree_risks();
 	
 protected:
 	
@@ -128,6 +141,23 @@ protected:
 	 * @param node The node to add.
 	 */
 	void add_point_to_metric(tree_node_t* node);
+
+
+	// void propagate_risk_backwards(tree_node_t* node, int parent_num);
+
+	// bool propagate_risk_forward(tree_node_t* node, int node_num);
+
+private:
+	/**
+	 * @brief aux recursive function to get the total cost with risk
+	 * @details Auxiliary function to use recursivly to compute the cost when using risk nodes
+	 * 
+	 * @param node The current node from which the risk and cost are going to be evaluated
+	 * @param node_num The number of the current node backwards (the root would be the ith node)
+	 * 
+	 * @return If the trajectory is feasable given the risk parameters
+	 */
+	bool get_solution_1(tree_node_t* node, int node_num, double& cost);
 
 
 };

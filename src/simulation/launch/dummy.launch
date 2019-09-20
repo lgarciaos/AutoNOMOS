@@ -3,9 +3,9 @@
   <!-- <arg name="stopping_check_in" default="1" /> -->
   <arg name="stopping_check_in" default="25" />
   <!-- <arg name="stopping_check_in" default="100" /> -->
-  <!-- <arg name="stopping_check_in" default="150" /> -->
-  <arg name="planner_in" default="RRT" />
-  <!-- <arg name="planner_in" default="SST" /> -->
+  <!-- <arg name="stopping_check_in" default="600" /> -->
+  <!-- <arg name="planner_in" default="RRT" /> -->
+  <arg name="planner_in" default="SST" />
   <!-- <arg name="planner_in" default="DIRT" /> -->
   <arg name="kill_on_exit_in" default="true"/>
   <arg name="simulation_iterations_in" default="1"/>
@@ -15,12 +15,13 @@
   <arg name="goal_state/x" default="-2"/>
   <arg name="goal_state/y" default="-7.5"/>
   <arg name="goal_state/theta" default="0"/>
-  <arg name="ctrl_to_use_in" default="RANDOM_CTRL"/>
-  <!-- <arg name="ctrl_to_use_in" default="BANG_BANG"/> -->
+  <!-- <arg name="ctrl_to_use_in" default="RANDOM_CTRL"/> -->
+  <arg name="ctrl_to_use_in" default="BANG_BANG"/>
   <!-- <arg name="start_state/x" default="-5"/> -->
   <!-- <arg name="start_state/y" default="-7.5"/> -->
   <!-- <arg name="start_state/theta" default="0"/> -->
   <arg name="model_name_in" default="AutoNOMOS_mini_ideal"/>
+  <arg name="motion_planning_seed" default="123456"/>
 
   <!-- <env name="ROSCONSOLE_CONFIG_FILE" value="$(find motion_planning)/config/custom_rosconsole.conf"/> -->
 
@@ -49,14 +50,15 @@
     <arg name="goal_state/theta" default = "$(arg goal_state/theta)"/>
     <arg name="ctrl_to_use" default="$(arg ctrl_to_use_in)"/>
     <arg name="global_planning" default="false"/>
+    <arg name="mp_random_seed" default="$(arg motion_planning_seed)"/>
     <!-- <arg name="start_state/x" default="$(arg start_state/x)"/> -->
     <!-- <arg name="start_state/y" default="$(arg start_state/y)"/> -->
     <!-- <arg name="start_state/theta" default="$(arg start_state/theta)"/> -->
 
   </include>
 
-  <include file = "$(find navigation)/launch/follow_trajectory.launch">
-  </include>
+  <!-- <include file = "$(find navigation)/launch/follow_trajectory.launch">  -->
+  <!-- </include> -->
 
   <include file = "$(find route_planning)/launch/simulation.launch">
   </include>

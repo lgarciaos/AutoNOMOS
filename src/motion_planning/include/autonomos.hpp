@@ -30,7 +30,7 @@ public:
 
 	virtual ~autonomos_t();
 
-	double distance(double* point1, double* point2);
+	double distance(double* point1, double* point2, bool only_geometric = false);
 
 	void random_state(double* state);
 
@@ -50,6 +50,10 @@ public:
 
 
 	void bang_bang_ctrl(double* control);
+
+	// std::set<obstacle_t> get_dynamic_obstacles();
+	bool get_next_dynamic_state(double *state, int i);
+
 
 	/**
 	 * @brief Set rectangular bounds
@@ -128,6 +132,8 @@ private:
 	std::string ctrl_to_use;
 
 	string autonomos_name;
+
+	// std::set<obstacle_t>::iterator it_obs;
 };
 
 

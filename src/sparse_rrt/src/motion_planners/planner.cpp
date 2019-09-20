@@ -172,3 +172,95 @@ tree_node_t* planner_t::get_root()
   return root;
 }
 
+double planner_t::propagating_function(double parent_risk, double current_risk, double gamma)
+{
+	ROS_ASSERT_MSG(parent_risk > 1.0, "PARENT RISK GREATER THAN 1");
+
+	// double res;
+	double current, parent;
+	current = 1 - exp(-gamma * current_risk);
+	// if (parent_risk >= 1.0)
+	// {
+	// 	parent = 1 - exp(-gamma * pare);// should equal 0
+	// 	// ROS_WARN("parent_risk: %f\tcurrent_risk: %f\tcurrent: %f", parent_risk, current_risk, current);
+	// }
+	// else 
+	// {
+		parent = 1 - exp(-gamma * parent_risk);
+	// }
+	// current = current > 1 ? 1 : current;
+	// parent = parent > 1 ? 1 : parent;
+	return ( current + parent ) / gamma ;
+}
+
+void planner_t::set_risk_aversion(double risk_aversion)
+{
+	// assert( ( "Risk aversion should be greater than 0!", risk_aversion > 0 ) );
+	this -> risk_aversion = risk_aversion;
+	if ( risk_aversion > 0 )
+	{
+		inv_risk_aversion = 1 / risk_aversion;
+	}
+	else 
+	{
+		inv_risk_aversion = 9999999999;
+	}
+}
+
+
+bool planner_t::propagate_risk_forward(tree_node_t* node, int node_num)
+{
+
+	bool all_zero = node -> risk <= SMALL_EPSILON;
+
+	for (auto child : node -> children)
+	{
+		if ( child -> risk > SMALL_EPSILON)
+		{
+			all_zero = false;
+			propagate_risk_forward(child, ++node_num);
+		}
+		else if (child -> risk > 0.0)
+		{
+			all_zero &= propagate_risk_forward(child, ++node_num);
+		}
+
+	}
+
+	// ROS_WARN("Risk: %.3f\tAll zero: %s\ti: %d", node -> risk, all_zero ? "TRUE" : "FALSE", node_num );
+	if ( all_zero)
+	{
+		node -> risk = 0;
+	}
+	else
+	{
+		// ROS_WARN("Old risk: %.3f", node -> risk);
+		node -> risk = log(1 + node -> risk) / node_num;
+		// ROS_WARN("\tNew risk: %.3f", node -> risk);
+	}
+	return all_zero;
+
+}
+
+void planner_t::propagate_risk_backwards(tree_node_t* node, int parent_num)
+{
+	// if (node -> parent == NULL)
+	// {
+	// 	node -> risk = 0;
+	// }
+	// else if (node -> risk > SMALL_EPSILON )
+	// {
+	if ( node -> parent != NULL && node -> parent -> risk < risk_aversion )
+	{
+		node -> parent -> risk = propagating_function(node -> parent -> risk, node -> risk, (double)parent_num);
+		// ROS_WARN("Duration: %.3f", node -> parent_edge -> duration);
+		// ROS_WARN("node risk: %s\t parent risk: %.2f\tparent num: %d",
+		// 	boost::lexical_cast<std::string>(node -> risk).c_str(), node -> parent -> risk, parent_num);
+		propagate_risk_backwards( node -> parent, ++parent_num);
+	}
+}
+
+void planner_t::forward_risk_propagation()
+{
+	propagate_risk_forward(root, 1);
+}

@@ -78,7 +78,7 @@ public:
 	/**
 	 * @copydoc system_t::distance(double*, double*)
 	 */
-	virtual double distance(double* point1, double* point2);
+	virtual double distance(double* point1, double* point2, bool only_geometric = false);
 
 	/**
 	 * @copydoc system_t::random_state(double*)
@@ -118,6 +118,9 @@ public:
 
 	virtual std::vector<std::tuple<double*,double,double*>> maneuver_generation(double* start_state,int num_maneuvers);
 
+	bool get_next_dynamic_state(double *state, int i){return false;}
+
+	
 protected:
 
 	std::vector<Rectangle_t> obstacles;

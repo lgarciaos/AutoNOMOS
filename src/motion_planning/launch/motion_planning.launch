@@ -11,6 +11,7 @@
   <!-- <arg name="start_state/y"/> -->
   <!-- <arg name="start_state/theta"/> -->
   <arg name="global_planning"/>
+  <arg name="mp_random_seed"/>
 
   <node name="motion_planning_node" pkg="motion_planning" type="motion_planning_node" output = "screen"
     required = "$(arg kill_on_exit)">
@@ -23,7 +24,7 @@
     <param name="stats_check"                type="double" value="0"/>
     <param name="min_time_steps"             type="int"    value="20"/>
     <param name="max_time_steps"             type="int"    value="200"/>
-    <param name="random_seed"                type="int"    value="56435351"/>
+    <param name="random_seed"                type="int"    value="$(arg mp_random_seed)"/>
     <!-- <param name="random_seed"                type="int"    value="19921123"/> -->
     <param name="sst_delta_near"             type="double" value="0.4"/>
     <param name="sst_delta_drain"            type="double" value="0.2"/>
@@ -34,6 +35,7 @@
     <param name="ctrl_to_use"                type="string" value="$(arg ctrl_to_use)"/>
     <param name="global_planning"            type="bool"   value="$(arg global_planning)"/>
 
+    <param name="risk_aversion"              type="double" value=".8"/>
     <!-- <param name="start_state/x"              type="double" value="$(arg start_state/x)"/> -->
     <!-- <param name="start_state/y"              type="double" value="$(arg start_state/y)"/> -->
     <!-- <param name="start_state/theta"          type="double" value="$(arg start_state/theta)"/> -->
@@ -48,10 +50,10 @@
     <param name="bounding/neg_x_bound"       type="double" value="-10.0"/> <!-- NOT USE IF global_planning == FALSE -->
     <param name="bounding/pos_y_bound"       type="double" value="+10.0"/> <!-- NOT USE IF global_planning == FALSE -->
     <param name="bounding/neg_y_bound"       type="double" value="-10.0"/> <!-- NOT USE IF global_planning == FALSE -->
-    <param name="bounding/perception_radius" type="double" value="50"/>     <!-- NOT USE IF global_planning == TRUE  -->
+    <param name="bounding/perception_radius" type="double" value="5"/>     <!-- NOT USE IF global_planning == TRUE  -->
     
     <!-- REPLANNING -->
-    <param name="replanning/delta_t"       type="double" value="1"/>
+    <param name="replanning/delta_t"       type="double" value=".3"/>
 
   </node>
 

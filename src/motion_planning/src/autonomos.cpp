@@ -117,12 +117,22 @@ void autonomos_t::set_bounds( double planning_rad_range )
   this -> neg_y_bound = 0;
 }
 
-double autonomos_t::distance(double* point1, double* point2)
+double autonomos_t::distance(double* point1, double* point2, bool only_geometric)
 {
-	double val = fabs(point1[2]-point2[2]);
+	double val = fabs(point1[2]-point2[2]), res;
 	if(val > M_PI)
 		val = 2*M_PI-val;
-	return std::sqrt( val * val + (point1[1]-point2[1]) * (point1[1]-point2[1])+(point1[0]-point2[0]) * (point1[0]-point2[0]) );
+  only_geometric = true;
+  if (only_geometric)
+  {
+    res = std::sqrt( pow( point1[1] - point2[1], 2) + pow( point1[0] - point2[0], 2));
+  } 
+  else
+  {
+	  res = std::sqrt( val * val + 
+      (point1[1]-point2[1]) * (point1[1]-point2[1])+(point1[0]-point2[0]) * (point1[0]-point2[0]) );
+  }
+  return res;
 }
 
 void autonomos_t::random_state(double* state)
@@ -146,10 +156,10 @@ void autonomos_t::random_control(double* control, bool allow_reverse)
     bang_bang_ctrl(control);
   }
 
-  if (!allow_reverse)
-  {
-    control[0] = abs(control[0]);
-  }
+  // if (!allow_reverse)
+  // {
+  //   control[0] = abs(control[0]);
+  // }
 
 }
 
@@ -274,7 +284,7 @@ bool autonomos_t::valid_state()
   p2.x = temp_state[0];
   p2.y = temp_state[1];
   p2.theta = temp_state[2];
-  bool collision = true;
+  bool collision = false;
 
   obstacle_t robot_temp = robot_obj;
   robot_temp.set_pose2D(temp_state[0], temp_state[1], temp_state[2]);
@@ -289,7 +299,7 @@ bool autonomos_t::valid_state()
       break;
     }
   }
-
+  // ROS_WARN_STREAM("Collision: " << collision);
 	return  !collision && in_bounds;
 
 }
@@ -303,12 +313,13 @@ svg::Point autonomos_t::visualize_point(double* state, svg::Dimensions dims)
 
 void autonomos_t::set_obstacles(motion_planning::obstacles_array::Response msg)
 {
+  dynamic_obstacles.clear();
   for (long unsigned int i = 0; i < msg.names.size(); ++i)
   {
     // obstacle_t obs(msg.names[i], msg.poses[i], msg.bounding_boxes[i], msg.is_static[i]);
     obstacle_t obs(msg.names[i], msg.poses[i], msg.bounding_boxes[i], 
         msg.is_static[i], msg.bounding_boxes_dimensions[i]);
-    std::cout << "obs " << obs << std::endl;
+    // std::cout << "obs " << obs << std::endl;
     if (msg.names[i] == autonomos_name)
     {
       robot_obj = obs;
@@ -321,5 +332,23 @@ void autonomos_t::set_obstacles(motion_planning::obstacles_array::Response msg)
     {
       dynamic_obstacles.insert(obs);
     }
+  }
+}
+
+// std::set<obstacle_t> autonomos_t::get_dynamic_obstacles()
+bool autonomos_t::get_next_dynamic_state(double* state, int i)
+{
+  
+  if ( i >= 0 && i < dynamic_obstacles.size() )
+  {
+    auto it_aux = dynamic_obstacles.begin();//
+    std::next(it_aux, i);
+    (*it_aux).get_xyz(state[0], state[1], state[2]);
+    // (*it_aux).get_name();
+    return true;
+  }
+  else
+  {
+    return false;
   }
 }

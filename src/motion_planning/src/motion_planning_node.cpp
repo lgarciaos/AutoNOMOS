@@ -3,11 +3,9 @@
 // std
 #include <chrono>
 
-#include "a_star.h"
-#include "autonomos.hpp"
-#include "motion_planners/rrt.hpp"
-#include "motion_planners/sst.hpp"
-#include "motion_planners/dirt.hpp"
+//boost
+#include <boost/timer/timer.hpp>
+#include <boost/chrono.hpp>
   
 // ros
 #include <ros/console.h>
@@ -22,9 +20,14 @@
 #include "utilities/condition_check.hpp"
 
 // own
-#include "motion_planning/car_trajectory.h"
-#include "motion_planning/Line_Segment.h"
+#include "a_star.h"
+#include "autonomos.hpp"
+#include "motion_planners/rrt.hpp"
+#include "motion_planners/sst.hpp"
+#include "motion_planners/dirt.hpp"
 #include "route_planning/route_state.h"
+#include "motion_planning/Line_Segment.h"
+#include "motion_planning/car_trajectory.h"
 // #include "sim_params.h"
 
 #define RRT "RRT"
@@ -79,6 +82,7 @@ namespace params
   double pos_y_bound;
   double neg_y_bound;
   double delta_t;
+  double risk_aversion;
 }
 
 ///////////////
@@ -131,6 +135,11 @@ a_star_t* a_star_ptr;
 planner_t* planner;
 
 
+boost::chrono::nanoseconds sumGlobal;
+boost::chrono::high_resolution_clock::time_point t1 ;
+boost::chrono::high_resolution_clock::time_point t2 ;
+std::stringstream ss_timers;
+
 ///////////////
 // FUNCTIONS //
 ///////////////
@@ -140,7 +149,7 @@ void init_planner();
 void get_obstacles_poses_callback(const geometry_msgs::PoseArray& msg);
 void get_obstacles_types_callback(const std_msgs::Int64MultiArray& msg);
 void rrt_sst_solver();
-void publish_car_trajectory(std::vector<std::tuple<double*, double, double*> >& controls);
+void publish_car_trajectory(std::vector<std::tuple<double*, double, double*, double> >& controls);
 void publish_sln_trajectory();
 void publish_sln_tree(tree_node_t* node);
 void publish_sln_tree_1(tree_node_t* node, motion_planning::Line_Segment& ls_traj);
@@ -148,6 +157,18 @@ void get_robot_pose_callback(const geometry_msgs::Pose2D& pose);
 void run_planner();
 void replan_setup();
 void get_next_state();
+void eval_dynamic_obstacles();
+void get_solution();
+
+
+void eval_dynamic_obstacles()
+{
+   // std::vector<std::tuple<double*, double, double*, double> > controls;
+
+  // planner -> set_dynamic_obstacles();
+  planner -> update_tree_risks();
+  // planner -> get_solution(controls);
+}
 
 void run_planner()
 {
@@ -362,6 +383,7 @@ void init_planner()
     planner -> set_goal_state(params::goal_state, params::goal_radius);
     // system_aux -> set_obstacles(vec_obstacles_poses, vec_obstacles_type, obstacles_radius);
     planner -> setup_planning();
+    planner -> set_risk_aversion(params::risk_aversion);
     checker -> reset();
 
   }
@@ -384,24 +406,24 @@ void rrt_sst_solver()
 			planner->step();
 		}
 		while(!checker -> check());
-		std::vector<std::tuple<double*, double, double*> > controls;
-		planner -> get_solution(controls);
-		double solution_cost = 0;
+		// std::vector<std::tuple<double*, double, double*, double> > controls;
+		// planner -> get_solution(controls, params::risk_aversion > 0);
+		// double solution_cost = 0;
 
-		for(unsigned i = 0; i < controls.size(); i++)
-		{
-			solution_cost += std::get<1>(controls[i]);
-		}
-    if (sim_params::publish_car_trajectory)
-    {
-      publish_car_trajectory(controls);
-    }
-    std::cout << GREEN_BOLD << "Planner:\t" << GREEN << params::planner_name <<
-      "\tTime:\t" << GREEN << checker -> time() << GREEN_BOLD <<  "\tIterations:\t" << 
-      GREEN << checker -> iterations() << GREEN_BOLD << "\tNodes:\t" << GREEN << 
-      planner -> number_of_nodes << GREEN_BOLD << "\tSln_Quality:\t" << GREEN << 
-      solution_cost << GREEN_BOLD << "\tcontroller:\t" << GREEN << params::ctrl_to_use << 
-      OUT_RESET << std::endl ;
+		// for(unsigned i = 0; i < controls.size(); i++)
+		// {
+		// 	solution_cost += std::get<1>(controls[i]);
+		// }
+  //   if (sim_params::publish_car_trajectory)
+  //   {
+  //     publish_car_trajectory(controls);
+  //   }
+  //   std::cout << GREEN_BOLD << "Planner:\t" << GREEN << params::planner_name <<
+  //     "\tTime:\t" << GREEN << checker -> time() << GREEN_BOLD <<  "\tIterations:\t" << 
+  //     GREEN << checker -> iterations() << GREEN_BOLD << "\tNodes:\t" << GREEN << 
+  //     planner -> number_of_nodes << GREEN_BOLD << "\tSln_Quality:\t" << GREEN << 
+  //     solution_cost << GREEN_BOLD << "\tcontroller:\t" << GREEN << params::ctrl_to_use << 
+  //     OUT_RESET << std::endl ;
 	}
 	else
 	{
@@ -421,8 +443,8 @@ void rrt_sst_solver()
 			while(!execution_done && !stats_print);
 			if(stats_print)
 			{
-				std::vector<std::tuple<double*,double, double*> > controls;
-				planner -> get_solution(controls);
+				std::vector<std::tuple<double*,double, double*, double> > controls;
+				planner -> get_solution(controls, params::risk_aversion > 0);
 				double solution_cost = 0;
 				for(unsigned i=0;i<controls.size();i++)
 				{
@@ -464,7 +486,37 @@ void rrt_sst_solver()
 	ROS_DEBUG("Done planning.");
 }
 
-void publish_car_trajectory(std::vector<std::tuple<double*, double, double*> >& controls)
+void get_solution()
+{
+  std::vector<std::tuple<double*, double, double*, double> > controls;
+  
+  t1 = boost::chrono::high_resolution_clock::now();
+  planner -> get_solution(controls, params::risk_aversion > 0);
+  t2 = boost::chrono::high_resolution_clock::now();
+  sumGlobal = (boost::chrono::duration_cast<boost::chrono::nanoseconds>(t2-t1)); 
+  ss_timers << sumGlobal.count() << "\t";
+
+  double solution_cost = 0;
+
+  for(unsigned i = 0; i < controls.size(); i++)
+  {
+    solution_cost += std::get<1>(controls[i]);
+  }
+  if (sim_params::publish_car_trajectory)
+  {
+    publish_car_trajectory(controls);
+  }
+  std::cout << GREEN_BOLD << "Planner:\t" << GREEN << params::planner_name <<
+    "\tTime:\t" << GREEN << checker -> time() << GREEN_BOLD <<  "\tIterations:\t" << 
+    GREEN << checker -> iterations() << GREEN_BOLD << "\tNodes:\t" << GREEN << 
+    planner -> number_of_nodes << GREEN_BOLD << "\tSln_Quality:\t" << GREEN << 
+    solution_cost << GREEN_BOLD << "\tcontroller:\t" << GREEN << params::ctrl_to_use << 
+    OUT_RESET << std::endl ;
+
+
+}
+
+void publish_car_trajectory(std::vector<std::tuple<double*, double, double*, double> >& controls)
 {
   // std::cout << __PRETTY_FUNCTION__ << '\n';
   // motion_planning::car_trajectory res;
@@ -493,7 +545,7 @@ void publish_car_trajectory(std::vector<std::tuple<double*, double, double*> >& 
     // ROS_WARN("acum_duration: %.3f\tdelta_t: %.3f", acum_duration, params::delta_t);
     i++;
   }
-  delta_t_real = acum_duration;
+  delta_t_real = acum_duration > 0 ? acum_duration : params::delta_t;
   car_trajectory_msg.path_len = i;
   car_trajectory_msg.header.seq = iterations;
   car_trajectory_msg.header.stamp = ros::Time::now();;
@@ -516,8 +568,8 @@ void get_obstacles_poses_callback(const geometry_msgs::PoseArray& msg)
 
 void get_obstacles_types_callback(const std_msgs::Int64MultiArray& msg)
 {
+  // ROS_WARN_STREAM(__PRETTY_FUNCTION__);
   subscriptions_established |= 2; 
-  ROS_WARN_STREAM(__PRETTY_FUNCTION__);
   for (auto e: msg.data )
   {
     vec_obstacles_type.push_back(e);
@@ -551,11 +603,12 @@ void publish_sln_tree_1(tree_node_t* node, motion_planning::Line_Segment& ls_tra
     point.y = node -> point[1];
     point.z = 0.01;
     ls_traj.points.push_back(point);
+    ls_traj.risk.push_back(node -> risk);
     point.x = (*i) -> point[0];
     point.y = (*i) -> point[1];
     point.z = 0.01;
     ls_traj.points.push_back(point);
-
+    ls_traj.risk.push_back((*i) -> risk);
     ROS_DEBUG_STREAM_NAMED("TRAJ_PUBLISHER","( " << node -> point[0] << ", " << node -> point[1] << ", " << node -> point[2] << " )" );
     publish_sln_tree_1(*i, ls_traj);
     // ls_traj.header.seq = ls_traj.header.seq + 1;
@@ -582,6 +635,7 @@ void publish_sln_trajectory(std::vector<tree_node_t*>  sln)
     point.y = node -> point[1];
     point.z = 0.1;
     ls_traj.points.push_back(point);
+    ls_traj.risk.push_back( -1 );
   }
   pub_sim_line.publish(ls_traj);
 
@@ -662,6 +716,7 @@ void init_variables()
     ROS_FATAL_STREAM("Not a valid planner: " << params::planner_name);
     ros::shutdown();
   }
+
   ROS_WARN_STREAM("MP NODE: " << __FUNCTION__ <<  ": Ended" );
 }
 
@@ -676,7 +731,7 @@ int main(int argc, char **argv)
   ros::Rate loop_rate(rate_hz);
   path_counter = 0;
   std_srvs::Empty empty;
-  ros::service::call("/gazebo/reset_simulation", empty);
+  // ros::service::call("/gazebo/reset_simulation", empty);
 
   int min_time_steps_aux, max_time_steps_aux;
   params::goal_state = new double[3];
@@ -701,6 +756,7 @@ int main(int argc, char **argv)
   nh_priv.param<double>       ("goal_state/theta",  params::goal_state[2], 0);
   nh_priv.param<bool>         ("global_planning",   params::global_planning, true);
   nh_priv.param<string>       ("ctrl_to_use",       params::ctrl_to_use, RANDOM_CTRL);
+  nh_priv.param<double>       ("risk_aversion",     params::risk_aversion, 0);
   nh_priv.param<double>       ("replanning/delta_t",         params::delta_t, 1);
   nh_priv.param<double>       ("bounding/pos_x_bound",       params::pos_x_bound, -0.0);
   nh_priv.param<double>       ("bounding/neg_x_bound",       params::neg_x_bound, -10.0);
@@ -759,7 +815,7 @@ int main(int argc, char **argv)
     sub_robot_pose = nh.subscribe(pose_topic_name, 1, &get_robot_pose_callback);
     pub_next_pose = nh.advertise<geometry_msgs::Pose2D>(pub_name_next_pose_, 100000, true);
     route_planning_client = nh.serviceClient<route_planning::route_state>("/route_planning/next_state");
-    obstacles_client = nh.serviceClient<motion_planning::obstacles_array>("/simulation/get_obstacles/static");
+    obstacles_client = nh.serviceClient<motion_planning::obstacles_array>("/simulation/get_obstacles");
     ROS_WARN_STREAM("\tpublishing to: " << pub_sim_line.getTopic());
     ROS_WARN_STREAM("\tsubscribed to: " << sub_robot_pose.getTopic());
   }
@@ -770,26 +826,70 @@ int main(int argc, char **argv)
   // loop_rate.sleep();
 
   ROS_WARN_STREAM("MP NODE: " <<  __FUNCTION__ <<  ": Going into while(ros::ok())");
-  ros::service::call("/gazebo/reset_simulation", empty);
+  // ros::service::call("/gazebo/reset_simulation", empty);
+
   while(ros::ok())
   {
     ros::spinOnce();
     if (subscriptions_established == 31)
     {
-      ROS_WARN_STREAM("Iteration: " << iterations);
+
+      // ROS_WARN_STREAM("Iteration: " << iterations);
+      t1 = boost::chrono::high_resolution_clock::now();
       if(planner == NULL) // If this is the first iteration, init the planner
       {
         init_planner();
+        // run_planner();
       }
       else // if is the 2nd or more iteration, do the replaning steps
       {
+        // std::cout << "Input something and press enter to continue..." << '\n';
+        // std::cin >> dummy;
         replan_setup();
+
+
         // break;
       }
-      // run the planner
       run_planner();
-      publish_lines();
+      t2 = boost::chrono::high_resolution_clock::now();
+      sumGlobal = (boost::chrono::duration_cast<boost::chrono::nanoseconds>(t2-t1)); 
+      ss_timers << sumGlobal.count() << "\t";
+
+      t1 = boost::chrono::high_resolution_clock::now();
+      eval_dynamic_obstacles();
+      t2 = boost::chrono::high_resolution_clock::now();
+      sumGlobal = (boost::chrono::duration_cast<boost::chrono::nanoseconds>(t2-t1)); 
+      ss_timers << sumGlobal.count() << "\t";
       
+      // publish_lines();
+      // std::cout << "Input something and press enter to continue..." << '\n';
+      // std::cin >> dummy;
+      get_solution();
+      publish_lines();
+
+      // std::cout << "Input something and press enter to continue..." << '\n';
+      // std::cin >> dummy;
+      t1 = boost::chrono::high_resolution_clock::now();
+      planner -> forward_risk_propagation();
+      t2 = boost::chrono::high_resolution_clock::now();
+      sumGlobal = (boost::chrono::duration_cast<boost::chrono::nanoseconds>(t2-t1)); 
+      ss_timers << sumGlobal.count() << "\t";
+
+      // publish_lines();
+
+      // while (true)
+      // {
+      //   std::cout << "Input something and press enter to continue..." << '\n';
+      //   std::cin >> dummy;
+      //   planner -> forward_risk_propagation();
+      //   publish_lines();
+      // }
+
+      ROS_WARN_STREAM("Iterations\tplanner_time\tbackward_time\teval_time\tforward_time");
+      ROS_WARN_STREAM(iterations << "\t" << ss_timers.str());
+
+      ss_timers.str("");
+      ss_timers.clear();
       iterations++;
     }
     else
@@ -810,29 +910,3 @@ int main(int argc, char **argv)
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-///////////////////////////////////////////////////////////////////////////////
-//                                  TODO
-///////////////////////////////////////////////////////////////////////////////
-// TODO:  Change theparams::ctrl_to_use from int to string and use an array at autonomos
-//

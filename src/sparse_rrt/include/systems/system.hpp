@@ -17,6 +17,7 @@
 #include "image_creation/svg_image.hpp"
 #include "utilities/parameter_reader.hpp"
 #include <tuple>
+#include <set>
 /**
  * @brief A base class for plannable systems.
  * @details A base class for plannable systems. This class implements core functionality
@@ -24,6 +25,7 @@
  * and controls, and visualizing points.
  * 
  */
+// template<class T>
 class system_t
 {
 public: 
@@ -157,7 +159,7 @@ public:
 	 * 
 	 * @return The distance between point1 and point2.
 	 */
-	virtual double distance(double* point1, double* point2) = 0;
+	virtual double distance(double* point1, double* point2, bool only_geometric = false) = 0;
 
 	/**
 	 * @brief Performs a local propagation using simple numerical integration.
@@ -195,6 +197,9 @@ public:
     {
     	return;
     }
+
+	virtual bool get_next_dynamic_state(double *state, int i) = 0;
+
 
 
 protected:
