@@ -13,7 +13,7 @@
 
 /////// VARIABLES ///////
 int seq;
-std::vector<std::pair<double, double>> points;
+std::vector<std::pair<double, double > > points;
 
 namespace params
 {
@@ -398,7 +398,7 @@ void fill_res(route_planning::route_state::Response &res, int segment, double di
 void fill_points()
 {
     ROS_WARN_STREAM("File name is: " << params::txt_file_name);
-    std::ifstream ifile(params::txt_file_name, std::ios::in);
+    std::ifstream ifile(params::txt_file_name.c_str(), std::ios::in);
 
     //check to see that the file was opened correctly:
     if (!ifile.is_open()) {
