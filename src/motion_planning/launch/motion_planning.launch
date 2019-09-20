@@ -35,7 +35,7 @@
     <param name="ctrl_to_use"                type="string" value="$(arg ctrl_to_use)"/>
     <param name="global_planning"            type="bool"   value="$(arg global_planning)"/>
 
-    <param name="risk_aversion"              type="double" value=".8"/>
+    <param name="risk_aversion"              type="double" value=".4"/>
     <!-- <param name="start_state/x"              type="double" value="$(arg start_state/x)"/> -->
     <!-- <param name="start_state/y"              type="double" value="$(arg start_state/y)"/> -->
     <!-- <param name="start_state/theta"          type="double" value="$(arg start_state/theta)"/> -->
@@ -47,10 +47,10 @@
 
     <!-- BOUNDING -->
     <param name="bounding/pos_x_bound"       type="double" value="0.0"/>   <!-- NOT USE IF global_planning == FALSE -->
-    <param name="bounding/neg_x_bound"       type="double" value="-10.0"/> <!-- NOT USE IF global_planning == FALSE -->
-    <param name="bounding/pos_y_bound"       type="double" value="+10.0"/> <!-- NOT USE IF global_planning == FALSE -->
-    <param name="bounding/neg_y_bound"       type="double" value="-10.0"/> <!-- NOT USE IF global_planning == FALSE -->
-    <param name="bounding/perception_radius" type="double" value="20"/>     <!-- NOT USE IF global_planning == TRUE  -->
+    <param name="bounding/neg_x_bound"       type="double" value="-9.0"/> <!-- NOT USE IF global_planning == FALSE -->
+    <param name="bounding/pos_y_bound"       type="double" value="-2.0"/> <!-- NOT USE IF global_planning == FALSE -->
+    <param name="bounding/neg_y_bound"       type="double" value="-11.0"/> <!-- NOT USE IF global_planning == FALSE -->
+    <param name="bounding/perception_radius" type="double" value="10"/>     <!-- NOT USE IF global_planning == TRUE  -->
     
     <!-- REPLANNING -->
     <param name="replanning/delta_t"       type="double" value=".3"/>

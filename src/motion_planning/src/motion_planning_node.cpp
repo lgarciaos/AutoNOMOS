@@ -585,6 +585,9 @@ void publish_sln_tree(tree_node_t* node)
   ls_traj.color = gz_purple[ls_traj.header.seq];
   ls_traj.header.frame_id = "tree_seg_" + std::to_string(ls_traj.header.seq) ;
 
+  
+  
+  printf("parent_x,parent_y,parent_risk,child_x,child_y,child_risk\n");
   publish_sln_tree_1(node, ls_traj);
   pub_sim_line.publish(ls_traj);
 
@@ -595,7 +598,7 @@ void publish_sln_tree_1(tree_node_t* node, motion_planning::Line_Segment& ls_tra
   // seq_ant += std::to_string(ls_traj.header.seq);
   
   geometry_msgs::Point32 point;
-
+//  printf("parent_x,parent_y,parent_risk,child_x,child_y,child_risk");
   for (std::list<tree_node_t*>::iterator i = node->children.begin(); i != node->children.end(); ++i)
   {
     // svg::Polyline traj_line(svg::Stroke(params::tree_line_width, svg::Color::Blue));
@@ -609,6 +612,11 @@ void publish_sln_tree_1(tree_node_t* node, motion_planning::Line_Segment& ls_tra
     point.z = 0.01;
     ls_traj.points.push_back(point);
     ls_traj.risk.push_back((*i) -> risk);
+    
+    printf("%.5f,%.5f,%.5f,%.5f,%.5f,%.5f\n",
+		    node -> point[0], node -> point[1], node -> risk, 
+		    (*i) -> point[0], (*i) -> point[1], (*i) -> risk);
+    
     ROS_DEBUG_STREAM_NAMED("TRAJ_PUBLISHER","( " << node -> point[0] << ", " << node -> point[1] << ", " << node -> point[2] << " )" );
     publish_sln_tree_1(*i, ls_traj);
     // ls_traj.header.seq = ls_traj.header.seq + 1;
@@ -628,6 +636,8 @@ void publish_sln_trajectory(std::vector<tree_node_t*>  sln)
   ls_traj.header.frame_id = "traj_seg_" + std::to_string(ls_traj.header.seq);
   ls_traj.color = gz_green[ls_traj.header.seq];
   ls_traj.line_list = true;
+  
+  printf("sln_parent_x,sln_parent_y,sln_parent_risk\n");
   for (auto&  node : sln) 
   {
     ROS_DEBUG_STREAM_NAMED("TRAJ_PUBLISHER","( " << node -> point[0] << ", " << node -> point[1] << ", " << node -> point[2] << " )" );
@@ -636,6 +646,8 @@ void publish_sln_trajectory(std::vector<tree_node_t*>  sln)
     point.z = 0.1;
     ls_traj.points.push_back(point);
     ls_traj.risk.push_back( -1 );
+    printf("%.5f,%.5f,%.5f\n", 
+		    node -> point[0], node -> point[1], node -> risk );
   }
   pub_sim_line.publish(ls_traj);
 

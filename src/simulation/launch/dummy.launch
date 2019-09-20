@@ -1,11 +1,11 @@
 <launch>
   <arg name="stopping_type_in" default="time"/>
   <!-- <arg name="stopping_check_in" default="1" /> -->
-  <arg name="stopping_check_in" default="25" />
+  <arg name="stopping_check_in" default="100" />
   <!-- <arg name="stopping_check_in" default="100" /> -->
   <!-- <arg name="stopping_check_in" default="600" /> -->
   <!-- <arg name="planner_in" default="RRT" /> -->
-  <arg name="planner_in" default="SST" />
+  <arg name="planner_in" default="SST" /> 
   <!-- <arg name="planner_in" default="DIRT" /> -->
   <arg name="kill_on_exit_in" default="true"/>
   <arg name="simulation_iterations_in" default="1"/>
@@ -49,7 +49,7 @@
     <arg name="goal_state/y" default = "$(arg goal_state/y)"/>
     <arg name="goal_state/theta" default = "$(arg goal_state/theta)"/>
     <arg name="ctrl_to_use" default="$(arg ctrl_to_use_in)"/>
-    <arg name="global_planning" default="false"/>
+    <arg name="global_planning" default="true"/>
     <arg name="mp_random_seed" default="$(arg motion_planning_seed)"/>
     <!-- <arg name="start_state/x" default="$(arg start_state/x)"/> -->
     <!-- <arg name="start_state/y" default="$(arg start_state/y)"/> -->
